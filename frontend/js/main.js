@@ -607,6 +607,10 @@ async function selectCity(c) {
         const wx = await getWeather(c.lat, c.lon);
         state.city = loc; state.weather = wx;
         renderWeather(loc, wx);
+        // 写入后端查询历史
+        if (authToken) {
+            fetchJSON(`${API_BASE}/api/history`, 3000, { method: 'POST', body: JSON.stringify({ city: c.name, lat: c.lat, lon: c.lon, weather: DESC(wx.current_weather?.weathercode || 0) }) });
+        }
     } catch (e) {
         $('error-msg').textContent = e.message; toggle('error-card');
     }
