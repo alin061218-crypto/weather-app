@@ -190,8 +190,17 @@ app.get('/api/me', authMiddleware, (req, res) => {
     res.json({ user: req.user });
 });
 
-// ===== 7. 数据查看 & 管理页面 =====
+// ===== 7. 数据查看 & 管理页面（需要密码） =====
 app.get('/admin', (req, res) => {
+    const ADMIN_PASSWORD = 'admin123';
+    if (req.query.pwd !== ADMIN_PASSWORD) {
+        return res.send(`<!DOCTYPE html><html lang="zh"><head><meta charset="UTF-8"><title>后台登录</title>
+<style>body{font-family:system-ui,sans-serif;background:#1a1a2e;color:#e0e0e0;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
+.box{background:rgba(255,255,255,.05);padding:40px;border-radius:16px;text-align:center;border:1px solid rgba(255,255,255,.1)}
+input{padding:12px 16px;border-radius:8px;border:1px solid #444;background:rgba(255,255,255,.08);color:#fff;font-size:15px;margin:10px 0;width:200px}
+button{padding:12px 28px;border-radius:8px;border:none;background:#e8b86d;color:#1a1a2e;font-size:15px;font-weight:600;cursor:pointer}
+</style></head><body><div class="box"><h2>🔐 数据后台</h2><form><input type="password" name="pwd" placeholder="输入密码"><br><button type="submit">进入</button></form></div></body></html>`);
+    }
     const users = readJSON(USERS_FILE) || [];
     const favs = readJSON(FAVORITES_FILE) || [];
     const history = readJSON(HISTORY_FILE) || [];
