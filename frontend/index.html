@@ -9,7 +9,8 @@
 <title>天气预报</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0a0a14">
-<link rel="stylesheet" href="css/style.css?v=4">
+<link rel="stylesheet" href="css/style.css?v=5">
+<link rel="stylesheet" href="css/light.css?v=1" id="light-css" disabled>
 </head>
 <body>
 <canvas id="bg-canvas"></canvas>
@@ -23,6 +24,8 @@
             <ul id="search-results" class="search-drop hidden"></ul>
         </div>
         <button id="unit-btn" class="unit-switch">°C</button>
+        <button id="theme-btn" class="unit-switch" title="切换暗黑/浅色模式">🌙</button>
+        <button id="map-btn" class="unit-switch" title="天气地图">🗺️</button>
     </header>
     <nav id="recent-section" class="recent-strip hidden">
         <div id="recent-list" class="recent-chips"></div>
@@ -103,6 +106,15 @@
             <p id="fav-user-info" class="fav-user"></p>
             <div id="fav-list" class="fav-list"><p class="fav-empty">暂无收藏</p></div>
             <button id="logout-btn" class="logout-btn">退出登录</button>
+        </div>
+    </div>
+
+    <!-- 天气地图弹窗 -->
+    <div id="map-modal" class="modal-overlay hidden">
+        <div class="modal-box" style="max-width:95vw;width:800px;padding:12px">
+            <button id="map-close" class="modal-close">&times;</button>
+            <h2 style="font-size:14px;margin-bottom:10px;padding-left:8px">🗺️ 天气地图</h2>
+            <iframe id="map-frame" style="width:100%;height:70vh;border:none;border-radius:12px" allow="geolocation"></iframe>
         </div>
     </div>
 

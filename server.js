@@ -57,7 +57,10 @@ function authMiddleware(req, res, next) {
 app.post('/api/register', async (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) return res.status(400).json({ error: '用户名和密码不能为空' });
-    if (username.length < 2 || password.length < 6) return res.status(400).json({ error: '用户名至少2位，密码至少6位' });
+    if (typeof username !== 'string' || typeof password !== 'string') return res.status(400).json({ error: '格式错误' });
+    if (username.length < 2 || username.length > 30) return res.status(400).json({ error: '用户名2-30位' });
+    if (password.length < 6 || password.length > 100) return res.status(400).json({ error: '密码6-100位' });
+    if (!/^[a-zA-Z0-9_一-龥]+$/.test(username)) return res.status(400).json({ error: '用户名只能包含中英文、数字和下划线' });
 
     const users = readJSON(USERS_FILE);
     if (users.find(u => u.username === username)) return res.status(400).json({ error: '用户名已存在' });
@@ -74,6 +77,9 @@ app.post('/api/register', async (req, res) => {
 // ===== 2. 用户登录 =====
 app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
+    if (!username || !password) return res.status(400).json({ error: '用户名密码不能为空' });
+    if (typeof username !== 'string' || typeof password !== 'string') return res.status(400).json({ error: '格式错误' });
+    if (username.length > 30 || password.length > 100) return res.status(400).json({ error: '输入过长' });
     const users = readJSON(USERS_FILE);
     const user = users.find(u => u.username === username);
     if (!user) return res.status(400).json({ error: '用户名或密码错误' });
@@ -93,10 +99,15 @@ const IP_API = 'https://ipapi.co/json/';
 app.get('/api/weather', async (req, res) => {
     const { lat, lon } = req.query;
     if (!lat || !lon) return res.status(400).json({ error: '缺少经纬度参数' });
+    // 验证经纬度格式
+    const latNum = parseFloat(lat), lonNum = parseFloat(lon);
+    if (isNaN(latNum) || isNaN(lonNum) || latNum < -90 || latNum > 90 || lonNum < -180 || lonNum > 180) {
+        return res.status(400).json({ error: '经纬度格式错误' });
+    }
 
     // 检查缓存（10分钟有效）
     const cache = readJSON(CACHE_FILE) || {};
-    const cacheKey = `${lat},${lon}`;
+    const cacheKey = latNum.toFixed(2) + ',' + lonNum.toFixed(2);
     if (cache[cacheKey] && Date.now() - cache[cacheKey].time < 600000) {
         return res.json(cache[cacheKey].data);
     }
@@ -190,17 +201,24 @@ app.get('/api/me', authMiddleware, (req, res) => {
     res.json({ user: req.user });
 });
 
-// ===== 7. 数据查看 & 管理页面（需要密码） =====
-app.get('/admin', (req, res) => {
-    const ADMIN_PASSWORD = 'admin123';
-    if (req.query.pwd !== ADMIN_PASSWORD) {
-        return res.send(`<!DOCTYPE html><html lang="zh"><head><meta charset="UTF-8"><title>后台登录</title>
-<style>body{font-family:system-ui,sans-serif;background:#1a1a2e;color:#e0e0e0;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
-.box{background:rgba(255,255,255,.05);padding:40px;border-radius:16px;text-align:center;border:1px solid rgba(255,255,255,.1)}
-input{padding:12px 16px;border-radius:8px;border:1px solid #444;background:rgba(255,255,255,.08);color:#fff;font-size:15px;margin:10px 0;width:200px}
-button{padding:12px 28px;border-radius:8px;border:none;background:#e8b86d;color:#1a1a2e;font-size:15px;font-weight:600;cursor:pointer}
-</style></head><body><div class="box"><h2>🔐 数据后台</h2><form><input type="password" name="pwd" placeholder="输入密码"><br><button type="submit">进入</button></form></div></body></html>`);
+// ===== 7. 数据后台管理 =====
+const ADMIN_CREDENTIALS = { username: 'admin', password: 'weather2024' };
+const ADMIN_TOKENS = new Map();
+
+// Admin 登录 API
+app.post('/api/admin-login', (req, res) => {
+    const { username, password } = req.body;
+    if (!username || !password) return res.status(400).json({ error: '用户名密码不能为空' });
+    if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
+        const token = 'admin_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+        ADMIN_TOKENS.set(token, Date.now());
+        return res.json({ token });
     }
+    res.status(401).json({ error: '用户名或密码错误' });
+});
+
+// Admin 后台页面渲染函数
+function sendAdminPage(res) {
     const users = readJSON(USERS_FILE) || [];
     const favs = readJSON(FAVORITES_FILE) || [];
     const history = readJSON(HISTORY_FILE) || [];
@@ -220,7 +238,8 @@ button{padding:4px 10px;border-radius:6px;border:none;cursor:pointer;font-size:1
 .btn-edit{background:#2980b9;color:#fff}.btn-save{background:#27ae60;color:#fff}
 input[type=text]{background:rgba(255,255,255,.08);border:1px solid #444;color:#fff;padding:4px 8px;border-radius:4px;font-size:12px;width:80px}
 .refresh{color:#81d4fa;font-size:12px;float:right}</style></head><body>
-<h1>📊 数据后台管理</h1><p class="refresh">修改后自动保存</p>
+<h1>📊 数据后台管理</h1>
+<button onclick="clearCache()" style="background:#e8b86d;color:#1a1a2e;font-weight:600;padding:8px 16px">清空天气缓存</button>
 <div>
 <div class="stat"><div class="stat-num">${users.length}</div><div class="stat-label">注册用户</div></div>
 <div class="stat"><div class="stat-num">${favs.length}</div><div class="stat-label">收藏记录</div></div>
@@ -259,12 +278,37 @@ async function api(url, method, body) {
     const r = await fetch(url, {method, headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});
     return r.json();
 }
-function delUser(id) { if(confirm('确认删除此用户？')) api('/admin/users/'+id,'DELETE').then(()=>location.reload()); }
-function updateUser(id, field, val) { api('/admin/users/'+id,'PUT',{[field]:val}).then(d=>{if(d.error)alert(d.error);}); }
-function delFav(id) { api('/admin/favorites/'+id,'DELETE').then(()=>location.reload()); }
-function delHist(id) { api('/admin/history/'+id,'DELETE').then(()=>location.reload()); }
+async function delUser(id) { if(confirm('确认删除此用户及相关数据?')) { await api('/admin/users/'+id,'DELETE'); location.reload(); } }
+async function updateUser(id,field,val) { await api('/admin/users/'+id,'PUT',{[field]:val}); }
+async function delFav(id) { if(confirm('确认删除?')) { await api('/admin/favorites/'+id,'DELETE'); location.reload(); } }
+async function delHist(id) { if(confirm('确认删除?')) { await api('/admin/history/'+id,'DELETE'); location.reload(); } }
+async function clearCache() { if(confirm('确认清空所有天气缓存?')) { await api('/admin/clear-cache','POST'); location.reload(); } }
 </script></body></html>`;
     res.send(html);
+}
+
+// Admin 后台页面（需 token 验证）
+app.get('/admin', (req, res) => {
+    if (req.query.token && ADMIN_TOKENS.has(req.query.token)) {
+        return sendAdminPage(res);
+    }
+    return res.send(`<!DOCTYPE html><html lang="zh"><head><meta charset="UTF-8"><title>后台登录</title>
+<style>body{font-family:system-ui,sans-serif;background:#1a1a2e;color:#e0e0e0;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
+.box{background:rgba(255,255,255,.05);padding:40px;border-radius:16px;text-align:center;border:1px solid rgba(255,255,255,.1)}
+input{padding:12px 16px;border-radius:8px;border:1px solid #444;background:rgba(255,255,255,.08);color:#fff;font-size:15px;margin:8px 0;width:220px;display:block}
+button{padding:12px 28px;border-radius:8px;border:none;background:#e8b86d;color:#1a1a2e;font-size:15px;font-weight:600;cursor:pointer;margin-top:12px}
+.error{color:#e09090;font-size:13px;margin-top:8px}
+</style></head><body><div class="box"><h2>🔐 数据后台</h2>
+<form id="loginForm"><input type="text" name="username" placeholder="用户名" required><input type="password" name="password" placeholder="密码" required><button type="submit">登录</button></form>
+<p class="error" id="errMsg"></p></div>
+<script>
+document.getElementById('loginForm').addEventListener('submit',async(e)=>{e.preventDefault();
+const u=document.querySelector('[name=username]').value,p=document.querySelector('[name=password]').value;
+const r=await fetch('/api/admin-login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
+const d=await r.json();
+if(d.token){location.href='/admin?token='+d.token}else{document.getElementById('errMsg').textContent=d.error}
+});
+</script></body></html>`);
 });
 
 // Admin API: 删除用户
@@ -277,6 +321,7 @@ app.delete('/admin/users/:id', (req, res) => {
     let hist = readJSON(HISTORY_FILE); hist = hist.filter(h => h.userId !== req.params.id); writeJSON(HISTORY_FILE, hist);
     res.json({ success: true });
 });
+
 // Admin API: 修改用户
 app.put('/admin/users/:id', (req, res) => {
     let users = readJSON(USERS_FILE);
@@ -289,6 +334,7 @@ app.put('/admin/users/:id', (req, res) => {
     writeJSON(USERS_FILE, users);
     res.json({ success: true });
 });
+
 // Admin API: 删除收藏
 app.delete('/admin/favorites/:id', (req, res) => {
     let favs = readJSON(FAVORITES_FILE);
@@ -296,6 +342,7 @@ app.delete('/admin/favorites/:id', (req, res) => {
     writeJSON(FAVORITES_FILE, favs);
     res.json({ success: true });
 });
+
 // Admin API: 删除历史
 app.delete('/admin/history/:id', (req, res) => {
     let hist = readJSON(HISTORY_FILE);
@@ -303,6 +350,7 @@ app.delete('/admin/history/:id', (req, res) => {
     writeJSON(HISTORY_FILE, hist);
     res.json({ success: true });
 });
+
 // Admin API: 清空缓存
 app.post('/admin/clear-cache', (req, res) => {
     writeJSON(CACHE_FILE, {});
@@ -310,16 +358,15 @@ app.post('/admin/clear-cache', (req, res) => {
 });
 
 // ===== 启动服务器 =====
-
-// ===== 启动服务器 =====
 app.listen(PORT, () => {
     console.log(`天气后端服务已启动: http://localhost:${PORT}`);
     console.log(`API 文档:`);
     console.log(`  POST /api/register  - 注册`);
     console.log(`  POST /api/login     - 登录`);
-    console.log(`  GET  /api/weather   - 获取天气（代理）`);
-    console.log(`  GET  /api/location  - IP定位（代理）`);
-    console.log(`  GET  /api/search    - 城市搜索（代理）`);
+    console.log(`  GET  /api/weather   - 获取天气(代理)`);
+    console.log(`  GET  /api/location  - IP定位(代理)`);
+    console.log(`  GET  /api/search    - 城市搜索(代理)`);
     console.log(`  GET/POST/DELETE /api/favorites - 收藏管理`);
     console.log(`  GET/POST /api/history - 查询历史`);
+    console.log(`  GET  /admin         - 数据后台管理`);
 });

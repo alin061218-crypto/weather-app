@@ -745,6 +745,39 @@ function addFavButton(loc) {
 const _origRW = renderWeather;
 renderWeather = function(loc, wx) { _origRW(loc, wx); if (loc.lat && loc.lon) addFavButton(loc); };
 
+// === 天气地图 ===
+function initMap() {
+    const modal = $('map-modal');
+    const frame = $('map-frame');
+    const btn = $('map-btn');
+    btn.addEventListener('click', () => {
+        const lat = state.city?.lat || 39.9;
+        const lon = state.city?.lon || 116.4;
+        // Windy.com 免费嵌入（无需 API Key）
+        frame.src = `https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=°C&metricWind=km/h&zoom=7&overlay=wind&product=ecmwf&lat=${lat}&lon=${lon}&detailLat=${lat}&detailLon=${lon}&detail=true&message=true`;
+        modal.classList.remove('hidden');
+    });
+    $('map-close').addEventListener('click', () => { modal.classList.add('hidden'); frame.src = ''; });
+    modal.addEventListener('click', (e) => { if (e.target === modal) { modal.classList.add('hidden'); frame.src = ''; } });
+}
+
 // === 启动 ===
 $('retry-btn').addEventListener('click', init);
-document.addEventListener('DOMContentLoaded', () => { initSearch(); initUnit(); init(); checkAuth(); });
+document.addEventListener('DOMContentLoaded', () => { initSearch(); initUnit(); initTheme(); initMap(); init(); checkAuth(); });
+
+// === 暗黑/浅色 ===
+function initTheme() {
+    const btn = $('theme-btn');
+    let mode = localStorage.getItem('wx_theme') || 'dark';
+    applyTheme(mode, btn);
+    btn.addEventListener('click', () => {
+        mode = mode === 'dark' ? 'light' : 'dark';
+        localStorage.setItem('wx_theme', mode);
+        applyTheme(mode, btn);
+    });
+}
+function applyTheme(mode, btn) {
+    const css = $('light-css');
+    if (mode === 'light') { css.disabled = false; document.documentElement.classList.add('light-mode'); btn.textContent = '☀️'; }
+    else { css.disabled = true; document.documentElement.classList.remove('light-mode'); btn.textContent = '🌙'; }
+}

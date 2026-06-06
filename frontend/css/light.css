@@ -1,0 +1,27 @@
+/* 暗黑/浅色模式 */
+.light-mode{--ink:#1a1a2e;--ink2:#4a4a5a;--ink3:#888;--srf:rgba(255,255,255,.7);--brd:rgba(0,0,0,.08);--brd2:rgba(0,0,0,.12);--accent:#c78435;background:#f0f0f5!important}
+.light-mode body{background:#f0f0f5!important;color:var(--ink)}
+.light-mode .card{background:rgba(255,255,255,.8);border-color:rgba(0,0,0,.1)}
+.light-mode .search-field{background:rgba(255,255,255,.7);color:#1a1a2e}
+.light-mode .search-drop{background:rgba(255,255,255,.97)}
+.light-mode .search-item{border-bottom:1px solid rgba(0,0,0,.05)}
+.light-mode .search-item:hover{background:rgba(0,0,0,.04)}
+.light-mode .recent-chip,.light-mode .unit-switch{background:rgba(255,255,255,.7);color:#444}
+.light-mode .detail-cell{background:rgba(0,0,0,.03)}.light-mode .detail-cell:hover{background:rgba(0,0,0,.06)}
+.light-mode .day-card{background:rgba(0,0,0,.03)}.light-mode .day-card:hover{background:rgba(0,0,0,.06)}
+.light-mode .advice-chip{background:rgba(0,0,0,.04);border-color:rgba(0,0,0,.08);color:#555}
+.light-mode .error-panel{background:rgba(255,255,255,.8)}
+.light-mode .modal-box{background:#f5f5f8;border-color:rgba(0,0,0,.1)}
+.light-mode .auth-input{background:rgba(0,0,0,.04);border-color:rgba(0,0,0,.1);color:#1a1a2e}
+.light-mode .footer,.light-mode .sec-label,.light-mode .hero-region,.light-mode .advice-text,.light-mode .si-meta,.light-mode .dl{color:var(--ink3)}
+.light-mode .hero-temp,.light-mode .hero-city,.light-mode .hero-desc{color:var(--ink)}
+.light-mode .dv,.light-mode .si-name{color:var(--ink2)}
+.light-mode .day-name{color:#333}
+.light-mode .user-fab{background:rgba(255,255,255,.8)}
+.light-mode .logout-btn{border-color:rgba(0,0,0,.1)}
+.light-mode #bg-canvas{opacity:.3}
+.light-mode body.bg-clear{background:linear-gradient(175deg,#e8f0f8 0%,#d0e0f0 40%,#c8ddf0 100%)!important}
+.light-mode body.bg-snow{background:linear-gradient(175deg,#f0f0f5 0%,#e8e8f0 40%,#ddd 100%)!important}
+.light-mode body.bg-rain{background:linear-gradient(175deg,#e0e5ec 0%,#d5dae2 40%,#c8d0da 100%)!important}
+.light-mode body.bg-fog{background:linear-gradient(175deg,#e8e8ed 0%,#dddde2 50%,#d0d0d5 100%)!important}
+.light-mode body.bg-storm{background:linear-gradient(175deg,#d0d0d8 0%,#c0c0ca 40%,#a8a8b5 100%)!important}
