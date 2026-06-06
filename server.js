@@ -190,8 +190,20 @@ app.post('/api/history', authMiddleware, (req, res) => {
     const { city, lat, lon, weather } = req.body;
     const history = readJSON(HISTORY_FILE);
     history.push({ id: Date.now().toString(), userId: req.user.id, city, lat, lon, weather: weather || '', time: new Date().toISOString() });
-    // 只保留最近 100 条
-    if (history.length > 100) history.splice(0, history.length - 100);
+    // 保留最近 100 条（仅该用户）
+    const userHistory = history.filter(h => h.userId === req.user.id);
+    if (userHistory.length > 100) {
+        const toRemove = userHistory.slice(0, userHistory.length - 100);
+        toRemove.forEach(h => { const idx = history.findIndex(x => x.id === h.id); if (idx !== -1) history.splice(idx, 1); });
+    }
+    writeJSON(HISTORY_FILE, history);
+    res.json({ success: true });
+});
+
+// 清除当前用户全部搜索历史
+app.delete('/api/history', authMiddleware, (req, res) => {
+    let history = readJSON(HISTORY_FILE);
+    history = history.filter(h => h.userId !== req.user.id);
     writeJSON(HISTORY_FILE, history);
     res.json({ success: true });
 });
@@ -367,6 +379,6 @@ app.listen(PORT, () => {
     console.log(`  GET  /api/location  - IP定位(代理)`);
     console.log(`  GET  /api/search    - 城市搜索(代理)`);
     console.log(`  GET/POST/DELETE /api/favorites - 收藏管理`);
-    console.log(`  GET/POST /api/history - 查询历史`);
+    console.log(`  GET/POST/DELETE /api/history - 查询历史`);
     console.log(`  GET  /admin         - 数据后台管理`);
 });
