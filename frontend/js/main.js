@@ -21,12 +21,26 @@ const F = {
 };
 
 // === 天气图标 ===
-const ICON = c => c === 0 ? '☀️' : c <= 3 ? '⛅' : c <= 48 ? '🌫️' : c <= 67 ? '🌧️' : c <= 77 ? '❄️' : c <= 86 ? '🌨️' : '⛈️';
-const DESC = c => c === 0 ? '晴' : c === 1 ? '少云' : c <= 3 ? '多云' : c <= 48 ? '雾' : c <= 67 ? '雨' : c <= 77 ? '雪' : c <= 86 ? '阵雪' : '雷暴';
-const isRain = c => (c >= 51 && c <= 67) || (c >= 80 && c <= 82);
-const isSnow = c => (c >= 71 && c <= 77) || (c >= 85 && c <= 86);
-const isStorm = c => c >= 95;
-const isFog = c => c >= 45 && c <= 48;
+// WMO 天气代码映射: https://open-meteo.com/en/docs#weathervariables
+const ICON = c => c === 0 ? '☀️' : c <= 3 ? '⛅' : c <= 48 ? '🌫️' : c <= 57 ? '🌧️' : c <= 67 ? '🌧️' : c <= 77 ? '❄️' : c <= 82 ? '🌧️' : c <= 86 ? '🌨️' : '⛈️';
+const DESC = c => {
+    // 按 WMO 代码精确映射
+    if (c === 0) return '晴';
+    if (c === 1) return '少云';
+    if (c <= 3) return '多云';
+    if (c <= 48) return '雾';          // 45, 48 雾/雾凇
+    if (c <= 57) return '毛毛雨';      // 51-57 小/中/大毛毛雨+冻毛毛雨
+    if (c <= 67) return '雨';          // 61-67 小/中/大雨+冻雨
+    if (c <= 77) return '雪';          // 71-77 小/中/大雪+雪粒
+    if (c <= 82) return '阵雨';        // 80-82 小/中/大阵雨
+    if (c <= 86) return '阵雪';        // 85-86 小/大阵雪
+    if (c <= 99) return '雷暴';        // 95 雷暴, 96/99 雷暴+冰雹
+    return '未知';
+};
+const isRain = c => (c >= 51 && c <= 67) || (c >= 80 && c <= 82);   // 毛毛雨/雨/阵雨
+const isSnow = c => (c >= 71 && c <= 77) || (c >= 85 && c <= 86);     // 雪/阵雪
+const isStorm = c => c >= 95;                                           // 雷暴
+const isFog = c => c >= 45 && c <= 48;                                  // 雾
 const isClear = c => c <= 1;
 
 // === API 请求 ===
@@ -752,17 +766,30 @@ renderWeather = function(loc, wx) { _origRW(loc, wx); if (loc.lat && loc.lon) ad
 // === 天气地图 ===
 function initMap() {
     const modal = $('map-modal');
-    const frame = $('map-frame');
+    const container = $('map-container');
     const btn = $('map-btn');
+
+    // 预加载 iframe（在 DOMContentLoaded 时就开始加载）
+    const frame = document.createElement('iframe');
+    frame.allow = 'geolocation';
+    frame.style.cssText = 'width:100%;height:100%;border:none;position:absolute;top:0;left:0';
+    frame.src = 'about:blank';
+    container.style.position = 'relative';
+    container.style.minHeight = '60vh';
+    container.appendChild(frame);
+
     btn.addEventListener('click', () => {
         const lat = state.city?.lat || 39.9;
         const lon = state.city?.lon || 116.4;
-        // Windy.com 免费嵌入（无需 API Key）
-        frame.src = `https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=°C&metricWind=km/h&zoom=7&overlay=wind&product=ecmwf&lat=${lat}&lon=${lon}&detailLat=${lat}&detailLon=${lon}&detail=true&message=true`;
+        const url = `https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=°C&metricWind=km/h&zoom=7&overlay=wind&product=ecmwf&lat=${lat}&lon=${lon}&detailLat=${lat}&detailLon=${lon}&detail=true&message=true`;
+        // 如果还没加载或城市变了，重新设置 src
+        if (frame.src !== url && !frame.src.includes('windy')) {
+            frame.src = url;
+        }
         modal.classList.remove('hidden');
     });
-    $('map-close').addEventListener('click', () => { modal.classList.add('hidden'); frame.src = ''; });
-    modal.addEventListener('click', (e) => { if (e.target === modal) { modal.classList.add('hidden'); frame.src = ''; } });
+    $('map-close').addEventListener('click', () => { modal.classList.add('hidden'); });
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.add('hidden'); });
 }
 
 // === 启动 ===
