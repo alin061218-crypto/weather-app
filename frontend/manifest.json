@@ -1,0 +1,26 @@
+{
+    "name": "天气预报 - Weather Forecast",
+    "short_name": "天气预报",
+    "description": "美观实用的天气预报 PWA 应用，支持自动定位、城市搜索、7天预报、温度趋势图、穿衣搭配和活动建议",
+    "start_url": "/",
+    "display": "standalone",
+    "orientation": "portrait-primary",
+    "background_color": "#1a1a2e",
+    "theme_color": "#1a1a2e",
+    "lang": "zh-CN",
+    "categories": ["weather", "lifestyle"],
+    "icons": [
+        {
+            "src": "icons/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "icons/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}

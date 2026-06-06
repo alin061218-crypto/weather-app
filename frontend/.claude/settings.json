@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3)",
+      "Bash(node --check js/config.js)",
+      "Bash(node --check js/utils.js)",
+      "Bash(node --check js/storage.js)",
+      "Bash(node --check js/advice.js)",
+      "Bash(node --check js/api.js)",
+      "Bash(where node *)",
+      "Read(//c/Program Files/nodejs/**)",
+      "Read(//c/Program Files \\(x86\\)/nodejs/**)",
+      "Bash(\"C:/Program Files/nodejs/node.exe\" --check js/config.js)",
+      "Bash(\"C:/Program Files/nodejs/node.exe\" --check js/utils.js)",
+      "Bash(\"C:/Program Files/nodejs/node.exe\" --check js/storage.js)",
+      "Bash(\"C:/Program Files/nodejs/node.exe\" --check js/advice.js)",
+      "Bash(\"C:/Program Files/nodejs/node.exe\" --check js/particles.js)",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\" http://localhost:8080/js/app.js)",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\" http://localhost:8080/js/api.js)",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\" http://localhost:8080/js/config.js)",
+      "Bash(\"C:/Program Files/nodejs/node.exe\" --check js/app.js)"
+    ]
+  }
+}

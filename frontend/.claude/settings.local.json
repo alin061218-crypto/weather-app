@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s --connect-timeout 5 \"https://api.open-meteo.com/v1/forecast?latitude=39.9&longitude=116.4&current_weather=true\")",
+      "Bash(curl -s --connect-timeout 10 \"https://api.open-meteo.com/v1/forecast?latitude=39.9&longitude=116.4&current_weather=true&hourly=temperature_2m,weathercode,relativehumidity_2m,cloudcover&timezone=auto&forecast_hours=6\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8080/index.html)",
+      "Bash(python -m http.server 8080)",
+      "Bash(python3 generate_icons.py)",
+      "Bash(python generate_icons.py)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8080/icons/icon-192.png)",
+      "Bash(curl -s http://localhost:8080/)",
+      "Bash(start http://localhost:8080)",
+      "Bash(cmd.exe /c start http://localhost:8080)",
+      "Bash(curl -s \"https://geocoding-api.open-meteo.com/v1/search?name=%E5%8C%97%E4%BA%AC&count=5&language=zh&format=json\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); [print\\(f'{r[\\\\\"name\\\\\"]}, {r.get\\(\\\\\"admin1\\\\\",\\\\\"\\\\\"\\)}, {r.get\\(\\\\\"country\\\\\",\\\\\"\\\\\"\\)} \\({r[\\\\\"latitude\\\\\"]}, {r[\\\\\"longitude\\\\\"]}\\)'\\) for r in d.get\\('results',[]\\)]\")",
+      "Bash(curl -s \"https://geocoding-api.open-meteo.com/v1/search?name=Beijing&count=3&language=zh&format=json\")",
+      "Bash(curl -s \"https://geocoding-api.open-meteo.com/v1/search?name=%E8%BF%9E%E4%BA%91%E6%B8%AF&count=5&language=zh\")",
+      "Bash(python3 -c \"import sys,json;d=json.load\\(sys.stdin\\);print\\(json.dumps\\(d,indent=2,ensure_ascii=False\\)[:800]\\)\")",
+      "Bash(curl -s \"https://geocoding-api.open-meteo.com/v1/search?name=%E5%8D%97%E4%BA%AC&count=5&language=zh\")",
+      "Bash(python3 -c \"import sys,json;d=json.load\\(sys.stdin\\);print\\(json.dumps\\(d,indent=2,ensure_ascii=False\\)[:600]\\)\")",
+      "Bash(curl -s \"https://nominatim.openstreetmap.org/search?q=%E8%BF%9E%E4%BA%91%E6%B8%AF&format=json&limit=3\")",
+      "Bash(curl -s --connect-timeout 5 \"https://nominatim.openstreetmap.org/search?q=Lianyungang&format=json&limit=2\")",
+      "Bash(python3 -c ' *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8080/js/api.js)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8080/)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8080/js/app.js)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8080/js/ui.js)",
+      "Bash(curl -s --connect-timeout 5 \"https://ipapi.co/json/\")"
+    ]
+  }
+}
