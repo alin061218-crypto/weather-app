@@ -192,6 +192,9 @@ app.get('/api/me', authMiddleware, (req, res) => {
 
 // ===== 7. 数据查看 & 管理页面 =====
 app.get('/admin', (req, res) => {
+    const ADMIN_PASSWORD = 'admin123';
+    if (req.query.pwd !== ADMIN_PASSWORD) return res.send('<h2>需要密码</h2><form><input name="pwd" placeholder="密码"><button>进入</button></form>');
+
     const users = readJSON(USERS_FILE) || [];
     const favs = readJSON(FAVORITES_FILE) || [];
     const history = readJSON(HISTORY_FILE) || [];
