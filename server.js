@@ -10,12 +10,13 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'weather_app_secret_key_2024';
-const DB_PATH = path.join(__dirname, 'data');
+const DB_PATH = process.env.DB_DIR || path.join(__dirname, 'data');
+const DB_FILE = path.join(DB_PATH, 'weather.db');
 
 // ===== 初始化数据目录和数据库 =====
 const fs = require('fs');
 if (!fs.existsSync(DB_PATH)) fs.mkdirSync(DB_PATH, { recursive: true });
-const db = new Database(path.join(DB_PATH, 'weather.db'));
+const db = new Database(DB_FILE);
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 
