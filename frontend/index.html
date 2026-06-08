@@ -2,128 +2,182 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-cache,no-store,must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>天气预报</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0a0a14">
-<link rel="stylesheet" href="css/style.css?v=5">
-<link rel="stylesheet" href="css/light.css?v=1" id="light-css" disabled>
+<link rel="stylesheet" href="css/style.css?v=6">
+<link rel="stylesheet" href="css/light.css?v=2" id="light-css" disabled>
 </head>
 <body>
 <canvas id="bg-canvas"></canvas>
 <div id="ambient-glow" class="ambient-glow"></div>
 
 <div class="app">
-    <header class="topbar">
-        <div class="search-box">
-            <input id="search-input" class="search-field" placeholder="搜索城市…" autocomplete="off" spellcheck="false">
-            <button id="search-clear" class="search-dismiss hidden">&times;</button>
-            <ul id="search-results" class="search-drop hidden"></ul>
+
+    <!-- ====== Tab 1: 天气 ====== -->
+    <div id="tab-home" class="tab-page active">
+        <header class="topbar">
+            <div class="search-box">
+                <input id="search-input" class="search-field" placeholder="搜索城市…" autocomplete="off" spellcheck="false">
+                <button id="search-clear" class="search-dismiss hidden">&times;</button>
+                <ul id="search-results" class="search-drop hidden"></ul>
+            </div>
+            <button id="unit-btn" class="unit-switch">°C</button>
+            <button id="theme-btn" class="unit-switch" title="切换暗黑/浅色模式">🌙</button>
+            <button id="map-btn" class="unit-switch" title="天气地图">🗺️</button>
+        </header>
+
+        <nav id="recent-section" class="recent-strip hidden">
+            <div id="recent-list" class="recent-chips"></div>
+            <button id="clear-recent" class="recent-clear">清除</button>
+        </nav>
+
+        <div id="loading" class="loading-state">
+            <div class="loader-ring"></div>
+            <p>获取天气中…</p>
         </div>
-        <button id="unit-btn" class="unit-switch">°C</button>
-        <button id="theme-btn" class="unit-switch" title="切换暗黑/浅色模式">🌙</button>
-        <button id="map-btn" class="unit-switch" title="天气地图">🗺️</button>
-    </header>
-    <nav id="recent-section" class="recent-strip hidden">
-        <div id="recent-list" class="recent-chips"></div>
-        <button id="clear-recent" class="recent-clear">清除</button>
-    </nav>
 
-    <div id="loading" class="loading-state">
-        <div class="loader-ring"></div>
-        <p>获取天气中…</p>
-    </div>
+        <main id="weather-card" class="card hidden">
+            <section class="hero">
+                <p id="region" class="hero-region">--</p>
+                <h1 id="city" class="hero-city">--</h1>
+                <span id="weather-icon" class="hero-icon">--</span>
+                <span id="temperature" class="hero-temp">--°</span>
+                <p id="weather-desc" class="hero-desc">--</p>
+            </section>
 
-    <main id="weather-card" class="card hidden">
-        <section class="hero">
-            <p id="region" class="hero-region">--</p>
-            <h1 id="city" class="hero-city">--</h1>
-            <span id="weather-icon" class="hero-icon">--</span>
-            <span id="temperature" class="hero-temp">--°</span>
-            <p id="weather-desc" class="hero-desc">--</p>
-        </section>
+            <section class="chart-section">
+                <p class="sec-label">24h 温度趋势</p>
+                <div class="chart-wrap"><canvas id="temp-chart"></canvas></div>
+            </section>
 
-        <section class="chart-section">
-            <p class="sec-label">24h温度趋势</p>
-            <div class="chart-wrap"><canvas id="temp-chart"></canvas></div>
-        </section>
+            <section class="detail-section">
+                <p class="sec-label">天气详情</p>
+                <div id="details-grid" class="detail-grid"></div>
+            </section>
 
-        <section class="detail-section">
-            <p class="sec-label">详情</p>
-            <div id="details-grid" class="detail-grid"></div>
-        </section>
+            <section class="daily-section">
+                <p class="sec-label">7 天预报</p>
+                <div id="daily-list" class="daily-list"></div>
+            </section>
 
-        <section class="daily-section">
-            <p class="sec-label">7天预报</p>
-            <div id="daily-list" class="daily-list"></div>
-        </section>
+            <section class="advice-section">
+                <p class="sec-label">穿衣搭配</p>
+                <p class="advice-text" id="clothing-main">--</p>
+                <div class="advice-chips" id="clothing-tags"></div>
+            </section>
 
-        <section class="advice-section">
-            <p class="sec-label">穿衣搭配</p>
-            <p class="advice-text" id="clothing-main">--</p>
-            <div class="advice-chips" id="clothing-tags"></div>
-        </section>
+            <section class="advice-section">
+                <p class="sec-label">活动建议</p>
+                <p class="advice-text" id="activity-main">--</p>
+                <div class="advice-chips" id="activity-tags"></div>
+            </section>
+        </main>
 
-        <section class="advice-section">
-            <p class="sec-label">活动建议</p>
-            <p class="advice-text" id="activity-main">--</p>
-            <div class="advice-chips" id="activity-tags"></div>
-        </section>
-    </main>
-
-    <div id="error-card" class="error-panel hidden">
-        <span class="error-emoji">😥</span>
-        <p class="error-title">获取天气失败</p>
-        <p id="error-msg" class="error-hint"></p>
-        <button id="retry-btn" class="error-retry">重试</button>
-    </div>
-
-    <!-- 用户按钮 -->
-    <button id="user-btn" class="user-fab" title="用户">👤</button>
-
-    <!-- 登录弹窗 -->
-    <div id="auth-modal" class="modal-overlay hidden">
-        <div class="modal-box">
-            <button id="auth-close" class="modal-close">&times;</button>
-            <h2 id="auth-title">登录</h2>
-            <input id="auth-user" class="auth-input" placeholder="用户名" autocomplete="username">
-            <input id="auth-pass" class="auth-input" type="password" placeholder="密码（至少6位）" autocomplete="current-password">
-            <button id="auth-submit" class="auth-submit">登录</button>
-            <p class="auth-switch">还没有账号？<a id="auth-toggle" href="#">点击注册</a></p>
-            <p id="auth-msg" class="auth-msg"></p>
-            <p class="auth-hint">登录后可收藏城市、查看历史</p>
+        <div id="error-card" class="error-panel hidden">
+            <span class="error-emoji">😥</span>
+            <p class="error-title">获取天气失败</p>
+            <p id="error-msg" class="error-hint"></p>
+            <button id="retry-btn" class="error-retry">重试</button>
         </div>
     </div>
 
-    <!-- 收藏列表弹窗 -->
-    <div id="fav-modal" class="modal-overlay hidden">
-        <div class="modal-box">
-            <button id="fav-close" class="modal-close">&times;</button>
-            <h2>我的收藏</h2>
-            <p id="fav-user-info" class="fav-user"></p>
-            <div id="fav-list" class="fav-list"><p class="fav-empty">暂无收藏</p></div>
-            <button id="logout-btn" class="logout-btn">退出登录</button>
+    <!-- ====== Tab 2: AI 助手 ====== -->
+    <div id="tab-chat" class="tab-page">
+        <div class="chat-header">
+            <span class="chat-header-icon">✨</span>
+            <span>AI 天气助手</span>
+        </div>
+        <div id="chat-list" class="chat-list">
+            <div class="chat-bubble bot">
+                <div class="chat-avatar">🤖</div>
+                <div class="chat-text">你好！我是天气 AI 助手。搜索一个城市后，我可以帮你分析天气，给你出行建议～</div>
+            </div>
+        </div>
+        <div class="chat-quick">
+            <button class="chat-quick-btn" data-q="今天适合出门吗">🚶 今天适合出门吗</button>
+            <button class="chat-quick-btn" data-q="需要带伞吗">☂️ 需要带伞吗</button>
+            <button class="chat-quick-btn" data-q="明天怎么穿">👔 明天怎么穿</button>
+            <button class="chat-quick-btn" data-q="空气质量如何">💨 空气质量如何</button>
+        </div>
+        <div class="chat-input-row">
+            <input id="chat-input" class="chat-input" placeholder="输入你的问题…" autocomplete="off">
+            <button id="chat-send" class="chat-send-btn">发送</button>
+        </div>
+    </div>
+
+    <!-- ====== Tab 3: 我的 ====== -->
+    <div id="tab-me" class="tab-page">
+        <!-- 未登录 -->
+        <div id="me-login-block" class="me-card">
+            <div class="me-avatar-big">👤</div>
+            <h2 class="me-title">我的账号</h2>
+            <p class="me-sub">登录后同步收藏与历史</p>
+
+            <div id="me-login-form" class="me-form">
+                <input id="me-user" class="me-input" placeholder="用户名" autocomplete="username">
+                <input id="me-pass" class="me-input" type="password" placeholder="密码（至少6位）" autocomplete="current-password">
+                <button id="me-submit" class="me-btn-primary">登 录</button>
+                <p id="me-msg" class="me-msg"></p>
+                <p class="me-switch">还没有账号？<a id="me-toggle" href="#">点击注册</a></p>
+            </div>
+        </div>
+
+        <!-- 已登录 -->
+        <div id="me-logged-block" class="me-card hidden">
+            <div class="me-avatar-big logged">👤</div>
+            <h2 id="me-username" class="me-title">--</h2>
+            <p class="me-sub">已登录</p>
+
+            <div class="me-section">
+                <p class="me-sec-title">⭐ 我的收藏</p>
+                <div id="me-fav-list" class="me-list"><p class="me-empty">暂无收藏</p></div>
+            </div>
+
+            <div class="me-section">
+                <p class="me-sec-title">📋 搜索历史</p>
+                <div id="me-hist-list" class="me-list"><p class="me-empty">暂无记录</p></div>
+                <button id="me-clear-hist" class="me-btn-danger">清空搜索历史</button>
+            </div>
+
+            <button id="me-logout" class="me-btn-outline">🚪 退出登录</button>
         </div>
     </div>
 
     <!-- 天气地图弹窗 -->
     <div id="map-modal" class="modal-overlay hidden">
-        <div class="modal-box" style="max-width:95vw;width:800px;padding:12px">
+        <div class="modal-box map-modal-box">
             <button id="map-close" class="modal-close">&times;</button>
             <h2 style="font-size:14px;margin-bottom:10px;padding-left:8px">🗺️ 天气地图</h2>
             <div id="map-container" style="width:100%;height:70vh;border-radius:12px;overflow:hidden"></div>
         </div>
     </div>
-    <!-- 预加载地图 iframe（隐藏） -->
+
+    <!-- 底部导航 -->
+    <nav class="tab-bar">
+        <button class="tab-btn active" data-tab="home">
+            <span class="tab-icon">🏠</span>
+            <span class="tab-label">天气</span>
+        </button>
+        <button class="tab-btn" data-tab="chat">
+            <span class="tab-icon">💬</span>
+            <span class="tab-label">AI 助手</span>
+        </button>
+        <button class="tab-btn" data-tab="me">
+            <span class="tab-icon">👤</span>
+            <span class="tab-label">我的</span>
+        </button>
+    </nav>
 
     <footer class="footer">
-        <span>Open-Meteo</span><span class="dot">·</span><span>ipapi.co</span>
+        <span>Open-Meteo</span><span class="dot">·</span><span>ipapi.co</span><span class="dot">·</span><span>SQLite</span>
     </footer>
 </div>
 
-<script type="module" src="js/main.js?v=3"></script>
+<script type="module" src="js/main.js?v=4"></script>
 </body>
 </html>

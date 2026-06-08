@@ -1,5 +1,5 @@
 // === 天气 App — 核心逻辑 ===
-// IP/GPS定位 → 天气 → 图表 → 建议
+// IP/GPS定位 → 天气 → 图表 → 建议 → AI 聊天 → 用户管理
 // 后端 API 地址（自动适配本地/线上）
 const API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? 'http://localhost:3000' : '';
 
@@ -9,7 +9,7 @@ const WX_PARAMS = 'current_weather=true&hourly=temperature_2m,weathercode,relati
 let authToken = localStorage.getItem('wx_token') || '';
 let currentUser = null;
 
-let state = { city: null, weather: null, unit: localStorage.getItem('wx_unit') || 'celsius', chart: null, particles: null };
+let state = { city: null, weather: null, unit: localStorage.getItem('wx_unit') || 'celsius', chart: null, particles: null, currentTab: 'home' };
 
 // === 工具函数 ===
 const F = {
@@ -21,72 +21,43 @@ const F = {
 };
 
 // === 天气图标 ===
-// WMO 天气代码映射: https://open-meteo.com/en/docs#weathervariables
 const ICON = c => c === 0 ? '☀️' : c <= 3 ? '⛅' : c <= 48 ? '🌫️' : c <= 57 ? '🌧️' : c <= 67 ? '🌧️' : c <= 77 ? '❄️' : c <= 82 ? '🌧️' : c <= 86 ? '🌨️' : '⛈️';
-const DESC = c => {
-    // 按 WMO 代码精确映射
-    if (c === 0) return '晴';
-    if (c === 1) return '少云';
-    if (c <= 3) return '多云';
-    if (c <= 48) return '雾';          // 45, 48 雾/雾凇
-    if (c <= 57) return '毛毛雨';      // 51-57 小/中/大毛毛雨+冻毛毛雨
-    if (c <= 67) return '雨';          // 61-67 小/中/大雨+冻雨
-    if (c <= 77) return '雪';          // 71-77 小/中/大雪+雪粒
-    if (c <= 82) return '阵雨';        // 80-82 小/中/大阵雨
-    if (c <= 86) return '阵雪';        // 85-86 小/大阵雪
-    if (c <= 99) return '雷暴';        // 95 雷暴, 96/99 雷暴+冰雹
-    return '未知';
-};
-const isRain = c => (c >= 51 && c <= 67) || (c >= 80 && c <= 82);   // 毛毛雨/雨/阵雨
-const isSnow = c => (c >= 71 && c <= 77) || (c >= 85 && c <= 86);     // 雪/阵雪
-const isStorm = c => c >= 95;                                           // 雷暴
-const isFog = c => c >= 45 && c <= 48;                                  // 雾
-const isClear = c => c <= 1;
+const DESC = c => { if (c === 0) return '晴'; if (c === 1) return '少云'; if (c <= 3) return '多云'; if (c <= 48) return '雾'; if (c <= 57) return '毛毛雨'; if (c <= 67) return '雨'; if (c <= 77) return '雪'; if (c <= 82) return '阵雨'; if (c <= 86) return '阵雪'; if (c <= 99) return '雷暴'; return '未知'; };
+const WX = { isRain: c => (c >= 51 && c <= 67) || (c >= 80 && c <= 82), isSnow: c => (c >= 71 && c <= 77) || (c >= 85 && c <= 86), isStorm: c => c >= 95, isFog: c => c >= 45 && c <= 48, isClear: c => c <= 1 };
 
 // === API 请求 ===
 async function fetchJSON(url, timeout = 5000, opts = {}) {
-    const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), timeout);
+    const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), timeout);
     const headers = { ...(opts.headers || {}) };
     if (authToken) headers.Authorization = `Bearer ${authToken}`;
-    const init = { signal: ctrl.signal, headers };
-    if (opts.method) init.method = opts.method;
-    if (opts.body) { init.body = opts.body; headers['Content-Type'] = 'application/json'; }
-    try { const r = await fetch(url, init); return r.ok ? r.json() : null; }
+    if (opts.method) headers['Content-Type'] = 'application/json';
+    try { const r = await fetch(url, { signal: ctrl.signal, headers, method: opts.method, body: opts.body }); return r.ok ? r.json() : null; }
     catch { return null; }
     finally { clearTimeout(t); }
 }
 
 async function ipLocation() {
-    // 优先用后端代理
     const d = await fetchJSON(`${API_BASE}/api/location`, 4000);
     if (d && !d.error) return { city: d.city || '', region: d.region || '', country: d.country || '', lat: d.lat, lon: d.lon };
-    // 兜底直连
     const d2 = await fetchJSON(API.ip, 4000);
     if (!d2 || d2.error) return null;
     return { city: d2.city || '', region: d2.region || '', country: d2.country_name || '', lat: d2.latitude, lon: d2.longitude };
 }
-
 async function geoSearch(q) {
-    // 优先用后端代理
     const d = await fetchJSON(`${API_BASE}/api/search?q=${encodeURIComponent(q)}`, 4000);
     if (d && Array.isArray(d)) return d.map(r => ({ name: r.name || '', admin1: r.admin1 || '', country: r.country || '', lat: r.lat, lon: r.lon }));
-    // 兜底直连
     const d2 = await fetchJSON(`${API.geo}?name=${encodeURIComponent(q)}&count=5&language=zh&format=json`, 4000);
     return d2?.results?.map(r => ({ name: r.name || '', admin1: r.admin1 || '', country: r.country || '', lat: r.latitude, lon: r.longitude })) || [];
 }
-
 async function getWeather(lat, lon) {
-    // 优先用后端代理
     const d = await fetchJSON(`${API_BASE}/api/weather?lat=${lat}&lon=${lon}`, 8000);
     if (d && !d.error) return d;
-    // 兜底直连
     const d2 = await fetchJSON(`${API.wx}?latitude=${lat}&longitude=${lon}&${WX_PARAMS}`, 8000);
     if (!d2) throw new Error('天气数据获取失败');
     return d2;
 }
 
-// === 本地城市数据库 (精简版：地级市 + 常用区县) ===
+// === 本地城市数据库 ===
 const DB = [
 ['北京','北京',39.904,116.407],['上海','上海',31.230,121.474],['天津','天津',39.343,117.362],['重庆','重庆',29.432,106.912],
 ['广州','广东',23.129,113.264],['深圳','广东',22.543,114.058],['杭州','浙江',30.274,120.155],['南京','江苏',32.062,118.778],
@@ -139,7 +110,6 @@ const DB = [
 ['包头','内蒙古',40.658,109.840],['鄂尔多斯','内蒙古',39.609,109.781],['赤峰','内蒙古',42.258,118.889],
 ['克拉玛依','新疆',45.579,84.889],['喀什','新疆',39.468,75.990],['伊犁','新疆',43.917,81.324],
 ['三亚','海南',18.253,109.512],['香港','香港',22.319,114.169],['澳门','澳门',22.199,113.544],['台北','台湾',25.033,121.565],
-// 补充 API 覆盖不到的城市
 ['锡林浩特','内蒙古',43.933,116.086],['乌兰浩特','内蒙古',46.073,122.093],['通辽','内蒙古',43.617,122.266],
 ['呼伦贝尔','内蒙古',49.212,119.765],['巴彦淖尔','内蒙古',40.743,107.388],['乌兰察布','内蒙古',40.994,113.134],
 ['乌海','内蒙古',39.655,106.795],['阿拉善','内蒙古',38.851,105.729],
@@ -173,7 +143,7 @@ const DB = [
 ['永州','湖南',26.420,111.613],['怀化','湖南',27.569,109.999],['娄底','湖南',27.697,111.996],
 ['益阳','湖南',28.554,112.355],['张家界','湖南',29.117,110.479],['湘西','湖南',28.312,109.739],
 ['衡水','河北',37.739,115.669],['承德','河北',40.952,117.962],['张家口','河北',40.824,114.888],
-['日照','山东',35.416,119.527],['莱芜','山东',36.214,117.677],
+['莱芜','山东',36.214,117.677],
 ['晋中','山西',37.687,112.753],['吕梁','山西',37.519,111.142],['晋城','山西',35.491,112.852],
 ['朔州','山西',39.332,112.433],['忻州','山西',38.416,112.734],['阳泉','山西',37.857,113.581],
 ['铁岭','辽宁',42.224,123.727],['朝阳','辽宁',41.573,120.451],['盘锦','辽宁',41.120,122.071],
@@ -183,8 +153,7 @@ const DB = [
 ['黑河','黑龙江',50.246,127.489],['绥化','黑龙江',46.654,126.969],['大兴安岭','黑龙江',52.335,124.711],
 ['白山','吉林',41.941,126.424],['白城','吉林',45.620,122.839],['松原','吉林',45.142,124.825],
 ['辽源','吉林',42.888,125.144],
-['莆田','福建',25.454,119.008],['三明','福建',26.263,117.638],['南平','福建',26.642,118.177],
-['宁德','福建',26.666,119.548],['龙岩','福建',25.075,117.017],
+['三明','福建',26.263,117.638],['南平','福建',26.642,118.177],['宁德','福建',26.666,119.548],
 ['宣城','安徽',30.941,118.759],['滁州','安徽',32.256,118.333],['阜阳','安徽',32.890,115.814],
 ['宿州','安徽',33.647,116.964],['六安','安徽',31.736,116.520],['亳州','安徽',33.845,115.779],
 ['池州','安徽',30.665,117.491],['黄山','安徽',29.715,118.338],['马鞍山','安徽',31.670,118.506],
@@ -192,12 +161,9 @@ const DB = [
 ['鹰潭','江西',28.260,117.069],['新余','江西',27.818,114.917],['萍乡','江西',27.623,113.855],
 ['宜春','江西',27.816,114.416],['上饶','江西',28.455,117.943],['吉安','江西',27.114,114.994],
 ['抚州','江西',27.949,116.358],
-['潮州','广东',23.657,116.622],['汕尾','广东',22.786,115.375],['河源','广东',23.743,114.700],
-['阳江','广东',21.858,111.983],['云浮','广东',22.915,112.045],
-['泰州','江苏',32.456,119.926],['宿迁','江苏',33.963,118.275],['连云港','江苏',34.597,119.221],
+['汕尾','广东',22.786,115.375],['河源','广东',23.743,114.700],['阳江','广东',21.858,111.983],['云浮','广东',22.915,112.045],
 ];
 
-// 区县→地级市映射
 const COUNTY = {
 '义乌':'金华','东阳':'金华','永康':'金华','慈溪':'宁波','余姚':'宁波','诸暨':'绍兴','海宁':'嘉兴','桐乡':'嘉兴',
 '温岭':'台州','临海':'台州','乐清':'温州','瑞安':'温州','建德':'杭州','富阳':'杭州','临安':'杭州',
@@ -264,8 +230,6 @@ const COUNTY = {
 '伊州':'哈密','高昌':'吐鲁番','阿图什':'克孜勒苏',
 '海拉尔区':'呼伦贝尔','集宁':'乌兰察布','临河':'巴彦淖尔',
 };
-
-// 将 COUNTY 中的区县同步到 DB
 for (const [cn, pn] of Object.entries(COUNTY)) {
     const p = DB.find(c => c[0] === pn);
     if (p && !DB.some(c => c[0] === cn)) DB.push([cn, p[1], p[2] + (Math.random()-0.5)*0.02, p[3] + (Math.random()-0.5)*0.02]);
@@ -273,50 +237,36 @@ for (const [cn, pn] of Object.entries(COUNTY)) {
 
 function findCity(lat, lon) {
     let best = null, bestD = Infinity;
-    for (const [n, p, clat, clon] of DB) {
-        const d = (clat - lat)**2 + (clon - lon)**2;
-        if (d < bestD) { bestD = d; best = n; }
-    }
+    for (const [n, p, clat, clon] of DB) { const d = (clat - lat)**2 + (clon - lon)**2; if (d < bestD) { bestD = d; best = n; } }
     return bestD < 0.5 ? best : null;
 }
 
 function searchLocal(q) {
     let s = q;
-    for (const sf of ['自治县','自治州','县级市','开发区','新区','特区','地区','街道','市','县','区','镇','乡']) {
-        if (s.endsWith(sf)) { s = s.slice(0, -sf.length); break; }
-    }
+    for (const sf of ['自治县','自治州','县级市','开发区','新区','特区','地区','街道','市','县','区','镇','乡']) { if (s.endsWith(sf)) { s = s.slice(0, -sf.length); break; } }
     s = s.toLowerCase().trim();
     if (s.length < 2) return [];
     const scored = [];
     for (const [n, p, lat, lon] of DB) {
         const nl = n.toLowerCase(); let sc = 0;
-        if (nl === s) sc = 100;
-        else if (nl.startsWith(s)) sc = 80;
-        else if (s.startsWith(nl)) sc = 75;
-        else if (nl.includes(s)) sc = 60;
-        else if (s.includes(nl)) sc = 55;
-        else if (s.length >= 2 && nl.length >= 2 && nl.slice(0, 2) === s.slice(0, 2)) sc = 40;
+        if (nl === s) sc = 100; else if (nl.startsWith(s)) sc = 80; else if (s.startsWith(nl)) sc = 75; else if (nl.includes(s)) sc = 60; else if (s.includes(nl)) sc = 55; else if (s.length >= 2 && nl.length >= 2 && nl.slice(0, 2) === s.slice(0, 2)) sc = 40;
         if (sc > 0) scored.push({ name: n, admin1: p, country: '中国', lat, lon, _s: sc });
     }
     scored.sort((a, b) => b._s - a._s);
     return scored.slice(0, 5).map(({ _s, ...c }) => c);
 }
 
-// === 搜索 ===
 async function doSearch(query) {
-    // 过滤机场、车站等非城市 feature_code
-    const NOT_CITY = /\b(机场|航空|车站|高铁|服务区|收费站|隧道|大桥|加油|停车|公墓|陵园)\b/;
+    const NOT_CITY = /(机场|航空|车站|高铁|服务区|收费站|隧道|大桥|加油|停车|公墓|陵园)/;
     const nameOK = n => n && !NOT_CITY.test(n) && n.length >= 2;
-
     const qs = [query];
     if (!query.endsWith('市') && !query.endsWith('县') && !query.endsWith('区') && query.length <= 4) qs.push(query + '市');
     if (query.endsWith('市') || query.endsWith('县') || query.endsWith('区')) qs.push(query.slice(0, -1));
-
     const all = [];
     for (const q of qs) {
         const r = await geoSearch(q);
         for (const c of r) {
-            if (!nameOK(c.name)) continue;  // 跳过机场、车站
+            if (!nameOK(c.name)) continue;
             let prio = 0;
             if (q.endsWith('市')) prio += 10;
             if (c.country === '中国') prio += 8;
@@ -326,31 +276,22 @@ async function doSearch(query) {
             all.push(c);
         }
     }
-    const seen = new Set();
-    const uniq = [];
-    for (const c of all) {
-        const k = c.lat.toFixed(3) + ',' + c.lon.toFixed(3);
-        if (!seen.has(k)) { seen.add(k); uniq.push(c); }
-    }
+    const seen = new Set(); const uniq = [];
+    for (const c of all) { const k = c.lat.toFixed(3) + ',' + c.lon.toFixed(3); if (!seen.has(k)) { seen.add(k); uniq.push(c); } }
     uniq.sort((a, b) => b._prio - a._prio);
     const cleaned = uniq.slice(0, 5).map(({ _prio, ...c }) => c);
-
-    // 本地 DB 精确匹配的城市强制排第一（覆盖 API 不准的情况）
     const local = searchLocal(query);
     if (local.length > 0) {
         const topLocal = local[0];
-        // 移除 cleaned 中与 topLocal 重复的条目（按名称）
         const filtered = cleaned.filter(c => c.name !== topLocal.name || c.admin1 !== topLocal.admin1);
         filtered.unshift(topLocal);
         return filtered;
     }
-
     return cleaned.length ? cleaned : [];
 }
 
 // === UI 渲染 ===
 function toggle(id) { ['loading','weather-card','error-card'].forEach(x => $(x).classList.toggle('hidden', $(x).id !== id)); }
-
 function resolveCity(loc) { if (loc.city && loc.city !== '当前位置' && !/^[A-Za-z]/.test(loc.city)) return loc.city; const cn = findCity(loc.lat, loc.lon); return cn || loc.city || '未知'; }
 
 function renderWeather(loc, wx) {
@@ -389,17 +330,10 @@ function renderWeather(loc, wx) {
         dl.innerHTML += `<div class="day-card"><div class="day-name">${F.day(d.time[i])}</div><div class="day-icon">${ICON(d.weathercode[i])}</div><div class="day-temps"><span class="dt-hi">${hi}</span><span class="dt-lo">${lo}</span></div>${precip > 0 ? `<div class="day-rain">💧${precip}%</div>` : ''}</div>`;
     }
 
-    // 建议
     const code = cur.weathercode, temp = cur.temperature, wind = cur.windspeed, daytime = cur.is_day === 1;
-    const cloth = getClothing(temp, code, wind);
-    const activ = getActivity(temp, code, wind, daytime);
-    renderAdvice('clothing-main', 'clothing-tags', cloth);
-    renderAdvice('activity-main', 'activity-tags', activ);
-
-    // 粒子背景
+    renderAdvice('clothing-main', 'clothing-tags', getClothing(temp, code, wind));
+    renderAdvice('activity-main', 'activity-tags', getActivity(temp, code, wind, daytime));
     updateBg(code, daytime);
-
-    // 先显示卡片，再画图表（否则canvas尺寸为0）
     toggle('weather-card');
 
     if (h.time?.length > 0) {
@@ -408,12 +342,8 @@ function renderWeather(loc, wx) {
     }
 }
 
-function renderAdvice(mid, tid, adv) {
-    $(mid).textContent = adv.text;
-    $(tid).innerHTML = adv.tags.map(t => `<span class="advice-chip">${t}</span>`).join('');
-}
+function renderAdvice(mid, tid, adv) { $(mid).textContent = adv.text; $(tid).innerHTML = adv.tags.map(t => `<span class="advice-chip">${t}</span>`).join(''); }
 
-// === 穿衣 & 活动 ===
 function getClothing(t, code, w) {
     const r = { text: '', tags: [] };
     if (t >= 35) { r.text = '炎热，轻薄透气短袖短裤'; r.tags = ['短袖👕','短裤🩳','遮阳帽🧢','防晒霜🧴']; }
@@ -425,9 +355,9 @@ function getClothing(t, code, w) {
     else if (t >= 0) { r.text = '寒冷，厚外套加毛衣围巾'; r.tags = ['棉服🧥','毛衣','围巾🧣','手套🧤']; }
     else if (t >= -10) { r.text = '非常冷，羽绒服全副武装'; r.tags = ['羽绒服🧥','毛衣','围巾🧣','手套🧤','帽子']; }
     else { r.text = '极寒，最强保暖减少外出'; r.tags = ['厚羽绒服🧥','多层保暖','围巾🧣','手套🧤','雪地靴👢']; }
-    if (isRain(code)) { r.text += '，记得带伞'; r.tags.push('雨伞☂️'); }
-    if (isSnow(code)) { r.tags.push('防滑靴👢','厚袜🧦'); }
-    if (isStorm(code)) { r.text = '雷暴，尽量别出门！'; r.tags.push('雨伞☂️','雨衣','远离树木⚠️'); }
+    if (WX.isRain(code)) { r.text += '，记得带伞'; r.tags.push('雨伞☂️'); }
+    if (WX.isSnow(code)) { r.tags.push('防滑靴👢','厚袜🧦'); }
+    if (WX.isStorm(code)) { r.text = '雷暴，尽量别出门！'; r.tags.push('雨伞☂️','雨衣','远离树木⚠️'); }
     if (w > 25) r.tags.push('防风外套💨');
     r.tags = [...new Set(r.tags)];
     return r;
@@ -435,10 +365,10 @@ function getClothing(t, code, w) {
 
 function getActivity(t, code, w, daytime) {
     const r = { text: '', tags: [] };
-    if (isStorm(code)) { r.text = '雷暴，留在室内！'; r.tags = ['阅读📚','电影🎬','室内健身🏋️','桌游🎲','烹饪🍳']; }
-    else if (isRain(code)) { r.text = '下雨，适合室内活动'; r.tags = ['室内健身🏋️','瑜伽🧘','游泳🏊','攀岩🧗','电影🎬','逛商场🛍️']; }
-    else if (isSnow(code)) { r.text = '下雪，可玩雪注意保暖'; r.tags = ['滑雪⛷️','堆雪人⛄','室内健身🏋️','温泉♨️']; }
-    else if (isFog(code)) { r.text = '雾天，建议室内活动'; r.tags = ['室内健身🏋️','瑜伽🧘','阅读📚','电影🎬']; }
+    if (WX.isStorm(code)) { r.text = '雷暴，留在室内！'; r.tags = ['阅读📚','电影🎬','室内健身🏋️','桌游🎲','烹饪🍳']; }
+    else if (WX.isRain(code)) { r.text = '下雨，适合室内活动'; r.tags = ['室内健身🏋️','瑜伽🧘','游泳🏊','攀岩🧗','电影🎬','逛商场🛍️']; }
+    else if (WX.isSnow(code)) { r.text = '下雪，可玩雪注意保暖'; r.tags = ['滑雪⛷️','堆雪人⛄','室内健身🏋️','温泉♨️']; }
+    else if (WX.isFog(code)) { r.text = '雾天，建议室内活动'; r.tags = ['室内健身🏋️','瑜伽🧘','阅读📚','电影🎬']; }
     else if (t > 35) { r.text = '高温！避免中午户外运动'; r.tags = ['游泳🏊','水上乐园🌊','室内健身🏋️','傍晚散步🚶']; }
     else if (t >= 30) { r.text = '较热，适合水上和早晚运动'; r.tags = ['游泳🏊','骑行🚴','晨跑🏃','公园散步🚶']; }
     else if (t >= 22) { r.text = '天气完美，适合户外运动！'; r.tags = ['跑步🏃','骑行🚴','徒步🥾','篮球🏀','足球⚽','羽毛球🏸']; }
@@ -448,155 +378,57 @@ function getActivity(t, code, w, daytime) {
     return r;
 }
 
-
 // === 粒子背景 ===
-// 根据天气代码确定粒子配置：类型、数量、速度、粗细、闪电
 function getParticleConfig(code, daytime) {
-    const lightRain = [51,53,56,61,80];
-    const modRain = [55,63,81];
-    const heavyRain = [65,82];
-    if (isStorm(code)) return {type:'storm',count:200,speed:900,thick:2.5,lightning:true};
+    const lightRain = [51,53,56,61,80], modRain = [55,63,81], heavyRain = [65,82];
+    if (WX.isStorm(code)) return {type:'storm',count:200,speed:900,thick:2.5,lightning:true};
     if (heavyRain.includes(code)) return {type:'rain',count:200,speed:800,thick:2,lightning:false};
     if (modRain.includes(code)) return {type:'rain',count:120,speed:600,thick:1.5,lightning:false};
     if (lightRain.includes(code)) return {type:'rain',count:60,speed:400,thick:1,lightning:false};
-    if (isSnow(code)) return {type:'snow',count:80,speed:40,thick:0,lightning:false};
-    if (isFog(code)) return {type:'fog',count:10,speed:8,thick:0,lightning:false};
-    if (isClear(code)) return {type:daytime?'sun':'stars',count:daytime?40:100,speed:0,thick:0,lightning:false};
+    if (WX.isSnow(code)) return {type:'snow',count:80,speed:40,thick:0,lightning:false};
+    if (WX.isFog(code)) return {type:'fog',count:10,speed:8,thick:0,lightning:false};
+    if (WX.isClear(code)) return {type:daytime?'sun':'stars',count:daytime?40:100,speed:0,thick:0,lightning:false};
     return null;
 }
-function updateBg(code, daytime) {
-    const bg = $('bg-canvas'); if (!bg) return;
-    const cfg = getParticleConfig(code, daytime);
-    if (!state.particles) state.particles = new ParticleBg(bg);
-    state.particles.start(cfg);
-    document.body.className = isStorm(code)?'bg-storm':isSnow(code)?'bg-snow':isRain(code)?'bg-rain':isFog(code)?'bg-fog':'bg-clear';
-}
+function updateBg(code, daytime) { const bg = $('bg-canvas'); if (!bg) return; const cfg = getParticleConfig(code, daytime); if (!state.particles) state.particles = new ParticleBg(bg); state.particles.start(cfg); document.body.className = WX.isStorm(code)?'bg-storm':WX.isSnow(code)?'bg-snow':WX.isRain(code)?'bg-rain':WX.isFog(code)?'bg-fog':'bg-clear'; }
 class ParticleBg {
-    constructor(cvs) {
-        this.cvs=cvs; this.ctx=cvs.getContext('2d'); this.ps=[]; this.cfg=null; this._id=null; this._flash=0;
-        this._resize(); this._onResize=()=>this._resize(); window.addEventListener('resize',this._onResize);
-    }
-    _resize() {
-        const dpr=devicePixelRatio||1;
-        this.cvs.width=innerWidth*dpr; this.cvs.height=innerHeight*dpr; this.W=innerWidth; this.H=innerHeight; this.dpr=dpr;
-    }
-    start(cfg) {
-        if(this._id) cancelAnimationFrame(this._id);
-        if(!cfg){this.ps=[];this.cfg=null;this.ctx.clearRect(0,0,this.cvs.width,this.cvs.height);return;}
-        this.cfg=cfg; this._flash=0;
-        this.ps=[];
-        for(let i=0;i<cfg.count;i++){
-            this.ps.push({
-                x:Math.random()*this.W, y:Math.random()*this.H,
-                len:cfg.thick>1?8+Math.random()*16:4+Math.random()*10,
-                spd:cfg.speed*(0.6+Math.random()*0.8),
-                op:0.1+Math.random()*0.3,
-                wind:cfg.type==='snow'?-20+Math.random()*40:0,
-                phase:Math.random()*Math.PI*2,
-                r:cfg.type==='snow'?1+Math.random()*2.5:cfg.type==='sun'?1+Math.random()*2:cfg.type==='stars'?0.5+Math.random()*1.5:cfg.type==='fog'?60+Math.random()*140:0,
-                twinkle:0.5+Math.random()*2, baseOp:0.3+Math.random()*0.7,
-            });
-        }
-        this._last=performance.now(); this._tick(this._last);
-    }
-    _tick(now) {
-        if(!this.cfg)return;
-        const dt=Math.min((now-this._last)/1000,0.1); this._last=now;
-        const ctx=this.ctx,W=this.W,H=this.H,dpr=this.dpr;
-        ctx.setTransform(dpr,0,0,dpr,0,0);
-        ctx.clearRect(0,0,W,H);
-        const {type,thick}=this.cfg;
-        for(const p of this.ps){
-            switch(type){
-                case'rain':case'storm':p.y+=p.spd*dt;if(p.y>H+p.len){p.y=-p.len;p.x=Math.random()*W;}break;
-                case'snow':p.y+=p.spd*dt;p.x+=Math.sin(p.y*0.004+p.phase)*p.wind*dt;if(p.y>H+p.r){p.y=-p.r;p.x=Math.random()*W;}if(p.x<-p.r)p.x=W+p.r;if(p.x>W+p.r)p.x=-p.r;break;
-                case'sun':p.y-=p.spd*dt;p.x+=p.wind*dt;if(p.y<-p.r){p.y=H+p.r;p.x=Math.random()*W;}break;
-                case'fog':p.x+=p.spd*dt;if(p.x>W+p.r)p.x=-p.r;if(p.x<-p.r)p.x=W+p.r;break;
-            }
-            ctx.save();
-            switch(type){
-                case'rain':case'storm':ctx.strokeStyle='rgba(180,210,240,'+p.op+')';ctx.lineWidth=thick;ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(p.x-thick*0.5,p.y+p.len);ctx.stroke();break;
-                case'snow':ctx.fillStyle='rgba(255,255,255,'+p.op+')';ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();break;
-                case'sun':ctx.fillStyle='rgba(255,220,150,'+(p.op*(0.5+0.5*Math.sin(now*0.001+p.x)))+')';ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();break;
-                case'stars':const tw=p.baseOp*(0.4+0.6*Math.sin(now*0.001*p.twinkle+p.phase));ctx.fillStyle='rgba(255,255,255,'+tw+')';ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();break;
-                case'fog':const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r);g.addColorStop(0,'rgba(200,210,220,'+p.op+')');g.addColorStop(1,'rgba(200,210,220,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();break;
-            }
-            ctx.restore();
-        }
-        if(this.cfg.lightning){this._flash*=0.88;if(Math.random()<0.015*dt*60){this._flash=0.15+Math.random()*0.15;}if(this._flash>0.005){ctx.fillStyle='rgba(255,255,255,'+this._flash+')';ctx.fillRect(0,0,W,H);}}
-        this._id=requestAnimationFrame(t=>this._tick(t));
-    }
+    constructor(cvs) { this.cvs=cvs; this.ctx=cvs.getContext('2d'); this.ps=[]; this.cfg=null; this._id=null; this._flash=0; this._resize(); this._onResize=()=>this._resize(); window.addEventListener('resize',this._onResize); }
+    _resize() { const dpr=devicePixelRatio||1; this.cvs.width=innerWidth*dpr; this.cvs.height=innerHeight*dpr; this.W=innerWidth; this.H=innerHeight; this.dpr=dpr; }
+    start(cfg) { if(this._id) cancelAnimationFrame(this._id); if(!cfg){this.ps=[];this.cfg=null;this.ctx.clearRect(0,0,this.cvs.width,this.cvs.height);return;} this.cfg=cfg; this._flash=0; this.ps=[]; for(let i=0;i<cfg.count;i++){this.ps.push({x:Math.random()*this.W,y:Math.random()*this.H,len:cfg.thick>1?8+Math.random()*16:4+Math.random()*10,spd:cfg.speed*(0.6+Math.random()*0.8),op:0.1+Math.random()*0.3,wind:cfg.type==='snow'?-20+Math.random()*40:0,phase:Math.random()*Math.PI*2,r:cfg.type==='snow'?1+Math.random()*2.5:cfg.type==='sun'?1+Math.random()*2:cfg.type==='stars'?0.5+Math.random()*1.5:cfg.type==='fog'?60+Math.random()*140:0,twinkle:0.5+Math.random()*2,baseOp:0.3+Math.random()*0.7});} this._last=performance.now(); this._tick(this._last); }
+    _tick(now) { if(!this.cfg)return; const dt=Math.min((now-this._last)/1000,0.1); this._last=now; const ctx=this.ctx,W=this.W,H=this.H,dpr=this.dpr; ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H); const {type,thick}=this.cfg; for(const p of this.ps){ switch(type){ case'rain':case'storm':p.y+=p.spd*dt;if(p.y>H+p.len){p.y=-p.len;p.x=Math.random()*W;}break; case'snow':p.y+=p.spd*dt;p.x+=Math.sin(p.y*0.004+p.phase)*p.wind*dt;if(p.y>H+p.r){p.y=-p.r;p.x=Math.random()*W;}if(p.x<-p.r)p.x=W+p.r;if(p.x>W+p.r)p.x=-p.r;break; case'sun':p.y-=p.spd*dt;p.x+=p.wind*dt;if(p.y<-p.r){p.y=H+p.r;p.x=Math.random()*W;}break; case'fog':p.x+=p.spd*dt;if(p.x>W+p.r)p.x=-p.r;if(p.x<-p.r)p.x=W+p.r;break; } ctx.save(); switch(type){ case'rain':case'storm':ctx.strokeStyle='rgba(180,210,240,'+p.op+')';ctx.lineWidth=thick;ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(p.x-thick*0.5,p.y+p.len);ctx.stroke();break; case'snow':ctx.fillStyle='rgba(255,255,255,'+p.op+')';ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();break; case'sun':ctx.fillStyle='rgba(255,220,150,'+(p.op*(0.5+0.5*Math.sin(now*0.001+p.x)))+')';ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();break; case'stars':const tw=p.baseOp*(0.4+0.6*Math.sin(now*0.001*p.twinkle+p.phase));ctx.fillStyle='rgba(255,255,255,'+tw+')';ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();break; case'fog':const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r);g.addColorStop(0,'rgba(200,210,220,'+p.op+')');g.addColorStop(1,'rgba(200,210,220,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();break; } ctx.restore(); } if(this.cfg.lightning){this._flash*=0.88;if(Math.random()<0.015*dt*60){this._flash=0.15+Math.random()*0.15;}if(this._flash>0.005){ctx.fillStyle='rgba(255,255,255,'+this._flash+')';ctx.fillRect(0,0,W,H);}} this._id=requestAnimationFrame(t=>this._tick(t)); }
 }
-
 
 // === Canvas 温度趋势图 ===
 class TempChart {
     constructor(cvs) { this.cvs = cvs; this.ctx = cvs.getContext('2d'); this.tip = null; this._createTip(); this._onResize = () => this._draw(); window.addEventListener('resize', this._onResize); }
     update(h, unit) { this.data = h; this.unit = unit; this._draw(); }
     _createTip() { this.tip = document.createElement('div'); this.tip.className = 'chart-tip hidden'; this.tip.style.cssText = 'position:absolute;pointer-events:none;background:rgba(0,0,0,.85);color:#fff;padding:5px 10px;border-radius:6px;font-size:12px;z-index:10;font-family:monospace'; this.cvs.parentElement.appendChild(this.tip); this.cvs.addEventListener('mousemove', e => this._onMove(e)); this.cvs.addEventListener('mouseleave', () => this.tip.classList.add('hidden')); }
-    _onMove(e) {
-        if (!this.data) return;
-        const r = this.cvs.getBoundingClientRect(), mx = e.clientX - r.left;
-        const t = this.data.time, tmp = this.data.temperature_2m;
-        const idx = Math.round((mx - 40) / (r.width - 56) * (tmp.length - 1));
-        if (idx < 0 || idx >= tmp.length) { this.tip.classList.add('hidden'); return; }
-        this.tip.classList.remove('hidden');
-        this.tip.textContent = F.time(t[idx]) + '  ' + F.ftemp(tmp[idx], this.unit);
-        this.tip.style.left = (40 + idx / (tmp.length - 1) * (r.width - 56) - this.tip.offsetWidth / 2) + 'px';
-        this.tip.style.top = (r.height * 0.1) + 'px';
-    }
-    _draw() {
-        if (!this.data) return;
-        const { time, temperature_2m: temps } = this.data;
-        const W = this.cvs.clientWidth, H = this.cvs.clientHeight;
-        if (W < 10 || H < 10) return;
-        const dpr = devicePixelRatio || 1;
-        this.cvs.width = W * dpr; this.cvs.height = H * dpr;
-        const ctx = this.ctx; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        const pad = { t: 16, r: 16, b: 28, l: 40 }, pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
-        if (pw < 0 || ph < 0) return;
-        let min = Math.min(...temps) - 2, max = Math.max(...temps) + 2;
-        const range = max - min || 5;
-        const xf = i => pad.l + i / (temps.length - 1) * pw;
-        const yf = v => pad.t + ph - (v - min) / range * ph;
-        ctx.fillStyle = 'rgba(255,255,255,0.03)'; ctx.fillRect(pad.l, pad.t, pw, ph);
-        ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 0.5;
-        for (let i = 0; i <= 4; i++) { const y = pad.t + ph / 4 * i, val = max - range / 4 * i; ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + pw, y); ctx.stroke(); ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.font = '10px sans-serif'; ctx.textAlign = 'right'; ctx.fillText(F.ftemp(Math.round(val), this.unit), pad.l - 6, y + 4); }
-        const step = Math.max(1, Math.floor(temps.length / 8));
-        ctx.textAlign = 'center';
-        for (let i = 0; i < temps.length; i += step) { ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.fillText(F.time(time[i]), xf(i), pad.t + ph + 16); }
-        const grad = ctx.createLinearGradient(0, pad.t, 0, pad.t + ph);
-        grad.addColorStop(0, 'rgba(79,195,247,0.3)'); grad.addColorStop(1, 'rgba(79,195,247,0)');
-        ctx.beginPath(); ctx.moveTo(xf(0), yf(temps[0]));
-        for (let i = 1; i < temps.length; i++) { const xc = (xf(i-1) + xf(i)) / 2; ctx.bezierCurveTo(xc, yf(temps[i-1]), xc, yf(temps[i]), xf(i), yf(temps[i])); }
-        ctx.lineTo(xf(temps.length-1), pad.t + ph); ctx.lineTo(xf(0), pad.t + ph); ctx.closePath();
-        ctx.fillStyle = grad; ctx.fill();
-        ctx.beginPath(); ctx.moveTo(xf(0), yf(temps[0]));
-        for (let i = 1; i < temps.length; i++) { const xc = (xf(i-1) + xf(i)) / 2; ctx.bezierCurveTo(xc, yf(temps[i-1]), xc, yf(temps[i]), xf(i), yf(temps[i])); }
-        ctx.strokeStyle = 'rgba(79,195,247,0.9)'; ctx.lineWidth = 2; ctx.stroke();
-        for (let i = 0; i < temps.length; i++) { ctx.beginPath(); ctx.arc(xf(i), yf(temps[i]), 2, 0, Math.PI * 2); ctx.fillStyle = 'rgba(79,195,247,0.7)'; ctx.fill(); }
+    _onMove(e) { if (!this.data) return; const r = this.cvs.getBoundingClientRect(), mx = e.clientX - r.left; const t = this.data.time, tmp = this.data.temperature_2m; const idx = Math.round((mx - 40) / (r.width - 56) * (tmp.length - 1)); if (idx < 0 || idx >= tmp.length) { this.tip.classList.add('hidden'); return; } this.tip.classList.remove('hidden'); this.tip.textContent = F.time(t[idx]) + '  ' + F.ftemp(tmp[idx], this.unit); this.tip.style.left = (40 + idx / (tmp.length - 1) * (r.width - 56) - this.tip.offsetWidth / 2) + 'px'; this.tip.style.top = (r.height * 0.1) + 'px'; }
+    _draw() { if (!this.data) return; const { time, temperature_2m: temps } = this.data; const W = this.cvs.clientWidth, H = this.cvs.clientHeight; if (W < 10 || H < 10) return; const dpr = devicePixelRatio || 1; this.cvs.width = W * dpr; this.cvs.height = H * dpr; const ctx = this.ctx; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); const pad = { t: 16, r: 16, b: 28, l: 40 }, pw = W - pad.l - pad.r, ph = H - pad.t - pad.b; if (pw < 0 || ph < 0) return; let min = Math.min(...temps) - 2, max = Math.max(...temps) + 2; const range = max - min || 5; const xf = i => pad.l + i / (temps.length - 1) * pw; const yf = v => pad.t + ph - (v - min) / range * ph; ctx.fillStyle = 'rgba(255,255,255,0.03)'; ctx.fillRect(pad.l, pad.t, pw, ph); ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 0.5; for (let i = 0; i <= 4; i++) { const y = pad.t + ph / 4 * i, val = max - range / 4 * i; ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + pw, y); ctx.stroke(); ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.font = '10px sans-serif'; ctx.textAlign = 'right'; ctx.fillText(F.ftemp(Math.round(val), this.unit), pad.l - 6, y + 4); } const step = Math.max(1, Math.floor(temps.length / 8)); ctx.textAlign = 'center'; for (let i = 0; i < temps.length; i += step) { ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.fillText(F.time(time[i]), xf(i), pad.t + ph + 16); } const grad = ctx.createLinearGradient(0, pad.t, 0, pad.t + ph); grad.addColorStop(0, 'rgba(79,195,247,0.3)'); grad.addColorStop(1, 'rgba(79,195,247,0)'); ctx.beginPath(); ctx.moveTo(xf(0), yf(temps[0])); for (let i = 1; i < temps.length; i++) { const xc = (xf(i-1) + xf(i)) / 2; ctx.bezierCurveTo(xc, yf(temps[i-1]), xc, yf(temps[i]), xf(i), yf(temps[i])); } ctx.lineTo(xf(temps.length-1), pad.t + ph); ctx.lineTo(xf(0), pad.t + ph); ctx.closePath(); ctx.fillStyle = grad; ctx.fill(); ctx.beginPath(); ctx.moveTo(xf(0), yf(temps[0])); for (let i = 1; i < temps.length; i++) { const xc = (xf(i-1) + xf(i)) / 2; ctx.bezierCurveTo(xc, yf(temps[i-1]), xc, yf(temps[i]), xf(i), yf(temps[i])); } ctx.strokeStyle = 'rgba(79,195,247,0.9)'; ctx.lineWidth = 2; ctx.stroke(); for (let i = 0; i < temps.length; i++) { ctx.beginPath(); ctx.arc(xf(i), yf(temps[i]), 2, 0, Math.PI * 2); ctx.fillStyle = 'rgba(79,195,247,0.7)'; ctx.fill(); }
     }
 }
 
-// === 定位 & 加载 ===
+// === Tab 切换 ===
+function switchTab(tab) {
+    state.currentTab = tab;
+    document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    const page = $(`tab-${tab}`); if (page) page.classList.add('active');
+    const btn = document.querySelector(`.tab-btn[data-tab="${tab}"]`); if (btn) btn.classList.add('active');
+
+    // 切换时更新"我的"页面
+    if (tab === 'me') refreshMePage();
+    if (tab === 'home') { if (state.chart) { requestAnimationFrame(() => state.chart._draw()); } }
+}
+document.querySelectorAll('.tab-btn').forEach(btn => { btn.addEventListener('click', () => switchTab(btn.dataset.tab)); });
+
+// === 搜索 & 主流程 ===
 async function init() {
     let loc = null;
-
-    // GPS 优先
     if ('geolocation' in navigator) {
-        try {
-            const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, { timeout: 5000, maximumAge: 600000 }));
-            const name = findCity(pos.coords.latitude, pos.coords.longitude);
-            loc = { city: name || '当前位置', region: '', country: '', lat: pos.coords.latitude, lon: pos.coords.longitude };
-        } catch {}
+        try { const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, { timeout: 5000, maximumAge: 600000 })); const name = findCity(pos.coords.latitude, pos.coords.longitude); loc = { city: name || '当前位置', region: '', country: '', lat: pos.coords.latitude, lon: pos.coords.longitude }; } catch {}
     }
-
-    // IP 兜底
-    if (!loc) {
-        try { loc = await ipLocation(); } catch {}
-    }
-
-    // 加载天气
+    if (!loc) { try { loc = await ipLocation(); } catch {} }
     if (loc) {
         try {
             const wx = await getWeather(loc.lat, loc.lon);
@@ -604,67 +436,31 @@ async function init() {
             localStorage.setItem('wx_last', JSON.stringify({ loc, wx, ts: Date.now() }));
             renderWeather(loc, wx);
         } catch (e) {
-            // 尝试缓存
             const raw = localStorage.getItem('wx_last');
-            if (raw) {
-                const cache = JSON.parse(raw);
-                renderWeather(cache.loc, cache.wx);
-                $('error-msg').textContent = '显示缓存数据（' + new Date(cache.ts).toLocaleTimeString() + '）';
-                toggle('weather-card');
-            } else {
-                $('error-msg').textContent = e.message; toggle('error-card');
-            }
+            if (raw) { const cache = JSON.parse(raw); renderWeather(cache.loc, cache.wx); $('error-msg').textContent = '显示缓存数据（' + new Date(cache.ts).toLocaleTimeString() + '）'; toggle('weather-card'); }
+            else { $('error-msg').textContent = e.message; toggle('error-card'); }
         }
     } else {
-        // 最终兜底：北京
-        try {
-            const wx = await getWeather(39.904, 116.407);
-            renderWeather({ city: '北京', region: '', country: '中国', lat: 39.904, lon: 116.407 }, wx);
-        } catch (e) {
-            $('error-msg').textContent = '网络异常，请检查连接'; toggle('error-card');
-        }
+        try { const wx = await getWeather(39.904, 116.407); renderWeather({ city: '北京', region: '', country: '中国', lat: 39.904, lon: 116.407 }, wx); }
+        catch (e) { $('error-msg').textContent = '网络异常，请检查连接'; toggle('error-card'); }
     }
 }
 
-// === 搜索UI ===
 function initSearch() {
     const inp = $('search-input'), clr = $('search-clear'), res = $('search-results'), recent = $('recent-list'), rsec = $('recent-section');
     let last = [];
-
     const search = F.debounce(async q => {
         if (q.length < 2) { res.classList.add('hidden'); last = []; return; }
-        last = await doSearch(q);
-        res.innerHTML = ''; res.classList.remove('hidden');
+        last = await doSearch(q); res.innerHTML = ''; res.classList.remove('hidden');
         if (!last.length) { res.classList.add('hidden'); return; }
-        for (const c of last) {
-            const li = document.createElement('li'); li.className = 'search-item';
-            li.innerHTML = `<span class="si-name">${c.name}</span><span class="si-meta">${[c.admin1, c.country].filter(Boolean).join('，')}</span>`;
-            li.addEventListener('click', () => { selectCity(c); res.classList.add('hidden'); });
-            res.appendChild(li);
-        }
+        for (const c of last) { const li = document.createElement('li'); li.className = 'search-item'; li.innerHTML = `<span class="si-name">${c.name}</span><span class="si-meta">${[c.admin1, c.country].filter(Boolean).join('，')}</span>`; li.addEventListener('click', () => { selectCity(c); res.classList.add('hidden'); }); res.appendChild(li); }
     }, 300);
-
     inp.addEventListener('input', () => { clr.classList.toggle('hidden', !inp.value); search(inp.value.trim()); });
-    inp.addEventListener('keydown', async e => {
-        if (e.key !== 'Enter') return; e.preventDefault();
-        const q = inp.value.trim(); if (!q) return;
-        if (last.length) { selectCity(last[0]); res.classList.add('hidden'); }
-        else { const r = await doSearch(q); if (r.length) selectCity(r[0]); }
-    });
+    inp.addEventListener('keydown', async e => { if (e.key !== 'Enter') return; e.preventDefault(); const q = inp.value.trim(); if (!q) return; if (last.length) { selectCity(last[0]); res.classList.add('hidden'); } else { const r = await doSearch(q); if (r.length) selectCity(r[0]); } });
     clr.addEventListener('click', () => { inp.value = ''; clr.classList.add('hidden'); res.classList.add('hidden'); inp.focus(); });
     document.addEventListener('click', e => { if (!e.target.closest('.search-box')) res.classList.add('hidden'); });
-
-    // 最近搜索
-    function loadRecent() {
-        try { return JSON.parse(localStorage.getItem('wx_recent') || '[]'); } catch { return []; }
-    }
-    function renderRecent() {
-        const rc = loadRecent();
-        if (!rc.length) { rsec.classList.add('hidden'); return; }
-        rsec.classList.remove('hidden');
-        recent.innerHTML = rc.map(c => `<span class="recent-chip">${c.name}</span>`).join('');
-        recent.querySelectorAll('.recent-chip').forEach((el, i) => el.addEventListener('click', () => selectCity(rc[i])));
-    }
+    function loadRecent() { try { return JSON.parse(localStorage.getItem('wx_recent') || '[]'); } catch { return []; } }
+    function renderRecent() { const rc = loadRecent(); if (!rc.length) { rsec.classList.add('hidden'); return; } rsec.classList.remove('hidden'); recent.innerHTML = rc.map(c => `<span class="recent-chip">${c.name}</span>`).join(''); recent.querySelectorAll('.recent-chip').forEach((el, i) => el.addEventListener('click', () => selectCity(rc[i]))); }
     $('clear-recent').addEventListener('click', () => { localStorage.removeItem('wx_recent'); renderRecent(); });
     renderRecent();
 }
@@ -682,194 +478,251 @@ async function selectCity(c) {
         const wx = await getWeather(c.lat, c.lon);
         state.city = loc; state.weather = wx;
         renderWeather(loc, wx);
-        // 写入后端查询历史
+        toggle('weather-card');
         if (authToken) {
             fetchJSON(`${API_BASE}/api/history`, 3000, { method: 'POST', body: JSON.stringify({ city: c.name, lat: c.lat, lon: c.lon, weather: DESC(wx.current_weather?.weathercode || 0) }) });
         }
-    } catch (e) {
-        $('error-msg').textContent = e.message; toggle('error-card');
-    }
+    } catch (e) { $('error-msg').textContent = e.message; toggle('error-card'); }
 }
 
-// === 单位切换 ===
 function initUnit() {
-    const btn = $('unit-btn');
-    btn.addEventListener('click', () => {
-        state.unit = state.unit === 'celsius' ? 'fahrenheit' : 'celsius';
-        localStorage.setItem('wx_unit', state.unit);
-        btn.textContent = state.unit === 'celsius' ? '°C' : '°F';
-        if (state.weather) renderWeather(state.city, state.weather);
-    });
+    const btn = $('unit-btn'); btn.addEventListener('click', () => { state.unit = state.unit === 'celsius' ? 'fahrenheit' : 'celsius'; localStorage.setItem('wx_unit', state.unit); btn.textContent = state.unit === 'celsius' ? '°C' : '°F'; if (state.weather) renderWeather(state.city, state.weather); });
 }
 
 // === 用户认证 ===
 function checkAuth() {
     authToken = localStorage.getItem('wx_token') || '';
     if (authToken) {
-        fetchJSON(`${API_BASE}/api/me`, 3000).then(d => {
-            if (d && d.user) { currentUser = d.user; updateUserUI(); }
-        }).catch(() => { logout(); });
+        fetchJSON(`${API_BASE}/api/me`, 3000).then(d => { if (d && d.user) { currentUser = d.user; updateMeUI(); } }).catch(() => { logout(); });
     }
 }
-function updateUserUI() {
-    const btn = $('user-btn');
-    if (currentUser) { btn.textContent = '⭐'; btn.classList.add('logged-in'); btn.title = currentUser.username; }
-    else { btn.textContent = '👤'; btn.classList.remove('logged-in'); btn.title = '登录/注册'; }
+function updateMeUI() {
+    if (currentUser) {
+        $('me-login-block').classList.add('hidden');
+        $('me-logged-block').classList.remove('hidden');
+        $('me-username').textContent = currentUser.username;
+    } else {
+        $('me-login-block').classList.remove('hidden');
+        $('me-logged-block').classList.add('hidden');
+    }
+    updateStarUI();
 }
-function logout() {
-    localStorage.removeItem('wx_token'); authToken = ''; currentUser = null; updateUserUI();
-    // 刷新星标
-    const star = document.querySelector('.fav-star');
-    if (star) { star.textContent = '☆'; star.classList.remove('active'); }
-}
+function logout() { localStorage.removeItem('wx_token'); authToken = ''; currentUser = null; updateMeUI(); updateStarUI(); }
+function refreshMePage() { if (currentUser) { loadMeFavorites(); loadMeHistory(); } }
 
-// 退出按钮
-$('logout-btn').addEventListener('click', () => { logout(); $('fav-modal').classList.add('hidden'); });
-
-// 用户按钮 → 收藏列表
-$('user-btn').addEventListener('click', () => {
-    if (currentUser) { loadFavorites(); $('fav-modal').classList.remove('hidden'); }
-    else { $('auth-modal').classList.remove('hidden'); }
-});
-
-// 登录/注册
+// 登录/注册 (在"我的"Tab内)
 let authMode = 'login';
-$('auth-toggle').addEventListener('click', (e) => {
+$('me-toggle').addEventListener('click', (e) => {
     e.preventDefault();
     authMode = authMode === 'login' ? 'register' : 'login';
-    $('auth-title').textContent = authMode === 'login' ? '登录' : '注册';
-    $('auth-submit').textContent = authMode === 'login' ? '登录' : '注册';
-    $('auth-msg').textContent = '';
+    $('me-submit').textContent = authMode === 'login' ? '登 录' : '注 册';
+    $('me-msg').textContent = '';
 });
-$('auth-submit').addEventListener('click', async () => {
-    const u = $('auth-user').value.trim(), p = $('auth-pass').value.trim();
-    if (!u || !p) { $('auth-msg').textContent = '请填写用户名和密码'; return; }
-    if (p.length < 6) { $('auth-msg').textContent = '密码至少6位'; return; }
+$('me-submit').addEventListener('click', async () => {
+    const u = $('me-user').value.trim(), p = $('me-pass').value.trim();
+    if (!u || !p) { $('me-msg').textContent = '请填写用户名和密码'; return; }
+    if (p.length < 6) { $('me-msg').textContent = '密码至少6位'; return; }
     const url = `${API_BASE}${authMode === 'login' ? '/api/login' : '/api/register'}`;
     const d = await fetchJSON(url, 5000, { method: 'POST', body: JSON.stringify({ username: u, password: p }) });
     if (d && d.token) {
         localStorage.setItem('wx_token', d.token); authToken = d.token; currentUser = d.user;
-        updateUserUI(); $('auth-modal').classList.add('hidden');
-        $('auth-user').value = ''; $('auth-pass').value = ''; $('auth-msg').textContent = '';
-    } else { $('auth-msg').textContent = (d && d.error) || '操作失败'; }
+        updateMeUI(); $('me-user').value = ''; $('me-pass').value = ''; $('me-msg').textContent = '';
+        refreshMePage();
+    } else { $('me-msg').textContent = (d && d.error) || '操作失败'; }
 });
-$('auth-close').addEventListener('click', () => $('auth-modal').classList.add('hidden'));
-$('fav-close').addEventListener('click', () => $('fav-modal').classList.add('hidden'));
-document.addEventListener('click', (e) => { if (e.target.classList.contains('modal-overlay')) e.target.classList.add('hidden'); });
+$('me-logout').addEventListener('click', () => { logout(); });
+$('me-clear-hist').addEventListener('click', async () => { if (!confirm('确认清空所有搜索历史？')) return; await fetchJSON(`${API_BASE}/api/history`, 3000, { method: 'DELETE' }); loadMeHistory(); });
 
-// 收藏
-async function loadFavorites() {
-    const list = $('fav-list');
-    $('fav-user-info').textContent = currentUser ? `当前用户：${currentUser.username}` : '';
-    if (!currentUser) { list.innerHTML = '<p class="fav-empty">请先登录</p>'; return; }
+async function loadMeFavorites() {
+    const list = $('me-fav-list'); if (!currentUser) { list.innerHTML = '<p class="me-empty">请先登录</p>'; return; }
     const d = await fetchJSON(`${API_BASE}/api/favorites`);
-    if (!d || d.error) { list.innerHTML = '<p class="fav-empty">加载失败</p>'; return; }
-    if (!d.length) { list.innerHTML = '<p class="fav-empty">暂无收藏，在天气页面点击 ⭐ 收藏城市</p>'; return; }
+    if (!d || d.error) { list.innerHTML = '<p class="me-empty">加载失败</p>'; return; }
+    if (!d.length) { list.innerHTML = '<p class="me-empty">暂无收藏，在天气页搜索城市后点击 ☆ 收藏</p>'; return; }
     list.innerHTML = d.map(f => `<div class="fav-item"><div class="fav-item-click" data-lat="${f.lat}" data-lon="${f.lon}" data-name="${f.name}" data-admin1="${f.admin1||''}" data-country="${f.country||''}"><div class="fav-item-name">${f.name}</div><div class="fav-item-meta">${f.admin1||''} ${f.country||''}</div></div><button class="fav-item-del" data-id="${f.id}">×</button></div>`).join('');
-    list.querySelectorAll('.fav-item-click').forEach(el => el.addEventListener('click', () => {
-        selectCity({ name: el.dataset.name, admin1: el.dataset.admin1, country: el.dataset.country, lat: parseFloat(el.dataset.lat), lon: parseFloat(el.dataset.lon) });
-        $('fav-modal').classList.add('hidden');
-    }));
-    list.querySelectorAll('.fav-item-del').forEach(btn => btn.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        await fetchJSON(`${API_BASE}/api/favorites/${btn.dataset.id}`, 5000, { method: 'DELETE' });
-        // 更新星标状态
-        const row = btn.closest('.fav-item');
-        if (row) {
-            const lat = parseFloat(row.querySelector('.fav-item-click').dataset.lat);
-            const lon = parseFloat(row.querySelector('.fav-item-click').dataset.lon);
-            updateStarState(lat, lon, false);
-        }
-        loadFavorites();
-    }));
+    list.querySelectorAll('.fav-item-click').forEach(el => el.addEventListener('click', () => { selectCity({ name: el.dataset.name, admin1: el.dataset.admin1, country: el.dataset.country, lat: parseFloat(el.dataset.lat), lon: parseFloat(el.dataset.lon) }); switchTab('home'); }));
+    list.querySelectorAll('.fav-item-del').forEach(btn => btn.addEventListener('click', async (e) => { e.stopPropagation(); await fetchJSON(`${API_BASE}/api/favorites/${btn.dataset.id}`, 3000, { method: 'DELETE' }); loadMeFavorites(); updateStarUI(); }));
 }
-// 更新收藏星标
-function updateStarState(lat, lon, isFav) {
-    const star = document.querySelector('.fav-star');
-    if (!star) return;
-    // 检查当前显示的城市是否是更新的城市
-    if (state.city && Math.abs(state.city.lat - lat) < 0.01 && Math.abs(state.city.lon - lon) < 0.01) {
-        star.textContent = isFav ? '★' : '☆';
-        if (isFav) star.classList.add('active'); else star.classList.remove('active');
-    }
+
+async function loadMeHistory() {
+    const list = $('me-hist-list'); if (!currentUser) { list.innerHTML = '<p class="me-empty">请先登录</p>'; return; }
+    const d = await fetchJSON(`${API_BASE}/api/history`);
+    if (!d || d.error) { list.innerHTML = '<p class="me-empty">加载失败</p>'; return; }
+    if (!d.length) { list.innerHTML = '<p class="me-empty">暂无记录</p>'; return; }
+    list.innerHTML = d.map(h => `<div class="fav-item" style="cursor:pointer"><div class="fav-item-click" data-lat="${h.lat}" data-lon="${h.lon}" data-name="${h.city}"><div class="fav-item-name">${h.city}</div><div class="fav-item-meta">${h.weather||''} · ${new Date(h.time).toLocaleString()}</div></div></div>`).join('');
+    list.querySelectorAll('.fav-item-click').forEach(el => el.addEventListener('click', () => { selectCity({ name: el.dataset.name, lat: parseFloat(el.dataset.lat), lon: parseFloat(el.dataset.lon) }); switchTab('home'); }));
 }
+
+// 收藏星标（天气 Tab 内）
 function addFavButton(loc) {
     const existing = document.querySelector('.fav-star'); if (existing) existing.remove();
     const star = document.createElement('button'); star.className = 'fav-star'; star.textContent = '☆'; star.title = '收藏此城市';
     star.addEventListener('click', async (e) => {
         e.stopPropagation();
-        if (!currentUser) { $('auth-modal').classList.remove('hidden'); return; }
+        if (!currentUser) { switchTab('me'); return; }
         if (star.classList.contains('active')) {
-            // 取消收藏
             const d = await fetchJSON(`${API_BASE}/api/favorites`);
-            if (d) {
-                const fav = d.find(f => Math.abs(f.lat - loc.lat) < 0.01 && Math.abs(f.lon - loc.lon) < 0.01);
-                if (fav) {
-                    await fetchJSON(`${API_BASE}/api/favorites/${fav.id}`, 5000, { method: 'DELETE' });
-                    star.textContent = '☆'; star.classList.remove('active');
-                }
-            }
+            if (d) { const fav = d.find(f => Math.abs(f.lat - loc.lat) < 0.01 && Math.abs(f.lon - loc.lon) < 0.01); if (fav) { await fetchJSON(`${API_BASE}/api/favorites/${fav.id}`, 3000, { method: 'DELETE' }); star.textContent = '☆'; star.classList.remove('active'); } }
         } else {
-            // 添加收藏
-            const d = await fetchJSON(`${API_BASE}/api/favorites`, 5000, { method: 'POST', body: JSON.stringify({ name: loc.city || loc.name, admin1: loc.region || loc.admin1 || '', country: loc.country || '', lat: loc.lat, lon: loc.lon }) });
+            const d = await fetchJSON(`${API_BASE}/api/favorites`, 3000, { method: 'POST', body: JSON.stringify({ name: loc.city || loc.name, admin1: loc.region || loc.admin1 || '', country: loc.country || '', lat: loc.lat, lon: loc.lon }) });
             if (d && !d.error) { star.textContent = '★'; star.classList.add('active'); }
         }
+        loadMeFavorites();
     });
-    if (currentUser) fetchJSON(`${API_BASE}/api/favorites`).then(d => {
-        if (d && d.find(f => Math.abs(f.lat - loc.lat) < 0.01 && Math.abs(f.lon - loc.lon) < 0.01)) { star.textContent = '★'; star.classList.add('active'); }
-    });
+    if (currentUser) fetchJSON(`${API_BASE}/api/favorites`).then(d => { if (d && d.find(f => Math.abs(f.lat - loc.lat) < 0.01 && Math.abs(f.lon - loc.lon) < 0.01)) { star.textContent = '★'; star.classList.add('active'); } });
     $('city').after(star);
 }
-// 包装 renderWeather 来加收藏按钮
+function updateStarUI() {
+    const star = document.querySelector('.fav-star'); if (!star || !state.city) return;
+    if (!currentUser) { star.textContent = '☆'; star.classList.remove('active'); return; }
+    fetchJSON(`${API_BASE}/api/favorites`).then(d => {
+        if (d && d.find(f => Math.abs(f.lat - state.city.lat) < 0.01 && Math.abs(f.lon - state.city.lon) < 0.01)) { star.textContent = '★'; star.classList.add('active'); }
+        else { star.textContent = '☆'; star.classList.remove('active'); }
+    });
+}
 const _origRW = renderWeather;
 renderWeather = function(loc, wx) { _origRW(loc, wx); if (loc.lat && loc.lon) addFavButton(loc); };
 
+// === AI 聊天助手 ===
+const CHAT_CONFIG = {
+    greeting: '你好！我是天气 AI 助手。搜索一个城市后，我可以帮你分析天气，给你出行建议～',
+    noCity: '请先在「天气」页面搜索一个城市，我才能帮你分析哦～',
+    noWeather: '还没加载天气数据，请先在首页搜索城市。',
+};
+
+function generateReply(question, city, wx) {
+    const q = question.toLowerCase().trim();
+    if (!city || !wx) return CHAT_CONFIG.noCity;
+    const cur = wx.current_weather; const code = cur.weathercode; const temp = cur.temperature; const wind = cur.windspeed;
+    const h = wx.hourly; const d = wx.daily;
+    const desc = DESC(code); const uv = h.uv_index?.[0] || 0; const humidity = h.relativehumidity_2m?.[0]; const precip = h.precipitation_probability?.[0] || 0;
+
+    // 匹配问题类型
+    if (q.includes('出门') || q.includes('适合') && q.includes('出去')) {
+        if (WX.isStorm(code)) return `🌩️ ${city}当前有雷暴，**绝对不建议出门**！温度 ${temp}°C，风速 ${wind} km/h。建议待在室内，远离门窗。`;
+        if (WX.isRain(code)) return `🌧️ ${city}正在下雨，温度 ${temp}°C。如果要出门，建议带伞、穿防水鞋。降雨概率 ${precip}%。如果雨不大，可以去室内场所逛逛。`;
+        if (WX.isSnow(code)) return `❄️ ${city}正在下雪，温度 ${temp}°C。出门注意防滑保暖，穿防滑鞋。如果风不大且雪不重，冬日出游也别有趣味～`;
+        if (temp > 35) return `🔥 ${city}当前高温 ${temp}°C，**不太适合长时间外出**！紫外线强度 ${uv}。建议避开 11:00-15:00 时段，等傍晚再出门。`;
+        if (temp >= 22 && temp <= 30) return `☀️ ${city}天气很棒！温度 ${temp}°C，非常适合出门。${desc}，紫外线 ${uv}，是个户外活动的好天气～`;
+        if (temp >= 5 && temp < 22) return `🌤️ ${city}温度 ${temp}°C，${desc}。可以出门，建议根据温度适当添衣。`;
+        if (temp < 5) return `🥶 ${city}比较冷，温度 ${temp}°C。如果出门一定要穿暖和，戴好围巾手套。`;
+        return `当前${city}温度 ${temp}°C，${desc}。综合来看，出门问题不大～`;
+    }
+
+    if (q.includes('伞') || q.includes('带伞') || q.includes('雨伞')) {
+        if (WX.isRain(code) || precip > 30) return `☂️ **建议带伞！**${city}当前${desc}，降雨概率 ${precip}%。7 天的最高降雨概率是 ${Math.max(...(d.precipitation_probability_max||[0]))}%，有备无患。`;
+        if (WX.isStorm(code)) return `⛈️ **必须带伞！**${city}有雷暴，降雨概率 ${precip}%。而且最好穿防水的鞋子和衣服。`;
+        return `🌂 ${city}当前${desc}，降雨概率仅 ${precip}%，不太需要带伞。但如果你出门时间长，备一把折叠伞也无妨。`;
+    }
+
+    if (q.includes('穿') || q.includes('穿什么') || q.includes('怎么穿') || q.includes('衣服')) {
+        const cloth = getClothing(temp, code, wind);
+        return `👔 ${city}温度 ${temp}°C，${desc}。\n\n**建议：${cloth.text}**\n推荐搭配：${cloth.tags.join('、')}\n\n${wind > 20 ? `⚠️ 风比较大（${wind} km/h），注意防风。` : ''}${WX.isRain(code) ? '☂️ 记得带伞！' : ''}`;
+    }
+
+    if (q.includes('空气') || q.includes('质量') || q.includes('污染') || q.includes('AQI') || q.includes('pm2') || q.includes('霾')) {
+        const cloud = h.cloudcover?.[0] || 0;
+        const vis = h.visibility?.[0];
+        if (WX.isFog(code)) return `🌫️ ${city}雾霾较重，云量 ${cloud}%，能见度 ${vis ? vis + 'm' : '较低'}。**敏感人群建议戴口罩，减少户外运动。**`;
+        if (cloud > 80) return `☁️ ${city}云量很高（${cloud}%），但云量不等同于污染。目前湿度 ${humidity}%，如果感觉闷可能是湿度过高。建议查看专业空气质量 APP 获取 PM2.5 数据。`;
+        return `🌬️ ${city}当前风速 ${wind} km/h，云量 ${cloud}%，湿度 ${humidity}%。通常风大时空气质量会好一些。不过精确的 PM2.5/PM10 数据需要专用传感器，建议参考空气质量 APP。`;
+    }
+
+    if (q.includes('明天') || q.includes('未来') || q.includes('预报') || q.includes('趋势')) {
+        if (!d || !d.time) return `📅 暂无 7 天预报数据，请稍后再试。`;
+        let reply = `📅 **${city} 未来趋势**\n\n`;
+        for (let i = 0; i < Math.min(5, d.time.length); i++) {
+            const hi = d.temperature_2m_max[i], lo = d.temperature_2m_min[i], dp = d.precipitation_probability_max?.[i] || 0;
+            reply += `${F.day(d.time[i])}：${DESC(d.weathercode[i])} ${Math.round(lo)}°~${Math.round(hi)}° ${dp > 0 ? '💧' + dp + '%' : ''}\n`;
+        }
+        return reply;
+    }
+
+    if (q.includes('运动') || q.includes('跑步') || q.includes('锻炼') || q.includes('健身')) {
+        const act = getActivity(temp, code, wind, cur.is_day === 1);
+        return `🏃 ${city}温度 ${temp}°C，${desc}。\n\n**${act.text}**\n推荐：${act.tags.join('、')}`;
+    }
+
+    // 默认回复
+    return `📍 当前城市：**${city}**\n🌡️ 温度：${temp}°C\n🌤️ 天气：${desc}\n💧 湿度：${humidity}%\n🌬️ 风速：${wind} km/h\n☀️ 紫外线：${uv}\n🌧️ 降雨概率：${precip}%\n\n你可以问我：\n• "今天适合出门吗"\n• "需要带伞吗"\n• "明天怎么穿"\n• "空气质量如何"\n• "明天/未来趋势"`;
+}
+
+function initChat() {
+    const input = $('chat-input'), send = $('chat-send'), list = $('chat-list');
+
+    function addMsg(role, text) {
+        const div = document.createElement('div'); div.className = `chat-bubble ${role}`;
+        const avatar = role === 'bot' ? '🤖' : '👤';
+        div.innerHTML = `<div class="chat-avatar">${avatar}</div><div class="chat-text">${text.replace(/\n/g, '<br>')}</div>`;
+        list.appendChild(div);
+        list.scrollTop = list.scrollHeight;
+    }
+
+    function handleSend() {
+        const q = input.value.trim(); if (!q) return;
+        addMsg('user', q);
+        const reply = generateReply(q, state.city?.city, state.weather);
+        setTimeout(() => addMsg('bot', reply), 300);
+        input.value = '';
+        // 保存聊天记录
+        try {
+            const hist = JSON.parse(localStorage.getItem('wx_chat') || '[]');
+            hist.push({ role: 'user', text: q, time: Date.now() }, { role: 'bot', text: reply, time: Date.now() });
+            if (hist.length > 40) hist.splice(0, hist.length - 40);
+            localStorage.setItem('wx_chat', JSON.stringify(hist));
+        } catch {}
+    }
+
+    send.addEventListener('click', handleSend);
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') handleSend(); });
+
+    // 快速提问按钮
+    document.querySelectorAll('.chat-quick-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const q = btn.dataset.q;
+            addMsg('user', q);
+            const reply = generateReply(q, state.city?.city, state.weather);
+            setTimeout(() => addMsg('bot', reply), 300);
+        });
+    });
+
+    // 恢复聊天记录
+    try {
+        const hist = JSON.parse(localStorage.getItem('wx_chat') || '[]');
+        if (hist.length) {
+            // 清空初始欢迎语
+            const firstBot = list.querySelector('.chat-bubble.bot');
+            if (firstBot) firstBot.remove();
+            for (const m of hist.slice(-10)) addMsg(m.role, m.text);
+        }
+    } catch {}
+}
+
 // === 天气地图 ===
 function initMap() {
-    const modal = $('map-modal');
-    const container = $('map-container');
-    const btn = $('map-btn');
-
-    // 预加载 iframe（在 DOMContentLoaded 时就开始加载）
+    const modal = $('map-modal'), container = $('map-container'), btn = $('map-btn');
     const frame = document.createElement('iframe');
     frame.allow = 'geolocation';
     frame.style.cssText = 'width:100%;height:100%;border:none;position:absolute;top:0;left:0';
     frame.src = 'about:blank';
-    container.style.position = 'relative';
-    container.style.minHeight = '60vh';
+    container.style.position = 'relative'; container.style.minHeight = '60vh';
     container.appendChild(frame);
-
-    btn.addEventListener('click', () => {
-        const lat = state.city?.lat || 39.9;
-        const lon = state.city?.lon || 116.4;
-        const url = `https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=°C&metricWind=km/h&zoom=7&overlay=wind&product=ecmwf&lat=${lat}&lon=${lon}&detailLat=${lat}&detailLon=${lon}&detail=true&message=true`;
-        // 如果还没加载或城市变了，重新设置 src
-        if (frame.src !== url && !frame.src.includes('windy')) {
-            frame.src = url;
-        }
-        modal.classList.remove('hidden');
-    });
+    btn.addEventListener('click', () => { const lat = state.city?.lat || 39.9, lon = state.city?.lon || 116.4; const url = `https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=°C&metricWind=km/h&zoom=7&overlay=wind&product=ecmwf&lat=${lat}&lon=${lon}&detailLat=${lat}&detailLon=${lon}&detail=true&message=true`; if (frame.src !== url && !frame.src.includes('windy')) { frame.src = url; } modal.classList.remove('hidden'); });
     $('map-close').addEventListener('click', () => { modal.classList.add('hidden'); });
     modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.add('hidden'); });
 }
 
-// === 启动 ===
-$('retry-btn').addEventListener('click', init);
-document.addEventListener('DOMContentLoaded', () => { initSearch(); initUnit(); initTheme(); initMap(); init(); checkAuth(); });
-
-// === 暗黑/浅色 ===
+// === 主题 ===
 function initTheme() {
-    const btn = $('theme-btn');
-    let mode = localStorage.getItem('wx_theme') || 'dark';
+    const btn = $('theme-btn'); let mode = localStorage.getItem('wx_theme') || 'dark';
     applyTheme(mode, btn);
-    btn.addEventListener('click', () => {
-        mode = mode === 'dark' ? 'light' : 'dark';
-        localStorage.setItem('wx_theme', mode);
-        applyTheme(mode, btn);
-    });
+    btn.addEventListener('click', () => { mode = mode === 'dark' ? 'light' : 'dark'; localStorage.setItem('wx_theme', mode); applyTheme(mode, btn); });
 }
 function applyTheme(mode, btn) {
     const css = $('light-css');
     if (mode === 'light') { css.disabled = false; document.documentElement.classList.add('light-mode'); btn.textContent = '☀️'; }
     else { css.disabled = true; document.documentElement.classList.remove('light-mode'); btn.textContent = '🌙'; }
 }
+
+// === 启动 ===
+$('retry-btn').addEventListener('click', init);
+document.addEventListener('DOMContentLoaded', () => { initSearch(); initUnit(); initTheme(); initMap(); initChat(); init(); checkAuth(); updateMeUI(); });

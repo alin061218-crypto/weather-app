@@ -9,7 +9,7 @@ body.bg-snow{background:linear-gradient(175deg,#1e2228 0%,#2a303a 40%,#38404c 10
 body.bg-rain{background:linear-gradient(175deg,#0c1218 0%,#141e28 40%,#1a2836 100%)}
 body.bg-fog{background:linear-gradient(175deg,#181c20 0%,#22262c 50%,#2c3238 100%)}
 body.bg-storm{background:linear-gradient(175deg,#080810 0%,#101020 40%,#181830 100%)}
-.app{position:relative;z-index:1;width:100%;max-width:460px;padding-top:20px;display:flex;flex-direction:column;gap:14px}
+.app{position:relative;z-index:1;width:100%;max-width:460px;padding-top:20px;display:flex;flex-direction:column;gap:14px;min-height:100vh;padding-bottom:env(safe-area-inset-bottom,12px)}
 .topbar{display:flex;gap:10px;align-items:center}
 .search-box{flex:1;position:relative}
 .search-field{width:100%;background:var(--srf);backdrop-filter:blur(20px) saturate(140%);-webkit-backdrop-filter:blur(20px) saturate(140%);border:1px solid var(--brd);border-radius:10px;padding:11px 38px 11px 16px;color:var(--ink);font-size:14px;font-family:var(--font-b);outline:none;transition:all .35s}
@@ -35,7 +35,7 @@ body.bg-storm{background:linear-gradient(175deg,#080810 0%,#101020 40%,#181830 1
 .loader-ring{width:40px;height:40px;border:2px solid rgba(255,255,255,.06);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 20px}
 @keyframes spin{to{transform:rotate(360deg)}}
 .loading-state p{color:var(--ink3);font-size:13px;letter-spacing:1px}
-.card{background:var(--srf);backdrop-filter:blur(30px) saturate(150%);-webkit-backdrop-filter:blur(30px) saturate(150%);border:1px solid var(--brd);border-radius:26px;padding:32px 22px 28px;animation:fadeUp .5s ease;position:relative;overflow:hidden}
+.card{background:var(--srf);backdrop-filter:blur(30px) saturate(150%);-webkit-backdrop-filter:blur(30px) saturate(150%);border:1px solid var(--brd);border-radius:26px;padding:32px 22px 28px;animation:fadeUp .5s ease;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:18px}
 .card::before{content:'';position:absolute;top:0;left:20px;right:20px;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent)}
 @keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
 .hero{text-align:center;margin-bottom:24px}
@@ -46,7 +46,7 @@ body.bg-storm{background:linear-gradient(175deg,#080810 0%,#101020 40%,#181830 1
 @media(max-width:380px){.hero-temp{font-size:56px}}
 .hero-desc{font-size:14px;color:var(--ink2);letter-spacing:1.5px}
 .sec-label{font-size:10px;color:var(--ink3);letter-spacing:3px;text-transform:uppercase;margin-bottom:14px}
-.chart-section,.detail-section,.daily-section,.advice-section{margin-top:22px;padding-top:20px;border-top:1px solid var(--brd)}
+.chart-section,.detail-section,.daily-section,.advice-section{margin-top:0;padding-top:16px;border-top:1px solid var(--brd)}
 .chart-wrap{position:relative;width:100%;height:190px;border-radius:10px;overflow:hidden;background:rgba(0,0,0,.15)}
 .chart-wrap canvas{width:100%;height:100%}
 .chart-tip{position:absolute;pointer-events:none;background:rgba(0,0,0,.85);color:#fff;padding:5px 10px;border-radius:6px;font-size:12px;z-index:10;font-family:monospace}
@@ -75,7 +75,8 @@ body.bg-storm{background:linear-gradient(175deg,#080810 0%,#101020 40%,#181830 1
 .error-hint{font-size:13px;color:#e09090;margin-bottom:20px}
 .error-retry{background:rgba(232,184,109,.1);color:var(--accent);border:1px solid rgba(232,184,109,.2);border-radius:10px;padding:10px 28px;font-size:14px;cursor:pointer;font-family:var(--font-b);transition:all .3s}
 .error-retry:hover{background:rgba(232,184,109,.2)}
-.footer{text-align:center;font-size:10px;color:var(--ink3);opacity:.4;letter-spacing:1px;padding:8px 0}
+.footer{text-align:center;font-size:10px;color:var(--ink3);opacity:.4;letter-spacing:1px;padding:8px 0;display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap}
+.dot{opacity:.3}
 .dot{margin:0 6px}
 @media(min-width:768px){.app{max-width:500px}.card{padding:40px 30px 34px}.detail-grid{grid-template-columns:repeat(2,1fr)}.chart-wrap{height:220px}}
 @media(min-width:1024px){.app{max-width:540px}}
@@ -111,3 +112,58 @@ body.bg-storm{background:linear-gradient(175deg,#080810 0%,#101020 40%,#181830 1
 .logout-btn{display:block;width:100%;margin-top:16px;padding:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:10px;color:#e09090;font-size:13px;cursor:pointer;font-family:var(--font-b);transition:all .2s}
 .logout-btn:hover{background:rgba(224,144,144,.1);border-color:rgba(224,144,144,.3)}
 .fav-user{font-size:12px;color:var(--ink3);text-align:center;margin-bottom:10px}
+
+/* ====== Tab 页面系统 ====== */
+.tab-page{display:none;flex-direction:column;gap:14px;flex:1;animation:fadeIn .3s ease}
+.tab-page.active{display:flex}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+/* ====== 底部导航栏 ====== */
+.tab-bar{position:sticky;bottom:0;z-index:200;display:flex;gap:0;background:rgba(12,12,22,.85);backdrop-filter:blur(24px) saturate(160%);-webkit-backdrop-filter:blur(24px) saturate(160%);border:1px solid var(--brd);border-radius:18px;overflow:hidden;margin-top:auto;padding-bottom:env(safe-area-inset-bottom,0)}
+.tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 0 8px;background:none;border:none;color:var(--ink3);cursor:pointer;transition:all .25s;font-family:var(--font-b)}
+.tab-btn.active{color:var(--accent)}
+.tab-icon{font-size:22px;line-height:1}
+.tab-label{font-size:11px;font-weight:500;letter-spacing:.5px}
+/* ====== 聊天界面 ====== */
+.chat-header{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--srf);backdrop-filter:blur(20px);border:1px solid var(--brd);border-radius:16px;margin-bottom:4px}
+.chat-header-icon{font-size:22px}
+.chat-header span{font-size:15px;font-weight:600;color:var(--ink)}
+.chat-list{flex:1;display:flex;flex-direction:column;gap:12px;padding:4px 0;max-height:54vh;overflow-y:auto}
+.chat-bubble{display:flex;gap:10px;align-items:flex-start;animation:fadeIn .25s ease}
+.chat-bubble.bot{justify-content:flex-start}
+.chat-bubble.user{justify-content:flex-end;flex-direction:row-reverse}
+.chat-avatar{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.chat-text{max-width:78%;padding:10px 14px;border-radius:14px;font-size:14px;line-height:1.6;word-break:break-word}
+.chat-bubble.bot .chat-text{background:rgba(255,255,255,.06);border:1px solid var(--brd);color:var(--ink)}
+.chat-bubble.user .chat-text{background:rgba(232,184,109,.15);border:1px solid rgba(232,184,109,.2);color:var(--ink)}
+.chat-quick{display:flex;flex-wrap:wrap;gap:8px;padding:8px 0}
+.chat-quick-btn{background:rgba(255,255,255,.04);border:1px solid var(--brd);border-radius:20px;padding:7px 14px;font-size:12px;color:var(--ink2);cursor:pointer;transition:all .2s;font-family:var(--font-b);white-space:nowrap}
+.chat-quick-btn:hover{background:rgba(232,184,109,.1);border-color:rgba(232,184,109,.25);color:var(--accent)}
+.chat-input-row{display:flex;gap:10px;margin-top:8px}
+.chat-input{flex:1;background:rgba(255,255,255,.06);border:1px solid var(--brd);border-radius:12px;padding:11px 14px;color:var(--ink);font-size:14px;outline:none;font-family:var(--font-b)}
+.chat-input:focus{border-color:var(--accent)}
+.chat-send-btn{background:var(--accent);color:#1a1a2e;border:none;border-radius:12px;padding:10px 18px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font-b);transition:opacity .2s;white-space:nowrap}
+.chat-send-btn:hover{opacity:.85}
+/* ====== 我的页面 ====== */
+.me-card{background:var(--srf);backdrop-filter:blur(24px);border:1px solid var(--brd);border-radius:20px;padding:28px 22px;display:flex;flex-direction:column;align-items:center;animation:fadeIn .3s ease}
+.me-avatar-big{width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,.04);border:2px solid var(--brd);display:flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:12px}
+.me-avatar-big.logged{background:rgba(232,184,109,.12);border-color:rgba(232,184,109,.3)}
+.me-title{font-family:var(--font-d);font-size:22px;font-weight:400;color:var(--ink);margin-bottom:4px}
+.me-sub{font-size:13px;color:var(--ink3);margin-bottom:20px}
+.me-form{width:100%;display:flex;flex-direction:column;gap:10px}
+.me-input{width:100%;background:rgba(255,255,255,.06);border:1px solid var(--brd);border-radius:10px;padding:12px 14px;color:var(--ink);font-size:15px;outline:none;font-family:var(--font-b)}
+.me-input:focus{border-color:var(--accent)}
+.me-btn-primary{width:100%;background:var(--accent);color:#1a1a2e;border:none;border-radius:10px;padding:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:var(--font-b);transition:opacity .2s}
+.me-btn-primary:hover{opacity:.85}
+.me-msg{text-align:center;font-size:13px;color:#e09090;min-height:20px;margin-top:4px}
+.me-switch{text-align:center;font-size:13px;color:var(--ink3);margin-top:8px}
+.me-switch a{color:var(--accent);text-decoration:none;cursor:pointer}
+.me-section{width:100%;margin-top:20px;padding-top:16px;border-top:1px solid var(--brd)}
+.me-sec-title{font-size:11px;color:var(--ink3);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px}
+.me-list{max-height:240px;overflow-y:auto}
+.me-empty{text-align:center;color:var(--ink3);padding:16px;font-size:13px}
+.me-btn-danger{display:block;width:100%;margin-top:10px;padding:10px;background:rgba(224,144,144,.08);border:1px solid rgba(224,144,144,.2);border-radius:10px;color:#e09090;font-size:13px;cursor:pointer;font-family:var(--font-b);transition:all .2s}
+.me-btn-danger:hover{background:rgba(224,144,144,.16);border-color:rgba(224,144,144,.35)}
+.me-btn-outline{display:block;width:100%;margin-top:16px;padding:10px;background:rgba(255,255,255,.04);border:1px solid var(--brd);border-radius:10px;color:var(--ink3);font-size:13px;cursor:pointer;font-family:var(--font-b);transition:all .2s}
+.me-btn-outline:hover{background:rgba(255,255,255,.08);color:var(--ink)}
+/* 我的页面里的收藏/历史条目（复用） */
+.me-list .fav-item{border-radius:8px}

@@ -19,6 +19,24 @@
 .light-mode .day-name{color:#333}
 .light-mode .user-fab{background:rgba(255,255,255,.8)}
 .light-mode .logout-btn{border-color:rgba(0,0,0,.1)}
+.light-mode .tab-bar{background:rgba(255,255,255,.8);border-color:rgba(0,0,0,.08)}
+.light-mode .tab-btn{color:#999}
+.light-mode .tab-btn.active{color:#c78435}
+.light-mode .chat-header{background:rgba(255,255,255,.6);border-color:rgba(0,0,0,.08)}
+.light-mode .chat-header span{color:#1a1a2e}
+.light-mode .chat-bubble.bot .chat-text{background:rgba(0,0,0,.04);border-color:rgba(0,0,0,.08);color:#333}
+.light-mode .chat-bubble.user .chat-text{background:rgba(200,150,80,.12);border-color:rgba(200,150,80,.2);color:#333}
+.light-mode .chat-input{background:rgba(0,0,0,.04);border-color:rgba(0,0,0,.1);color:#1a1a2e}
+.light-mode .chat-quick-btn{background:rgba(0,0,0,.04);border-color:rgba(0,0,0,.08);color:#666}
+.light-mode .chat-quick-btn:hover{background:rgba(200,150,80,.1);border-color:rgba(200,150,80,.3);color:#c78435}
+.light-mode .me-card{background:rgba(255,255,255,.5);border-color:rgba(0,0,0,.08)}
+.light-mode .me-input{background:rgba(0,0,0,.04);border-color:rgba(0,0,0,.1);color:#1a1a2e}
+.light-mode .me-btn-outline{background:rgba(0,0,0,.04);border-color:rgba(0,0,0,.1);color:#888}
+.light-mode .me-btn-outline:hover{background:rgba(0,0,0,.08);color:#1a1a2e}
+.light-mode .me-btn-danger{background:rgba(224,144,144,.06);border-color:rgba(224,144,144,.15)}
+.light-mode .map-modal-box{background:#f5f5f8}
+.light-mode .fav-tab{background:rgba(0,0,0,.04);border-color:rgba(0,0,0,.08);color:#888}
+.light-mode .fav-tab.active{background:rgba(200,150,80,.12);color:#c78435;border-color:rgba(200,150,80,.3)}
 .light-mode #bg-canvas{opacity:.3}
 .light-mode body.bg-clear{background:linear-gradient(175deg,#e8f0f8 0%,#d0e0f0 40%,#c8ddf0 100%)!important}
 .light-mode body.bg-snow{background:linear-gradient(175deg,#f0f0f5 0%,#e8e8f0 40%,#ddd 100%)!important}
