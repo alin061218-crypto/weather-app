@@ -815,28 +815,41 @@ async function init() {
     toggle('loading');
     console.log('[init] 开始, API_BASE=', API_BASE);
 
-    // GPS 优先
+    // 1. 先尝试 GPS
     if ('geolocation' in navigator) {
-        try { const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, { timeout: 5000, maximumAge: 600000 })); const name = findCity(pos.coords.latitude, pos.coords.longitude); loc = { city: name || '当前位置', region: '', country: '', lat: pos.coords.latitude, lon: pos.coords.longitude }; console.log('[init] GPS定位成功:', name); } catch (e) { console.log('[init] GPS失败:', e.message); }
+        try {
+            const pos = await new Promise((res, rej) => {
+                navigator.geolocation.getCurrentPosition(res, rej, { timeout: 5000, maximumAge: 600000 });
+            });
+            const name = findCity(pos.coords.latitude, pos.coords.longitude);
+            loc = { city: name || '当前位置', region: '', country: '中国', lat: pos.coords.latitude, lon: pos.coords.longitude };
+            console.log('[init] GPS定位成功:', name);
+        } catch (e) {
+            console.log('[init] GPS失败:', e.message);
+        }
     }
 
-    // IP 兜底
+    // 2. GPS 失败 → IP 兜底
     if (!loc) {
-        try { loc = await ipLocation(); console.log('[init] IP定位结果:', JSON.stringify(loc)); } catch (e) { console.log('[init] IP定位异常:', e.message); }
-        // IP 定位到国外就忽略，直接北京
-        if (loc && loc.country && !['China','中国'].includes(loc.country)) {
+        try {
+            loc = await ipLocation();
+            console.log('[init] IP定位结果:', JSON.stringify(loc));
+        } catch (e) {
+            console.log('[init] IP定位异常:', e.message);
+        }
+        // IP 定位到国外 → 忽略
+        if (loc && loc.country && loc.country !== 'China' && loc.country !== '中国') {
             console.log('[init] 检测到国外IP, 回退北京');
             loc = null;
         }
-        // 经纬度明显不对也回退
-        if (loc && (isNaN(loc.lat) || isNaN(loc.lon) || loc.lat < 15 || loc.lat > 55 || loc.lon < 70 || loc.lon > 140)) {
-            console.log('[init] 经纬度异常, 回退北京');
-            loc = null;
-        }
     }
 
-    // 最终兜底：北京
-    if (!loc) { loc = { city: '北京', region: '', country: '中国', lat: 39.904, lon: 116.407 }; console.log('[init] 定位失败, 回退北京'); }
+    // 3. 最终兜底：北京
+    if (!loc) {
+        loc = { city: '北京', region: '', country: '中国', lat: 39.904, lon: 116.407 };
+        console.log('[init] 定位失败, 回退北京');
+    }
+    console.log('[init] 最终定位:', loc.city, loc.lat, loc.lon);
 
     try {
         console.log('[init] 开始获取天气...');
@@ -846,11 +859,11 @@ async function init() {
         localStorage.setItem('wx_last', JSON.stringify({ loc, wx, ts: Date.now() }));
         renderWeather(loc, wx);
     } catch (e) {
-        // 天气请求失败 = 可能是网络问题，尝试用上次缓存
         console.error('[init] 天气获取失败:', e.message);
         const raw = localStorage.getItem('wx_last');
         if (raw) {
             const cache = JSON.parse(raw);
+            console.log('[init] 使用缓存的天气:', cache.loc.city);
             renderWeather(cache.loc, cache.wx);
             $('error-msg').textContent = '显示缓存数据（' + new Date(cache.ts).toLocaleTimeString() + '）';
             toggle('weather-card');
