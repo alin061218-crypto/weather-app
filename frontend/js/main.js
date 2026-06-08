@@ -897,23 +897,40 @@ document.querySelectorAll('.tab-btn').forEach(btn => { btn.addEventListener('cli
 async function init() {
     let loc = null;
     toggle('loading');
-    console.log('[init] 开始, API_BASE=', API_BASE);
 
-    // 1. 先尝试 GPS
+    // 1. GPS 定位（优先）
     if ('geolocation' in navigator) {
         try {
             const pos = await new Promise((res, rej) => {
-                navigator.geolocation.getCurrentPosition(res, rej, { timeout: 5000, maximumAge: 600000 });
+                navigator.geolocation.getCurrentPosition(res, rej, { timeout: 8000, maximumAge: 300000 });
             });
             const name = findCity(pos.coords.latitude, pos.coords.longitude);
             loc = { city: name || '当前位置', region: '', country: '中国', lat: pos.coords.latitude, lon: pos.coords.longitude };
         } catch {}
     }
 
-    // 2. GPS 失败 → IP 兜底
+    // 2. IP 定位兜底（仅国内有效）
     if (!loc) {
-        try { loc = await ipLocation(); } catch {}
-        if (loc && loc.country && loc.country !== 'China' && loc.country !== '中国') loc = null;
+        try {
+            const d = await fetchJSON(`${API_BASE}/api/location`, 6000);
+            if (d && d.city && !d.error) {
+                // 后端代理：如果返回的是美国IP（Railway 服务器），不要用，直连 ipapi
+                if (d.country === 'United States' || d.country === 'US') {
+                    // 跳过，走直连
+                } else {
+                    loc = { city: d.city || '', region: d.region || '', country: d.country || '', lat: d.lat, lon: d.lon };
+                }
+            }
+        } catch {}
+        // 前端直连 ipapi.co（从用户浏览器发请求，能获取真实IP）
+        if (!loc) {
+            try {
+                const d2 = await fetchJSON(API.ip, 6000);
+                if (d2 && !d2.error && d2.country_code === 'CN') {
+                    loc = { city: d2.city || '', region: d2.region || '', country: '中国', lat: d2.latitude, lon: d2.longitude };
+                }
+            } catch {}
+        }
     }
 
     // 3. 最终兜底：北京
