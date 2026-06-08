@@ -802,18 +802,18 @@ document.querySelectorAll('.tab-btn').forEach(btn => { btn.addEventListener('cli
 async function init() {
     let loc = null;
     toggle('loading');
+    console.log('[init] 开始, API_BASE=', API_BASE);
 
     // GPS 优先
     if ('geolocation' in navigator) {
-        try { const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, { timeout: 5000, maximumAge: 600000 })); const name = findCity(pos.coords.latitude, pos.coords.longitude); loc = { city: name || '当前位置', region: '', country: '', lat: pos.coords.latitude, lon: pos.coords.longitude }; } catch {}
+        try { const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, { timeout: 5000, maximumAge: 600000 })); const name = findCity(pos.coords.latitude, pos.coords.longitude); loc = { city: name || '当前位置', region: '', country: '', lat: pos.coords.latitude, lon: pos.coords.longitude }; console.log('[init] GPS定位成功:', name); } catch (e) { console.log('[init] GPS失败:', e.message); }
     }
 
     // IP 兜底
     if (!loc) {
-        try { loc = await ipLocation(); } catch {}
-        // 如果 IP 定位到国外（Railway 在美国），强制回退到中国
-        if (loc && loc.country && !['China','中国'].includes(loc.country) && (loc.lat < 15 || loc.lat > 55 || loc.lon < 70 || loc.lon > 140)) {
-            // 国外坐标无视，用北京
+        try { loc = await ipLocation(); console.log('[init] IP定位结果:', JSON.stringify(loc)); } catch (e) { console.log('[init] IP定位异常:', e.message); }
+        if (loc && loc.country && !['China','中国'].includes(loc.country)) {
+            console.log('[init] 检测到国外IP, 回退北京');
             loc = null;
         }
     }
