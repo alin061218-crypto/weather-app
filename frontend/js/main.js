@@ -604,12 +604,17 @@ const COUNTY = {
 };
 for (const [cn, pn] of Object.entries(COUNTY)) {
     const p = DB.find(c => c[0] === pn);
-    if (p && !DB.some(c => c[0] === cn)) DB.push([cn, p[1], p[2] + (Math.random()-0.5)*0.02, p[3] + (Math.random()-0.5)*0.02]);
+    if (p && !DB.some(c => c[0] === cn)) {
+        // 安全检查：父城市必须有经纬度
+        if (typeof p[2] === 'number' && typeof p[3] === 'number') {
+            DB.push([cn, p[1], p[2] + (Math.random()-0.5)*0.02, p[3] + (Math.random()-0.5)*0.02]);
+        }
+    }
 }
 
 function findCity(lat, lon) {
     let best = null, bestD = Infinity;
-    for (const [n, p, clat, clon] of DB) { const d = (clat - lat)**2 + (clon - lon)**2; if (d < bestD) { bestD = d; best = n; } }
+    for (const entry of DB) { const [n, p, clat, clon] = entry; if (typeof clat !== 'number' || typeof clon !== 'number' || isNaN(clat) || isNaN(clon)) continue; const d = (clat - lat)**2 + (clon - lon)**2; if (d < bestD) { bestD = d; best = n; } }
     return bestD < 0.5 ? best : null;
 }
 
