@@ -796,7 +796,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => { btn.addEventListener('cli
 // === 搜索 & 主流程 ===
 async function init() {
     let loc = null;
-    toggle('loading'); // 确保加载动画显示
+    toggle('loading');
 
     // GPS 优先
     if ('geolocation' in navigator) {
@@ -804,21 +804,33 @@ async function init() {
     }
 
     // IP 兜底
-    if (!loc) { try { loc = await ipLocation(); } catch {} }
-    if (loc) {
-        try {
-            const wx = await getWeather(loc.lat, loc.lon);
-            state.city = loc; state.weather = wx;
-            localStorage.setItem('wx_last', JSON.stringify({ loc, wx, ts: Date.now() }));
-            renderWeather(loc, wx);
-        } catch (e) {
-            const raw = localStorage.getItem('wx_last');
-            if (raw) { const cache = JSON.parse(raw); renderWeather(cache.loc, cache.wx); $('error-msg').textContent = '显示缓存数据（' + new Date(cache.ts).toLocaleTimeString() + '）'; toggle('weather-card'); }
-            else { $('error-msg').textContent = e.message; toggle('error-card'); }
+    if (!loc) {
+        try { loc = await ipLocation(); } catch {}
+        // 如果 IP 定位到国外（Railway 在美国），强制回退到中国
+        if (loc && loc.country && !['China','中国'].includes(loc.country) && (loc.lat < 15 || loc.lat > 55 || loc.lon < 70 || loc.lon > 140)) {
+            // 国外坐标无视，用北京
+            loc = null;
         }
-    } else {
-        try { const wx = await getWeather(39.904, 116.407); renderWeather({ city: '北京', region: '', country: '中国', lat: 39.904, lon: 116.407 }, wx); }
-        catch (e) { $('error-msg').textContent = '网络异常，请检查连接'; toggle('error-card'); }
+    }
+
+    // 最终兜底：北京
+    if (!loc) loc = { city: '北京', region: '', country: '中国', lat: 39.904, lon: 116.407 };
+
+    try {
+        const wx = await getWeather(loc.lat, loc.lon);
+        state.city = loc; state.weather = wx;
+        localStorage.setItem('wx_last', JSON.stringify({ loc, wx, ts: Date.now() }));
+        renderWeather(loc, wx);
+    } catch (e) {
+        const raw = localStorage.getItem('wx_last');
+        if (raw) {
+            const cache = JSON.parse(raw);
+            renderWeather(cache.loc, cache.wx);
+            $('error-msg').textContent = '显示缓存数据（' + new Date(cache.ts).toLocaleTimeString() + '）';
+            toggle('weather-card');
+        } else {
+            $('error-msg').textContent = e.message; toggle('error-card');
+        }
     }
 }
 
