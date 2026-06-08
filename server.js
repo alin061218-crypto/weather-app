@@ -12,7 +12,9 @@ const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'weather_app_secret_key_2024';
 const DB_PATH = path.join(__dirname, 'data');
 
-// ===== 初始化数据库 =====
+// ===== 初始化数据目录和数据库 =====
+const fs = require('fs');
+if (!fs.existsSync(DB_PATH)) fs.mkdirSync(DB_PATH, { recursive: true });
 const db = new Database(path.join(DB_PATH, 'weather.db'));
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
