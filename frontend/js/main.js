@@ -796,9 +796,14 @@ document.querySelectorAll('.tab-btn').forEach(btn => { btn.addEventListener('cli
 // === 搜索 & 主流程 ===
 async function init() {
     let loc = null;
+    toggle('loading'); // 确保加载动画显示
+
+    // GPS 优先
     if ('geolocation' in navigator) {
         try { const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, { timeout: 5000, maximumAge: 600000 })); const name = findCity(pos.coords.latitude, pos.coords.longitude); loc = { city: name || '当前位置', region: '', country: '', lat: pos.coords.latitude, lon: pos.coords.longitude }; } catch {}
     }
+
+    // IP 兜底
     if (!loc) { try { loc = await ipLocation(); } catch {} }
     if (loc) {
         try {
