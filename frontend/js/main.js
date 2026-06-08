@@ -779,28 +779,39 @@ function renderAdvice(mid, tid, adv) { $(mid).textContent = adv.text; $(tid).inn
 
 function renderCityGuide(name) {
     const g = getCityGuide(name);
-    const section = document.getElementById('guide-section');
-    if (!g) { section.style.display = 'none'; return; }
-    section.style.display = '';
-    const cityEn = encodeURIComponent(name.replace(/[市州县区]$/,'') || name);
-    const mkImg = (term, i) => `https://source.unsplash.com/400x300/?${term},china&sig=${i}`;
+    const empty = document.getElementById('guide-empty');
+    const content = document.getElementById('guide-content');
+    if (!g) {
+        empty.classList.remove('hidden');
+        content.classList.add('hidden');
+        return;
+    }
+    empty.classList.add('hidden');
+    content.classList.remove('hidden');
+
+    const mkImg = (term, i) => `https://loremflickr.com/400/300/${encodeURIComponent(term)}?lock=${i}`;
     document.getElementById('food-guide').innerHTML = g.food.split(',').map((f, i) => {
-        const t = f.replace(/[^一-龥]/g,'').trim();
-        return `<div class="guide-card"><img class="guide-img" src="${mkImg(t+' food', i)}" alt="${t}" loading="lazy" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22300%22><rect fill=%22%231a1a2e%22 width=%22400%22 height=%22300%22/><text fill=%22%23666%22 x=%22200%22 y=%22150%22 text-anchor=%22middle%22 font-size=%2214%22>${t}</text></svg>'"><div class="guide-card-text">${f.trim()}</div></div>`;
+        const tags = f.replace(/[^一-龥]/g,'').trim().split('').slice(0,3).join(',');
+        return `<div class="guide-card"><img class="guide-img" src="${mkImg('chinese+food,'+tags, i)}" alt="${f}" loading="lazy"><div class="guide-card-text">${f.trim()}</div></div>`;
     }).join('');
     document.getElementById('travel-guide').innerHTML = g.travel.split(',').map((t, i) => {
-        const clean = t.replace(/[^一-龥]/g,'').trim();
-        return `<div class="guide-card"><img class="guide-img" src="${mkImg(clean+' scenery landmark', i+50)}" alt="${clean}" loading="lazy" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22300%22><rect fill=%22%231a1a2e%22 width=%22400%22 height=%22300%22/><text fill=%22%23666%22 x=%22200%22 y=%22150%22 text-anchor=%22middle%22 font-size=%2214%22>${clean}</text></svg>'"><div class="guide-card-text">${t.trim()}</div></div>`;
+        const tags = t.replace(/[^一-龥]/g,'').trim().split('').slice(0,3).join(',');
+        return `<div class="guide-card"><img class="guide-img" src="${mkImg('china+scenery+landmark,'+tags, i+60)}" alt="${t}" loading="lazy"><div class="guide-card-text">${t.trim()}</div></div>`;
     }).join('');
+    // 重置到美食 Tab
+    document.querySelectorAll('.guide-tab').forEach(btn => btn.classList.remove('active'));
+    const foodTab = document.querySelector('.guide-tab[data-guide="food"]');
+    if (foodTab) foodTab.classList.add('active');
+    document.getElementById('food-guide').classList.remove('hidden');
+    document.getElementById('travel-guide').classList.add('hidden');
 }
-// 美食/景点 Tab 切换
+
 document.addEventListener('click', function(e) {
     if (e.target.classList.contains('guide-tab')) {
         document.querySelectorAll('.guide-tab').forEach(t => t.classList.remove('active'));
         e.target.classList.add('active');
-        const which = e.target.dataset.guide;
-        document.getElementById('food-guide').classList.toggle('hidden', which !== 'food');
-        document.getElementById('travel-guide').classList.toggle('hidden', which !== 'travel');
+        document.getElementById('food-guide').classList.toggle('hidden', e.target.dataset.guide !== 'food');
+        document.getElementById('travel-guide').classList.toggle('hidden', e.target.dataset.guide !== 'travel');
     }
 });
 
@@ -876,8 +887,8 @@ function switchTab(tab) {
     const page = $(`tab-${tab}`); if (page) page.classList.add('active');
     const btn = document.querySelector(`.tab-btn[data-tab="${tab}"]`); if (btn) btn.classList.add('active');
 
-    // 切换时更新"我的"页面
     if (tab === 'me') refreshMePage();
+    if (tab === 'guide' && state.city) renderCityGuide(state.city.city);
     if (tab === 'home') { if (state.chart) { requestAnimationFrame(() => state.chart._draw()); } }
 }
 document.querySelectorAll('.tab-btn').forEach(btn => { btn.addEventListener('click', () => switchTab(btn.dataset.tab)); });

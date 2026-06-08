@@ -76,16 +76,6 @@
                 <p class="advice-text" id="activity-main">--</p>
                 <div class="advice-chips" id="activity-tags"></div>
             </section>
-
-            <!-- 城市推荐：美食 + 旅游（可切换标签） -->
-            <section class="guide-section" id="guide-section" style="display:none">
-                <div class="guide-tabs">
-                    <button class="guide-tab active" data-guide="food">🍜 美食推荐</button>
-                    <button class="guide-tab" data-guide="travel">🏛️ 旅游景点</button>
-                </div>
-                <div id="food-guide" class="guide-grid"></div>
-                <div id="travel-guide" class="guide-grid hidden"></div>
-            </section>
         </main>
 
         <div id="error-card" class="error-panel hidden">
@@ -93,6 +83,26 @@
             <p class="error-title">获取天气失败</p>
             <p id="error-msg" class="error-hint"></p>
             <button id="retry-btn" class="error-retry">重试</button>
+        </div>
+    </div>
+
+    <!-- ====== Tab 2: AI 助手 ====== -->
+    <div id="tab-chat" class="tab-page">
+        <div id="chat-list" class="chat-list">
+            <div class="chat-bubble bot">
+                <div class="chat-avatar">🤖</div>
+                <div class="chat-text">你好！我是天气 AI 助手。搜索一个城市后，我可以帮你分析天气，给你出行建议～</div>
+            </div>
+        </div>
+        <div class="chat-quick">
+            <button class="chat-quick-btn" data-q="今天适合出门吗">🚶 今天适合出门吗</button>
+            <button class="chat-quick-btn" data-q="需要带伞吗">☂️ 需要带伞吗</button>
+            <button class="chat-quick-btn" data-q="明天怎么穿">👔 明天怎么穿</button>
+            <button class="chat-quick-btn" data-q="空气质量如何">💨 空气质量如何</button>
+        </div>
+        <div class="chat-input-row">
+            <input id="chat-input" class="chat-input" placeholder="输入你的问题…" autocomplete="off">
+            <button id="chat-send" class="chat-send-btn">发送</button>
         </div>
     </div>
 
@@ -120,7 +130,24 @@
         </div>
     </div>
 
-    <!-- ====== Tab 3: 我的 ====== -->
+    <!-- ====== Tab 3: 城市指南 ====== -->
+    <div id="tab-guide" class="tab-page">
+        <div id="guide-empty" class="me-card">
+            <div class="me-avatar-big">📍</div>
+            <h2 class="me-title">城市指南</h2>
+            <p class="me-sub">在天气页搜索城市后，这里会展示当地美食和旅游推荐</p>
+        </div>
+        <div id="guide-content" class="hidden">
+            <div class="guide-tabs">
+                <button class="guide-tab active" data-guide="food">🍜 美食推荐</button>
+                <button class="guide-tab" data-guide="travel">🏛️ 旅游景点</button>
+            </div>
+            <div id="food-guide" class="guide-grid"></div>
+            <div id="travel-guide" class="guide-grid hidden"></div>
+        </div>
+    </div>
+
+    <!-- ====== Tab 4: 我的 ====== -->
     <div id="tab-me" class="tab-page">
         <!-- 未登录 -->
         <div id="me-login-block" class="me-card">
@@ -167,6 +194,7 @@
         </div>
     </div>
 
+
     <!-- 底部导航 -->
     <nav class="tab-bar">
         <button class="tab-btn active" data-tab="home">
@@ -176,6 +204,10 @@
         <button class="tab-btn" data-tab="chat">
             <span class="tab-icon">💬</span>
             <span class="tab-label">AI 助手</span>
+        </button>
+        <button class="tab-btn" data-tab="guide">
+            <span class="tab-icon">📍</span>
+            <span class="tab-label">城市指南</span>
         </button>
         <button class="tab-btn" data-tab="me">
             <span class="tab-icon">👤</span>
