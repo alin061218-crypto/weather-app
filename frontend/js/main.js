@@ -37,35 +37,28 @@ async function fetchJSON(url, timeout = 5000, opts = {}) {
 }
 
 async function ipLocation() {
-    console.log('[ipLoc] 开始...');
     // 优先用后端代理
     try {
         const d = await fetchJSON(`${API_BASE}/api/location`, 8000);
-        console.log('[ipLoc] 后端结果:', JSON.stringify(d));
         if (d && d.city && !d.error) return { city: d.city || '', region: d.region || '', country: d.country || '', lat: d.lat, lon: d.lon };
-    } catch (e) { console.log('[ipLoc] 后端异常:', e.message); }
+    } catch {}
     // 兜底直连
     try {
         const d2 = await fetchJSON(API.ip, 8000);
-        console.log('[ipLoc] ipapi结果:', JSON.stringify(d2));
         if (!d2 || d2.error) return null;
         return { city: d2.city || '', region: d2.region || '', country: d2.country_name || '', lat: d2.latitude, lon: d2.longitude };
-    } catch (e) { console.log('[ipLoc] ipapi异常:', e.message); return null; }
-}async function geoSearch(q) {
+    } catch { return null; }
+}
+async function geoSearch(q) {
     const d = await fetchJSON(`${API_BASE}/api/search?q=${encodeURIComponent(q)}`, 4000);
     if (d && Array.isArray(d)) return d.map(r => ({ name: r.name || '', admin1: r.admin1 || '', country: r.country || '', lat: r.lat, lon: r.lon }));
     const d2 = await fetchJSON(`${API.geo}?name=${encodeURIComponent(q)}&count=5&language=zh&format=json`, 4000);
     return d2?.results?.map(r => ({ name: r.name || '', admin1: r.admin1 || '', country: r.country || '', lat: r.latitude, lon: r.longitude })) || [];
 }
 async function getWeather(lat, lon) {
-    const url = `${API_BASE}/api/weather?lat=${lat}&lon=${lon}`;
-    console.log('[getWeather] 请求:', url);
-    const d = await fetchJSON(url, 10000);
-    console.log('[getWeather] 后端结果:', d ? 'got data' : 'null/error');
+    const d = await fetchJSON(`${API_BASE}/api/weather?lat=${lat}&lon=${lon}`, 10000);
     if (d && !d.error) return d;
-    console.log('[getWeather] 后端失败，直连API');
-    const wxUrl = `${API.wx}?latitude=${lat}&longitude=${lon}&${WX_PARAMS}`;
-    const d2 = await fetchJSON(wxUrl, 10000);
+    const d2 = await fetchJSON(`${API.wx}?latitude=${lat}&longitude=${lon}&${WX_PARAMS}`, 10000);
     if (!d2) throw new Error('天气数据获取失败');
     return d2;
 }
@@ -823,47 +816,27 @@ async function init() {
             });
             const name = findCity(pos.coords.latitude, pos.coords.longitude);
             loc = { city: name || '当前位置', region: '', country: '中国', lat: pos.coords.latitude, lon: pos.coords.longitude };
-            console.log('[init] GPS定位成功:', name);
-        } catch (e) {
-            console.log('[init] GPS失败:', e.message);
-        }
+        } catch {}
     }
 
     // 2. GPS 失败 → IP 兜底
     if (!loc) {
-        try {
-            loc = await ipLocation();
-            console.log('[init] IP定位结果:', JSON.stringify(loc));
-        } catch (e) {
-            console.log('[init] IP定位异常:', e.message);
-        }
-        // IP 定位到国外 → 忽略
-        if (loc && loc.country && loc.country !== 'China' && loc.country !== '中国') {
-            console.log('[init] 检测到国外IP, 回退北京');
-            loc = null;
-        }
+        try { loc = await ipLocation(); } catch {}
+        if (loc && loc.country && loc.country !== 'China' && loc.country !== '中国') loc = null;
     }
 
     // 3. 最终兜底：北京
-    if (!loc) {
-        loc = { city: '北京', region: '', country: '中国', lat: 39.904, lon: 116.407 };
-        console.log('[init] 定位失败, 回退北京');
-    }
-    console.log('[init] 最终定位:', loc.city, loc.lat, loc.lon);
+    if (!loc) loc = { city: '北京', region: '', country: '中国', lat: 39.904, lon: 116.407 };
 
     try {
-        console.log('[init] 开始获取天气...');
         const wx = await getWeather(loc.lat, loc.lon);
-        console.log('[init] 天气获取成功, code:', wx.current_weather?.weathercode);
         state.city = loc; state.weather = wx;
         localStorage.setItem('wx_last', JSON.stringify({ loc, wx, ts: Date.now() }));
         renderWeather(loc, wx);
     } catch (e) {
-        console.error('[init] 天气获取失败:', e.message);
         const raw = localStorage.getItem('wx_last');
         if (raw) {
             const c = JSON.parse(raw);
-            console.log('[init] 使用缓存:', c.loc.city);
             renderWeather(c.loc, c.wx);
             $('error-msg').textContent = '显示缓存数据';
             toggle('weather-card');
