@@ -31,20 +31,27 @@ async function fetchJSON(url, timeout = 5000, opts = {}) {
     const headers = { ...(opts.headers || {}) };
     if (authToken) headers.Authorization = `Bearer ${authToken}`;
     if (opts.method) headers['Content-Type'] = 'application/json';
-    try { const r = await fetch(url, { signal: ctrl.signal, headers, method: opts.method, body: opts.body }); return r.ok ? r.json() : null; }
+    try { const r = await fetch(url, { signal: ctrl.signal, headers, method: opts.method, body: opts.body }); const json = await r.json(); return json || null; }
     catch { return null; }
     finally { clearTimeout(t); }
 }
 
 async function ipLocation() {
+    console.log('[ipLoc] 开始...');
     // 优先用后端代理
-    const d = await fetchJSON(`${API_BASE}/api/location`, 6000);
-    if (d && d.city && !d.error) return { city: d.city || '', region: d.region || '', country: d.country || '', lat: d.lat, lon: d.lon };
+    try {
+        const d = await fetchJSON(`${API_BASE}/api/location`, 8000);
+        console.log('[ipLoc] 后端结果:', JSON.stringify(d));
+        if (d && d.city && !d.error) return { city: d.city || '', region: d.region || '', country: d.country || '', lat: d.lat, lon: d.lon };
+    } catch (e) { console.log('[ipLoc] 后端异常:', e.message); }
     // 兜底直连
-    const d2 = await fetchJSON(API.ip, 6000);
-    if (!d2 || d2.error) return null;
-    return { city: d2.city || '', region: d2.region || '', country: d2.country_name || '', lat: d2.latitude, lon: d2.longitude };}
-async function geoSearch(q) {
+    try {
+        const d2 = await fetchJSON(API.ip, 8000);
+        console.log('[ipLoc] ipapi结果:', JSON.stringify(d2));
+        if (!d2 || d2.error) return null;
+        return { city: d2.city || '', region: d2.region || '', country: d2.country_name || '', lat: d2.latitude, lon: d2.longitude };
+    } catch (e) { console.log('[ipLoc] ipapi异常:', e.message); return null; }
+}async function geoSearch(q) {
     const d = await fetchJSON(`${API_BASE}/api/search?q=${encodeURIComponent(q)}`, 4000);
     if (d && Array.isArray(d)) return d.map(r => ({ name: r.name || '', admin1: r.admin1 || '', country: r.country || '', lat: r.lat, lon: r.lon }));
     const d2 = await fetchJSON(`${API.geo}?name=${encodeURIComponent(q)}&count=5&language=zh&format=json`, 4000);
