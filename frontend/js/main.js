@@ -836,8 +836,7 @@ async function init() {
     }
 
     // 最终兜底：北京
-    if (!loc) loc = { city: '北京', region: '', country: '中国', lat: 39.904, lon: 116.407 };
-    console.log('[init] 最终定位:', loc.city, loc.lat, loc.lon);
+    if (!loc) { loc = { city: '北京', region: '', country: '中国', lat: 39.904, lon: 116.407 }; console.log('[init] 定位失败, 回退北京'); }
 
     try {
         console.log('[init] 开始获取天气...');
@@ -847,6 +846,7 @@ async function init() {
         localStorage.setItem('wx_last', JSON.stringify({ loc, wx, ts: Date.now() }));
         renderWeather(loc, wx);
     } catch (e) {
+        // 天气请求失败 = 可能是网络问题，尝试用上次缓存
         console.error('[init] 天气获取失败:', e.message);
         const raw = localStorage.getItem('wx_last');
         if (raw) {
