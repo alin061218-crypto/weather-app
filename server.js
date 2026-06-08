@@ -183,10 +183,19 @@ app.get('/api/weather', async (req, res) => {
 // IP 定位代理
 app.get('/api/location', async (req, res) => {
     try {
-        const r = await fetch(IP_API);
+        const r = await fetch(IP_API, { signal: AbortSignal.timeout(5000) });
         const d = await r.json();
+        if (d.error) throw new Error(d.reason || 'ipapi error');
         res.json({ city: d.city, region: d.region, country: d.country_name, lat: d.latitude, lon: d.longitude });
     } catch {
+        // ipapi 失败尝试 ip-api.com
+        try {
+            const r2 = await fetch('http://ip-api.com/json/', { signal: AbortSignal.timeout(5000) });
+            const d2 = await r2.json();
+            if (d2.status === 'success') {
+                return res.json({ city: d2.city, region: d2.regionName, country: d2.country, lat: d2.lat, lon: d2.lon });
+            }
+        } catch {}
         res.status(500).json({ error: '定位失败' });
     }
 });
