@@ -862,10 +862,10 @@ async function init() {
         console.error('[init] 天气获取失败:', e.message);
         const raw = localStorage.getItem('wx_last');
         if (raw) {
-            const cache = JSON.parse(raw);
-            console.log('[init] 使用缓存的天气:', cache.loc.city);
-            renderWeather(cache.loc, cache.wx);
-            $('error-msg').textContent = '显示缓存数据（' + new Date(cache.ts).toLocaleTimeString() + '）';
+            const c = JSON.parse(raw);
+            console.log('[init] 使用缓存:', c.loc.city);
+            renderWeather(c.loc, c.wx);
+            $('error-msg').textContent = '显示缓存数据';
             toggle('weather-card');
         } else {
             $('error-msg').textContent = e.message; toggle('error-card');
