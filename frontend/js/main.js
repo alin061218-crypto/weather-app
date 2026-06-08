@@ -58,9 +58,14 @@ async function ipLocation() {
     return d2?.results?.map(r => ({ name: r.name || '', admin1: r.admin1 || '', country: r.country || '', lat: r.latitude, lon: r.longitude })) || [];
 }
 async function getWeather(lat, lon) {
-    const d = await fetchJSON(`${API_BASE}/api/weather?lat=${lat}&lon=${lon}`, 8000);
+    const url = `${API_BASE}/api/weather?lat=${lat}&lon=${lon}`;
+    console.log('[getWeather] 请求:', url);
+    const d = await fetchJSON(url, 10000);
+    console.log('[getWeather] 后端结果:', d ? 'got data' : 'null/error');
     if (d && !d.error) return d;
-    const d2 = await fetchJSON(`${API.wx}?latitude=${lat}&longitude=${lon}&${WX_PARAMS}`, 8000);
+    console.log('[getWeather] 后端失败，直连API');
+    const wxUrl = `${API.wx}?latitude=${lat}&longitude=${lon}&${WX_PARAMS}`;
+    const d2 = await fetchJSON(wxUrl, 10000);
     if (!d2) throw new Error('天气数据获取失败');
     return d2;
 }
