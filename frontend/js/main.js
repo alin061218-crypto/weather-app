@@ -820,13 +820,17 @@ async function init() {
 
     // 最终兜底：北京
     if (!loc) loc = { city: '北京', region: '', country: '中国', lat: 39.904, lon: 116.407 };
+    console.log('[init] 最终定位:', loc.city, loc.lat, loc.lon);
 
     try {
+        console.log('[init] 开始获取天气...');
         const wx = await getWeather(loc.lat, loc.lon);
+        console.log('[init] 天气获取成功, code:', wx.current_weather?.weathercode);
         state.city = loc; state.weather = wx;
         localStorage.setItem('wx_last', JSON.stringify({ loc, wx, ts: Date.now() }));
         renderWeather(loc, wx);
     } catch (e) {
+        console.error('[init] 天气获取失败:', e.message);
         const raw = localStorage.getItem('wx_last');
         if (raw) {
             const cache = JSON.parse(raw);
