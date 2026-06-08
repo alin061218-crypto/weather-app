@@ -659,6 +659,12 @@ function getCityGuide(name) {
     if (CITY_GUIDE[clean]) return CITY_GUIDE[clean];
     const parent = COUNTY[name];
     if (parent && CITY_GUIDE[parent]) return CITY_GUIDE[parent];
+    // 区县名去尾部查归属城市
+    const trimmed = name.replace(/[市州县区]$/,'');
+    if (trimmed !== name && COUNTY[trimmed]) {
+        const p = COUNTY[trimmed];
+        if (CITY_GUIDE[p]) return CITY_GUIDE[p];
+    }
     return null;
 }
 
