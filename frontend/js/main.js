@@ -818,8 +818,14 @@ async function init() {
     // IP 兜底
     if (!loc) {
         try { loc = await ipLocation(); console.log('[init] IP定位结果:', JSON.stringify(loc)); } catch (e) { console.log('[init] IP定位异常:', e.message); }
+        // IP 定位到国外就忽略，直接北京
         if (loc && loc.country && !['China','中国'].includes(loc.country)) {
             console.log('[init] 检测到国外IP, 回退北京');
+            loc = null;
+        }
+        // 经纬度明显不对也回退
+        if (loc && (isNaN(loc.lat) || isNaN(loc.lon) || loc.lat < 15 || loc.lat > 55 || loc.lon < 70 || loc.lon > 140)) {
+            console.log('[init] 经纬度异常, 回退北京');
             loc = null;
         }
     }
