@@ -77,12 +77,14 @@
                 <div class="advice-chips" id="activity-tags"></div>
             </section>
 
-            <!-- 城市推荐：美食 + 旅游 -->
+            <!-- 城市推荐：美食 + 旅游（可切换标签） -->
             <section class="guide-section" id="guide-section" style="display:none">
-                <p class="sec-label">🍜 美食推荐</p>
-                <div id="food-guide" class="guide-list"></div>
-                <p class="sec-label" style="margin-top:14px">🏛️ 旅游景点</p>
-                <div id="travel-guide" class="guide-list"></div>
+                <div class="guide-tabs">
+                    <button class="guide-tab active" data-guide="food">🍜 美食推荐</button>
+                    <button class="guide-tab" data-guide="travel">🏛️ 旅游景点</button>
+                </div>
+                <div id="food-guide" class="guide-grid"></div>
+                <div id="travel-guide" class="guide-grid hidden"></div>
             </section>
         </main>
 

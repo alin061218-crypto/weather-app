@@ -30,6 +30,10 @@
 .light-mode .chat-quick-btn{background:rgba(0,0,0,.04);border-color:rgba(0,0,0,.08);color:#666}
 .light-mode .chat-quick-btn:hover{background:rgba(200,150,80,.1);border-color:rgba(200,150,80,.3);color:#c78435}
 .light-mode .me-card{background:rgba(255,255,255,.5);border-color:rgba(0,0,0,.08)}
+.light-mode .guide-tab{background:rgba(0,0,0,.04);border-color:rgba(0,0,0,.08);color:#999}
+.light-mode .guide-tab.active{background:rgba(200,150,80,.12);color:#c78435;border-color:rgba(200,150,80,.3)}
+.light-mode .guide-card{background:rgba(0,0,0,.02);border-color:rgba(0,0,0,.08)}
+.light-mode .guide-card:hover{background:rgba(200,150,80,.06);border-color:rgba(200,150,80,.2)}
 .light-mode .me-input{background:rgba(0,0,0,.04);border-color:rgba(0,0,0,.1);color:#1a1a2e}
 .light-mode .me-btn-outline{background:rgba(0,0,0,.04);border-color:rgba(0,0,0,.1);color:#888}
 .light-mode .me-btn-outline:hover{background:rgba(0,0,0,.08);color:#1a1a2e}

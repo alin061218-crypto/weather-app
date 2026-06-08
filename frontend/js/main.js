@@ -782,9 +782,27 @@ function renderCityGuide(name) {
     const section = document.getElementById('guide-section');
     if (!g) { section.style.display = 'none'; return; }
     section.style.display = '';
-    document.getElementById('food-guide').innerHTML = g.food.split(',').map(f => `<span class="guide-chip">${f.trim()}</span>`).join('');
-    document.getElementById('travel-guide').innerHTML = g.travel.split(',').map(t => `<span class="guide-chip">${t.trim()}</span>`).join('');
+    const cityEn = encodeURIComponent(name.replace(/[市州县区]$/,'') || name);
+    const mkImg = (term, i) => `https://source.unsplash.com/400x300/?${term},china&sig=${i}`;
+    document.getElementById('food-guide').innerHTML = g.food.split(',').map((f, i) => {
+        const t = f.replace(/[^一-龥]/g,'').trim();
+        return `<div class="guide-card"><img class="guide-img" src="${mkImg(t+' food', i)}" alt="${t}" loading="lazy" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22300%22><rect fill=%22%231a1a2e%22 width=%22400%22 height=%22300%22/><text fill=%22%23666%22 x=%22200%22 y=%22150%22 text-anchor=%22middle%22 font-size=%2214%22>${t}</text></svg>'"><div class="guide-card-text">${f.trim()}</div></div>`;
+    }).join('');
+    document.getElementById('travel-guide').innerHTML = g.travel.split(',').map((t, i) => {
+        const clean = t.replace(/[^一-龥]/g,'').trim();
+        return `<div class="guide-card"><img class="guide-img" src="${mkImg(clean+' scenery landmark', i+50)}" alt="${clean}" loading="lazy" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22300%22><rect fill=%22%231a1a2e%22 width=%22400%22 height=%22300%22/><text fill=%22%23666%22 x=%22200%22 y=%22150%22 text-anchor=%22middle%22 font-size=%2214%22>${clean}</text></svg>'"><div class="guide-card-text">${t.trim()}</div></div>`;
+    }).join('');
 }
+// 美食/景点 Tab 切换
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('guide-tab')) {
+        document.querySelectorAll('.guide-tab').forEach(t => t.classList.remove('active'));
+        e.target.classList.add('active');
+        const which = e.target.dataset.guide;
+        document.getElementById('food-guide').classList.toggle('hidden', which !== 'food');
+        document.getElementById('travel-guide').classList.toggle('hidden', which !== 'travel');
+    }
+});
 
 function getClothing(t, code, w) {
     const r = { text: '', tags: [] };
