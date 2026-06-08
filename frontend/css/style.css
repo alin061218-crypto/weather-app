@@ -69,6 +69,10 @@ body.bg-storm{background:linear-gradient(175deg,#080810 0%,#101020 40%,#181830 1
 .advice-chips{display:flex;flex-wrap:wrap;gap:7px}
 .advice-chip{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);border-radius:20px;padding:6px 14px;font-size:12px;color:var(--ink2);transition:all .25s}
 .advice-chip:hover{background:rgba(255,255,255,.08);border-color:var(--brd2)}
+.guide-section{margin-top:0;padding-top:16px;border-top:1px solid var(--brd)}
+.guide-list{display:flex;flex-wrap:wrap;gap:7px}
+.guide-chip{background:rgba(232,184,109,.08);border:1px solid rgba(232,184,109,.12);border-radius:20px;padding:6px 14px;font-size:12px;color:#e8b86d;transition:all .25s}
+.guide-chip:hover{background:rgba(232,184,109,.16);border-color:rgba(232,184,109,.25)}
 .error-panel{text-align:center;background:var(--srf);backdrop-filter:blur(30px);border:1px solid var(--brd);border-radius:26px;padding:50px 24px;animation:fadeUp .5s ease}
 .error-emoji{font-size:40px;display:block;margin-bottom:12px}
 .error-title{font-size:16px;margin-bottom:6px}

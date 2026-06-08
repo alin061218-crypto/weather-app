@@ -616,6 +616,52 @@ for (const cn of Object.keys(COUNTY)) {
     }
 }
 
+// === 城市美食 + 旅游推荐 ===
+const CITY_GUIDE = {
+'北京':{food:'北京烤鸭🐤,炸酱面🍜,铜锅涮肉🥩,豆汁焦圈,驴打滚,炒肝',travel:'故宫🏯,天安门,长城🏯,颐和园,天坛,南锣鼓巷'},
+'上海':{food:'小笼包🥟,生煎包,葱油拌面,蟹粉豆腐🦀,排骨年糕,蝴蝶酥',travel:'外滩🌃,东方明珠,豫园,南京路,迪士尼🏰,武康路'},
+'广州':{food:'早茶点心🥟,白切鸡,煲仔饭🍚,云吞面,叉烧,艇仔粥',travel:'广州塔🗼,沙面,陈家祠,长隆🎢,白云山,永庆坊'},
+'深圳':{food:'光明乳鸽🕊️,沙井蚝🦪,潮汕牛肉火锅,隆江猪脚饭,玉簪虾饺',travel:'世界之窗🌍,欢乐谷🎢,大小梅沙🏖️,仙湖植物园,梧桐山'},
+'杭州':{food:'西湖醋鱼🐟,东坡肉,龙井虾仁🍤,片儿川,葱包烩,定胜糕',travel:'西湖🏞️,灵隐寺,雷峰塔,西溪湿地,宋城,断桥残雪'},
+'成都':{food:'火锅🥘,串串香,麻婆豆腐,夫妻肺片🌶️,龙抄手,兔头',travel:'宽窄巷子,锦里,大熊猫基地🐼,都江堰,青城山,春熙路'},
+'重庆':{food:'火锅🥘,重庆小面🍜,酸辣粉,毛血旺,辣子鸡🌶️,烤鱼',travel:'洪崖洞🏮,磁器口,长江索道,解放碑,武隆天坑,南山一棵树'},
+'西安':{food:'肉夹馍🥙,羊肉泡馍,凉皮,biangbiang面,葫芦头,甑糕',travel:'兵马俑⚔️,大雁塔,城墙🚲,回民街,钟鼓楼,华清池'},
+'南京':{food:'鸭血粉丝汤🦆,盐水鸭,皮肚面,鸡汁汤包🥟,糖芋苗,梅花糕',travel:'中山陵,夫子庙🏮,秦淮河🛶,总统府,鸡鸣寺,玄武湖'},
+'武汉':{food:'热干面🍜,鸭脖,豆皮,面窝,武昌鱼🐟,莲藕排骨汤',travel:'黄鹤楼🏯,东湖🌊,武汉长江大桥,户部巷,省博物馆,楚河汉街'},
+'苏州':{food:'松鼠桂鱼🐟,响油鳝糊,碧螺虾仁,糖粥,蟹壳黄,生煎',travel:'拙政园🏞️,虎丘塔,平江路🛶,周庄古镇,寒山寺,太湖'},
+'长沙':{food:'臭豆腐🤤,口味虾🦞,剁椒鱼头,糖油粑粑,辣椒炒肉🌶️,米粉',travel:'橘子洲🍊,岳麓山,湖南博物院,IFS国金,太平老街,梅溪湖'},
+'厦门':{food:'沙茶面🍜,海蛎煎🦪,土笋冻,姜母鸭,酱油水海鲜,花生汤',travel:'鼓浪屿🏝️,南普陀寺,环岛路,植物园🌿,沙坡尾,集美学村'},
+'昆明':{food:'过桥米线🍜,汽锅鸡,菌子火锅🍄,烤饵块,豆花米线,木瓜水',travel:'石林🗿,滇池,翠湖公园,西山,斗南花市💐,大观楼'},
+'青岛':{food:'辣炒蛤蜊,鲅鱼水饺🥟,海鲜锅,青岛啤酒🍺,烤鱿鱼,排骨米饭',travel:'栈桥🌊,八大关🏘️,崂山,五四广场,啤酒博物馆,金沙滩🏖️'},
+'大理':{food:'破酥粑粑,大理砂锅鱼🐟,烤乳扇🧀,凉鸡米线,洱海弓鱼,酸辣鱼',travel:'洱海🌊,苍山🏔️,大理古城,喜洲古镇,崇圣寺三塔,双廊'},
+'桂林':{food:'桂林米粉🍜,啤酒鱼🐟,荔浦芋扣肉,恭城油茶,马蹄糕,田螺酿',travel:'漓江🛶,象鼻山,阳朔西街,十里画廊🚲,龙脊梯田🌾,遇龙河'},
+'三亚':{food:'文昌鸡🐔,和乐蟹🦀,清补凉,抱罗粉,椰子饭🥥,海鲜烧烤',travel:'亚龙湾🏖️,蜈支洲岛🏝️,南山寺,天涯海角,椰子林,鹿回头'},
+'哈尔滨':{food:'锅包肉🥩,马迭尔冰棍🍦,铁锅炖,烤冷面,哈尔滨红肠,大列巴',travel:'冰雪大世界❄️,中央大街,索菲亚教堂⛪,太阳岛,松花江,极地馆'},
+'拉萨':{food:'藏面🍜,酥油茶🫖,牦牛肉🥩,青稞酒,糌粑,甜茶',travel:'布达拉宫🏯,大昭寺🙏,八廓街,纳木错🏔️,羊卓雍措,哲蚌寺'},
+'乌鲁木齐':{food:'大盘鸡🍗,烤羊肉串🍢,手抓饭🍚,拉条子,烤包子,馕🥖',travel:'天山天池🏔️,大巴扎🕌,红山公园,南山牧场,吐鲁番葡萄沟🍇,喀纳斯湖'},
+'贵阳':{food:'酸汤鱼🐟,肠旺面🍜,花溪牛肉粉,丝娃娃,豆腐圆子,辣子鸡',travel:'黄果树瀑布💦,青岩古镇,黔灵山🐒,甲秀楼,天河潭,千户苗寨'},
+'兰州':{food:'牛肉面🍜,酿皮,炒面片,黄焖羊肉🐑,甜醅子,灰豆子',travel:'中山桥🌉,白塔山,五泉山,黄河风情线,省博物馆🐴,水墨丹霞'},
+'南宁':{food:'老友粉🍜,柠檬鸭🍋,螺蛳粉,卷筒粉,粉饺,酸嘢',travel:'青秀山🌿,南湖公园,方特🎢,中山路夜市,德天瀑布💦,扬美古镇'},
+'南昌':{food:'南昌拌粉🍜,瓦罐汤🍲,藜蒿炒腊肉,白糖糕,米粉蒸肉,鄱阳湖胖鱼头',travel:'滕王阁🏯,八一起义纪念馆,绳金塔,梅岭🏔️,瑶湖,海昏侯国遗址'},
+'合肥':{food:'臭鳜鱼🐟,李鸿章大杂烩,三河米饺,肥西老母鸡汤🥘,庄子煎饼',travel:'三河古镇,包公园,安徽省博物馆,逍遥津公园,大蜀山,滨湖湿地'},
+'福州':{food:'佛跳墙🍲,鱼丸,肉燕,鼎边糊,荔枝肉,芋泥',travel:'三坊七巷🏘️,鼓山,西湖公园,森林公园🌿,平潭岛🏖️,上下杭'},
+'呼和浩特':{food:'手扒肉🥩,烤全羊🐑,奶茶🫖,羊杂碎,莜面,奶皮子',travel:'大召寺🙏,内蒙古博物院,希拉穆仁草原🏇,响沙湾🏜️,昭君博物院'},
+'郑州':{food:'烩面🍜,胡辣汤🌶️,桶子鸡,红烧黄河大鲤鱼🐟,焖饼,油馍头',travel:'少林寺🥋,嵩山,河南博物院,商城遗址,二七纪念塔,黄河风景区'},
+'济南':{food:'把子肉🥩,油旋,九转大肠,糖醋鲤鱼🐟,甜沫,奶汤蒲菜',travel:'趵突泉💦,千佛山,大明湖🌸,五龙潭,芙蓉街,解放阁'},
+'天津':{food:'狗不理包子🥟,煎饼果子,耳朵眼炸糕,十八街麻花,嘎巴菜,熟梨糕',travel:'天津之眼🎡,意式风情区,五大道🏘️,古文化街,盘山,海河游船🛶'},
+'沈阳':{food:'沈阳鸡架🍗,老边饺子🥟,锅包肉🥩,白肉血肠,马家烧麦,延吉冷面',travel:'沈阳故宫🏯,张氏帅府,北陵公园,九一八纪念馆,中街,棋盘山'},
+'大连':{food:'海鲜焖子🦪,海胆生吃,烤鱼片🐟,铁板鱿鱼,海鲜水饺🥟,炒海肠',travel:'老虎滩🐯,星海广场🌟,棒棰岛🏖️,金石滩,发现王国🎢,东港威尼斯水城'},
+'石家庄':{food:'驴肉火烧🥙,石家庄熏肉,正定八大碗,金凤扒鸡🍗,饸烙面,红星包子',travel:'西柏坡,正定古城,赵州桥,抱犊寨🏔️,驼梁,隆兴寺'},
+};
+function getCityGuide(name) {
+    if (CITY_GUIDE[name]) return CITY_GUIDE[name];
+    const clean = name.replace(/[市州县区]$/,'');
+    if (CITY_GUIDE[clean]) return CITY_GUIDE[clean];
+    const parent = COUNTY[name];
+    if (parent && CITY_GUIDE[parent]) return CITY_GUIDE[parent];
+    return null;
+}
+
 function findCity(lat, lon) {
     let best = null, bestD = Infinity;
     for (const entry of DB) { const [n, p, clat, clon] = entry; if (typeof clat !== 'number' || typeof clon !== 'number' || isNaN(clat) || isNaN(clon)) continue; const d = (clat - lat)**2 + (clon - lon)**2; if (d < bestD) { bestD = d; best = n; } }
@@ -713,6 +759,7 @@ function renderWeather(loc, wx) {
     const code = cur.weathercode, temp = cur.temperature, wind = cur.windspeed, daytime = cur.is_day === 1;
     renderAdvice('clothing-main', 'clothing-tags', getClothing(temp, code, wind));
     renderAdvice('activity-main', 'activity-tags', getActivity(temp, code, wind, daytime));
+    renderCityGuide(name);
     updateBg(code, daytime);
     toggle('weather-card');
 
@@ -723,6 +770,15 @@ function renderWeather(loc, wx) {
 }
 
 function renderAdvice(mid, tid, adv) { $(mid).textContent = adv.text; $(tid).innerHTML = adv.tags.map(t => `<span class="advice-chip">${t}</span>`).join(''); }
+
+function renderCityGuide(name) {
+    const g = getCityGuide(name);
+    const section = document.getElementById('guide-section');
+    if (!g) { section.style.display = 'none'; return; }
+    section.style.display = '';
+    document.getElementById('food-guide').innerHTML = g.food.split(',').map(f => `<span class="guide-chip">${f.trim()}</span>`).join('');
+    document.getElementById('travel-guide').innerHTML = g.travel.split(',').map(t => `<span class="guide-chip">${t.trim()}</span>`).join('');
+}
 
 function getClothing(t, code, w) {
     const r = { text: '', tags: [] };
