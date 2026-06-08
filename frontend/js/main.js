@@ -37,12 +37,13 @@ async function fetchJSON(url, timeout = 5000, opts = {}) {
 }
 
 async function ipLocation() {
-    const d = await fetchJSON(`${API_BASE}/api/location`, 4000);
-    if (d && !d.error) return { city: d.city || '', region: d.region || '', country: d.country || '', lat: d.lat, lon: d.lon };
-    const d2 = await fetchJSON(API.ip, 4000);
+    // 优先用后端代理
+    const d = await fetchJSON(`${API_BASE}/api/location`, 6000);
+    if (d && d.city && !d.error) return { city: d.city || '', region: d.region || '', country: d.country || '', lat: d.lat, lon: d.lon };
+    // 兜底直连
+    const d2 = await fetchJSON(API.ip, 6000);
     if (!d2 || d2.error) return null;
-    return { city: d2.city || '', region: d2.region || '', country: d2.country_name || '', lat: d2.latitude, lon: d2.longitude };
-}
+    return { city: d2.city || '', region: d2.region || '', country: d2.country_name || '', lat: d2.latitude, lon: d2.longitude };}
 async function geoSearch(q) {
     const d = await fetchJSON(`${API_BASE}/api/search?q=${encodeURIComponent(q)}`, 4000);
     if (d && Array.isArray(d)) return d.map(r => ({ name: r.name || '', admin1: r.admin1 || '', country: r.country || '', lat: r.lat, lon: r.lon }));
@@ -630,6 +631,12 @@ function searchLocal(q) {
 async function doSearch(query) {
     const NOT_CITY = /(机场|航空|车站|高铁|服务区|收费站|隧道|大桥|加油|停车|公墓|陵园)/;
     const nameOK = n => n && !NOT_CITY.test(n) && n.length >= 2;
+
+    // 1. 先查本地 DB（714 条城市+区县，秒搜覆盖全域）
+    const local = searchLocal(query);
+    if (local.length > 0) return local;
+
+    // 2. 本地没命中再走 API
     const qs = [query];
     if (!query.endsWith('市') && !query.endsWith('县') && !query.endsWith('区') && query.length <= 4) qs.push(query + '市');
     if (query.endsWith('市') || query.endsWith('县') || query.endsWith('区')) qs.push(query.slice(0, -1));
@@ -651,13 +658,6 @@ async function doSearch(query) {
     for (const c of all) { const k = c.lat.toFixed(3) + ',' + c.lon.toFixed(3); if (!seen.has(k)) { seen.add(k); uniq.push(c); } }
     uniq.sort((a, b) => b._prio - a._prio);
     const cleaned = uniq.slice(0, 5).map(({ _prio, ...c }) => c);
-    const local = searchLocal(query);
-    if (local.length > 0) {
-        const topLocal = local[0];
-        const filtered = cleaned.filter(c => c.name !== topLocal.name || c.admin1 !== topLocal.admin1);
-        filtered.unshift(topLocal);
-        return filtered;
-    }
     return cleaned.length ? cleaned : [];
 }
 
