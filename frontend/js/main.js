@@ -1,6 +1,7 @@
 // === 天气 App — 核心逻辑 ===
 // IP/GPS定位 → 天气 → 图表 → 建议 → AI 聊天 → 用户管理
-// 后端 API 地址（自动适配本地/线上）
+// 后端 API 地址：从 localhost 打开时连本地后端（数据持久化到本地 SQLite）
+// 注意：请使用 http://localhost:3000 打开页面，数据才会保存到本地硬盘
 const API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? 'http://localhost:3000' : '';
 
 const $ = id => document.getElementById(id);

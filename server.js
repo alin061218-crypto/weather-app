@@ -4,6 +4,7 @@ const express = require('express');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const fs = require('fs');
 const Database = require('better-sqlite3');
 const path = require('path');
 
@@ -17,7 +18,6 @@ const DB_PATH = process.env.DB_DIR || path.join(DB_ROOT, 'db');
 const DB_FILE = path.join(DB_PATH, 'weather.db');
 
 // ===== 初始化数据目录和数据库 =====
-const fs = require('fs');
 if (!fs.existsSync(DB_PATH)) fs.mkdirSync(DB_PATH, { recursive: true });
 const db = new Database(DB_FILE);
 db.pragma('journal_mode = WAL');
