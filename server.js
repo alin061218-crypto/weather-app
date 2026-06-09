@@ -9,7 +9,7 @@ const Database = require('better-sqlite3');
 const path = require('path');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || 'weather_app_secret_key_2024';
 // Railway Volume 持久化路径（容器重启后数据不丢失）
 // Railway 卷挂载到 /data，本地开发用 ./data/
@@ -418,6 +418,45 @@ app.post('/admin/clear-cache', (req, res) => {
     res.json({ success: true });
 });
 
+// ===== 必应图片搜索代理 =====
+const imageCache = new Map();
+const IMAGE_CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 缓存7天
+
+app.get('/api/image', async (req, res) => {
+    const { q } = req.query;
+    if (!q) return res.status(400).json({ error: '缺少搜索词' });
+
+    const cacheKey = q.trim();
+    const cached = imageCache.get(cacheKey);
+    if (cached && Date.now() - cached.time < IMAGE_CACHE_TTL) {
+        return res.json({ url: cached.url, source: 'cache' });
+    }
+
+    try {
+        const searchUrl = `https://cn.bing.com/images/search?q=${encodeURIComponent(q)}&first=1`;
+        const r = await fetch(searchUrl, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
+                'Accept': 'text/html',
+                'Accept-Language': 'zh-CN,zh;q=0.9'
+            },
+            signal: AbortSignal.timeout(10000)
+        });
+        const html = await r.text();
+        // 必应把真实图片URL藏在 murl 或 data-src 里
+        let match = html.match(/murl&quot;:&quot;([^&]+)&quot;/);
+        if (!match) match = html.match(/data-src=&quot;([^&]+)&quot;/);
+        if (match && match[1]) {
+            const imgUrl = match[1].replace(/\\u002F/g, '/');
+            imageCache.set(cacheKey, { url: imgUrl, time: Date.now() });
+            return res.json({ url: imgUrl, source: 'bing' });
+        }
+        return res.json({ url: null, source: 'none' });
+    } catch (e) {
+        return res.json({ url: null, error: e.message });
+    }
+});
+
 // ===== 启动服务器 =====
 app.listen(PORT, () => {
     console.log(`天气后端服务已启动: http://localhost:${PORT} (SQLite)`);
@@ -427,6 +466,7 @@ app.listen(PORT, () => {
     console.log(`  GET  /api/weather   - 获取天气(代理)`);
     console.log(`  GET  /api/location  - IP定位(代理)`);
     console.log(`  GET  /api/search    - 城市搜索(代理)`);
+    console.log(`  GET  /api/image     - 必应图片搜索代理`);
     console.log(`  GET/POST/DELETE /api/favorites - 收藏管理`);
     console.log(`  GET/POST/DELETE /api/history - 查询历史`);
     console.log(`  GET  /admin         - 数据后台管理`);
