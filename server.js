@@ -10,7 +10,10 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'weather_app_secret_key_2024';
-const DB_PATH = process.env.DB_DIR || path.join(__dirname, 'data');
+// Railway Volume 持久化路径（容器重启后数据不丢失）
+// Railway 卷挂载到 /data，本地开发用 ./data/
+const DB_ROOT = fs.existsSync('/data') ? '/data' : path.join(__dirname, 'data');
+const DB_PATH = process.env.DB_DIR || path.join(DB_ROOT, 'db');
 const DB_FILE = path.join(DB_PATH, 'weather.db');
 
 // ===== 初始化数据目录和数据库 =====

@@ -37,12 +37,12 @@ async function fetchJSON(url, timeout = 5000, opts = {}) {
 }
 
 async function ipLocation() {
-    // 优先用后端代理
+    // 优先用后端代理（从用户浏览器IP获取）
     try {
         const d = await fetchJSON(`${API_BASE}/api/location`, 8000);
         if (d && d.city && !d.error) return { city: d.city || '', region: d.region || '', country: d.country || '', lat: d.lat, lon: d.lon };
     } catch {}
-    // 兜底直连
+    // 兜底直连 ipapi.co
     try {
         const d2 = await fetchJSON(API.ip, 8000);
         if (!d2 || d2.error) return null;
@@ -671,7 +671,10 @@ function getCityGuide(name) {
 function findCity(lat, lon) {
     let best = null, bestD = Infinity;
     for (const entry of DB) { const [n, p, clat, clon] = entry; if (typeof clat !== 'number' || typeof clon !== 'number' || isNaN(clat) || isNaN(clon)) continue; const d = (clat - lat)**2 + (clon - lon)**2; if (d < bestD) { bestD = d; best = n; } }
-    return bestD < 0.5 ? best : null;
+    const raw = bestD < 0.5 ? best : null;
+    // 区县→父级地级市映射，避免IP定位返回灌南/义乌这类县级名
+    if (raw && COUNTY[raw]) return COUNTY[raw];
+    return raw;
 }
 
 function searchLocal(q) {
@@ -725,6 +728,18 @@ async function doSearch(query) {
 // === UI 渲染 ===
 function toggle(id) { ['loading','weather-card','error-card'].forEach(x => $(x).classList.toggle('hidden', $(x).id !== id)); }
 function resolveCity(loc) { if (loc.city && loc.city !== '当前位置' && !/^[A-Za-z]/.test(loc.city)) return loc.city; const cn = findCity(loc.lat, loc.lon); return cn || loc.city || '未知'; }
+// 将区县名映射回父级地级市（避免IP接口直接返回灌南/义乌等县级名）
+function toPrefectureCity(name) {
+    if (!name) return name;
+    // 去掉常见后缀
+    let cleaned = name;
+    for (const sf of ['市','县','区','镇','乡','街道','自治县','自治州','地区','开发区','新区','特区','县级市']) {
+        if (cleaned.endsWith(sf)) { cleaned = cleaned.slice(0, -sf.length); break; }
+    }
+    if (COUNTY[cleaned]) return COUNTY[cleaned];
+    if (COUNTY[name]) return COUNTY[name];
+    return name.startsWith('市辖区') ? null : name;
+}
 
 function renderWeather(loc, wx) {
     const cur = wx.current_weather, h = wx.hourly, d = wx.daily;
@@ -909,25 +924,25 @@ async function init() {
         } catch {}
     }
 
-    // 2. IP 定位兜底（仅国内有效）
+    // 2. IP 定位兜底
     if (!loc) {
         try {
             const d = await fetchJSON(`${API_BASE}/api/location`, 6000);
             if (d && d.city && !d.error) {
-                // 后端代理：如果返回的是美国IP（Railway 服务器），不要用，直连 ipapi
                 if (d.country === 'United States' || d.country === 'US') {
-                    // 跳过，走直连
+                    // Railway 服务器在美国，跳过
                 } else {
-                    loc = { city: d.city || '', region: d.region || '', country: d.country || '', lat: d.lat, lon: d.lon };
+                    const cn = toPrefectureCity(d.city);
+                    loc = { city: cn || d.city, region: d.region || '', country: d.country || '', lat: d.lat, lon: d.lon };
                 }
             }
         } catch {}
-        // 前端直连 ipapi.co（从用户浏览器发请求，能获取真实IP）
         if (!loc) {
             try {
                 const d2 = await fetchJSON(API.ip, 6000);
                 if (d2 && !d2.error && d2.country_code === 'CN') {
-                    loc = { city: d2.city || '', region: d2.region || '', country: '中国', lat: d2.latitude, lon: d2.longitude };
+                    const cn = toPrefectureCity(d2.city);
+                    loc = { city: cn || d2.city, region: d2.region || '', country: '中国', lat: d2.latitude, lon: d2.longitude };
                 }
             } catch {}
         }

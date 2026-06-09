@@ -1,0 +1,15 @@
+# Railway 服务配置 — 天气App后端
+[build]
+builder = "nixpacks"
+buildCommand = "npm install"
+
+[deploy]
+startCommand = "node server.js"
+numReplicas = 1
+healthcheckPath = "/"
+restartPolicyType = "always"
+
+# Volume 持久化 — SQLite 数据库存储
+# 挂载路径: /data → 容器内 DB_ROOT
+[volumes]
+weather-db = "/data"
