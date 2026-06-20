@@ -3,7 +3,7 @@ import { Atmosphere } from './atmosphere.js';
 import { icon, weatherIcon } from './icons.js';
 
 const API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
-  ? 'http://localhost:3000' : '';
+  ? 'http://localhost:3001' : '';
 
 const $ = id => document.getElementById(id);
 const Q = (sel, el) => (el || document).querySelector(sel);
