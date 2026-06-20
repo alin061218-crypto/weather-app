@@ -1,205 +1,248 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-cache,no-store,must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>天气预报</title>
+<title>天气 · Weather</title>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0a0a14">
-<link rel="stylesheet" href="css/style.css?v=6">
-<link rel="stylesheet" href="css/light.css?v=2" id="light-css" disabled>
+<meta name="theme-color" content="#080a0c">
+
+<!-- 引入 Three.js (CDN import map) -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js"
+  }
+}
+</script>
+
+<link rel="stylesheet" href="css/style.css?v=8">
 </head>
 <body>
-<canvas id="bg-canvas"></canvas>
-<div id="ambient-glow" class="ambient-glow"></div>
+
+<!-- Three.js 3D 大气层背景 -->
+<div id="atmosphere"></div>
+
+<!-- 环境光晕 -->
+<div class="ambient-glow"></div>
 
 <div class="app">
 
-    <!-- ====== Tab 1: 天气 ====== -->
-    <div id="tab-home" class="tab-page active">
-        <header class="topbar">
-            <div class="search-box">
-                <input id="search-input" class="search-field" placeholder="搜索城市…" autocomplete="off" spellcheck="false">
-                <button id="search-clear" class="search-dismiss hidden">&times;</button>
-                <ul id="search-results" class="search-drop hidden"></ul>
-            </div>
-            <button id="unit-btn" class="unit-switch">°C</button>
-            <button id="theme-btn" class="unit-switch" title="切换暗黑/浅色模式">🌙</button>
-            <button id="map-btn" class="unit-switch" title="天气地图">🗺️</button>
-        </header>
-
-        <nav id="recent-section" class="recent-strip hidden">
-            <div id="recent-list" class="recent-chips"></div>
-            <button id="clear-recent" class="recent-clear">清除</button>
-        </nav>
-
-        <div id="loading" class="loading-state">
-            <div class="loader-ring"></div>
-            <p>获取天气中…</p>
-        </div>
-
-        <main id="weather-card" class="card hidden">
-            <section class="hero">
-                <p id="region" class="hero-region">--</p>
-                <h1 id="city" class="hero-city">--</h1>
-                <span id="weather-icon" class="hero-icon">--</span>
-                <span id="temperature" class="hero-temp">--°</span>
-                <p id="weather-desc" class="hero-desc">--</p>
-            </section>
-
-            <section class="chart-section">
-                <p class="sec-label">24h 温度趋势</p>
-                <div class="chart-wrap"><canvas id="temp-chart"></canvas></div>
-            </section>
-
-            <section class="detail-section">
-                <p class="sec-label">天气详情</p>
-                <div id="details-grid" class="detail-grid"></div>
-            </section>
-
-            <section class="daily-section">
-                <p class="sec-label">7 天预报</p>
-                <div id="daily-list" class="daily-list"></div>
-            </section>
-
-            <section class="advice-section">
-                <p class="sec-label">穿衣搭配</p>
-                <p class="advice-text" id="clothing-main">--</p>
-                <div class="advice-chips" id="clothing-tags"></div>
-            </section>
-
-            <section class="advice-section">
-                <p class="sec-label">活动建议</p>
-                <p class="advice-text" id="activity-main">--</p>
-                <div class="advice-chips" id="activity-tags"></div>
-            </section>
-        </main>
-
-        <div id="error-card" class="error-panel hidden">
-            <span class="error-emoji">😥</span>
-            <p class="error-title">获取天气失败</p>
-            <p id="error-msg" class="error-hint"></p>
-            <button id="retry-btn" class="error-retry">重试</button>
-        </div>
-    </div>
-
-    <!-- ====== Tab 2: AI 助手 ====== -->
-    <div id="tab-chat" class="tab-page">
-        <div class="chat-header">
-            <span class="chat-header-icon">✨</span>
-            <span>AI 天气助手</span>
-        </div>
-        <div id="chat-list" class="chat-list">
-            <div class="chat-bubble bot">
-                <div class="chat-avatar">🤖</div>
-                <div class="chat-text">你好！我是天气 AI 助手。搜索一个城市后，我可以帮你分析天气，给你出行建议～</div>
-            </div>
-        </div>
-        <div class="chat-quick">
-            <button class="chat-quick-btn" data-q="今天适合出门吗">🚶 今天适合出门吗</button>
-            <button class="chat-quick-btn" data-q="需要带伞吗">☂️ 需要带伞吗</button>
-            <button class="chat-quick-btn" data-q="明天怎么穿">👔 明天怎么穿</button>
-            <button class="chat-quick-btn" data-q="空气质量如何">💨 空气质量如何</button>
-        </div>
-        <div class="chat-input-row">
-            <input id="chat-input" class="chat-input" placeholder="输入你的问题…" autocomplete="off">
-            <button id="chat-send" class="chat-send-btn">发送</button>
-        </div>
-    </div>
-
-    <!-- ====== Tab 3: 城市指南 ====== -->
-    <div id="tab-guide" class="tab-page">
-        <div id="guide-empty" class="me-card">
-            <div class="me-avatar-big">📍</div>
-            <h2 class="me-title">城市指南</h2>
-            <p class="me-sub">在天气页搜索城市后，这里会展示当地美食和旅游推荐</p>
-        </div>
-        <div id="guide-content" class="hidden">
-            <div class="guide-tabs">
-                <button class="guide-tab active" data-guide="food">🍜 美食推荐</button>
-                <button class="guide-tab" data-guide="travel">🏛️ 旅游景点</button>
-            </div>
-            <div id="food-guide" class="guide-grid"></div>
-            <div id="travel-guide" class="guide-grid hidden"></div>
-        </div>
-    </div>
-
-    <!-- ====== Tab 4: 我的 ====== -->
-    <div id="tab-me" class="tab-page">
-        <!-- 未登录 -->
-        <div id="me-login-block" class="me-card">
-            <div class="me-avatar-big">👤</div>
-            <h2 class="me-title">我的账号</h2>
-            <p class="me-sub">登录后同步收藏与历史</p>
-
-            <div id="me-login-form" class="me-form">
-                <input id="me-user" class="me-input" placeholder="用户名" autocomplete="username">
-                <input id="me-pass" class="me-input" type="password" placeholder="密码（至少6位）" autocomplete="current-password">
-                <button id="me-submit" class="me-btn-primary">登 录</button>
-                <p id="me-msg" class="me-msg"></p>
-                <p class="me-switch">还没有账号？<a id="me-toggle" href="#">点击注册</a></p>
-            </div>
-        </div>
-
-        <!-- 已登录 -->
-        <div id="me-logged-block" class="me-card hidden">
-            <div class="me-avatar-big logged">👤</div>
-            <h2 id="me-username" class="me-title">--</h2>
-            <p class="me-sub">已登录</p>
-
-            <div class="me-section">
-                <p class="me-sec-title">⭐ 我的收藏</p>
-                <div id="me-fav-list" class="me-list"><p class="me-empty">暂无收藏</p></div>
-            </div>
-
-            <div class="me-section">
-                <p class="me-sec-title">📋 搜索历史</p>
-                <div id="me-hist-list" class="me-list"><p class="me-empty">暂无记录</p></div>
-                <button id="me-clear-hist" class="me-btn-danger">清空搜索历史</button>
-            </div>
-
-            <button id="me-logout" class="me-btn-outline">🚪 退出登录</button>
-        </div>
-    </div>
-
-    <!-- 天气地图弹窗 -->
-    <div id="map-modal" class="modal-overlay hidden">
-        <div class="modal-box map-modal-box">
-            <button id="map-close" class="modal-close">&times;</button>
-            <h2 style="font-size:14px;margin-bottom:10px;padding-left:8px">🗺️ 天气地图</h2>
-            <div id="map-container" style="width:100%;height:70vh;border-radius:12px;overflow:hidden"></div>
-        </div>
-    </div>
-
-
-    <!-- 底部导航 -->
-    <nav class="tab-bar">
-        <button class="tab-btn active" data-tab="home">
-            <span class="tab-icon">🏠</span>
-            <span class="tab-label">天气</span>
+  <!-- ====== Tab 1: 天气 ====== -->
+  <div id="tab-home" class="tab-page active">
+    <header class="topbar">
+      <div class="search-box">
+        <input id="search-input" class="search-field" placeholder="搜索城市" autocomplete="off" spellcheck="false">
+        <button id="search-clear" class="search-dismiss hidden">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
-        <button class="tab-btn" data-tab="chat">
-            <span class="tab-icon">💬</span>
-            <span class="tab-label">AI 助手</span>
-        </button>
-        <button class="tab-btn" data-tab="guide">
-            <span class="tab-icon">📍</span>
-            <span class="tab-label">城市指南</span>
-        </button>
-        <button class="tab-btn" data-tab="me">
-            <span class="tab-icon">👤</span>
-            <span class="tab-label">我的</span>
-        </button>
+        <ul id="search-results" class="search-drop hidden"></ul>
+      </div>
+      <button id="theme-btn" class="tool-btn" title="切换浅色/暗黑">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      </button>
+      <button id="map-btn" class="tool-btn" title="天气地图">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+      </button>
+    </header>
+
+    <nav id="recent-section" class="recent-strip hidden">
+      <div id="recent-list" class="recent-chips"></div>
+      <button id="clear-recent" class="recent-clear">清除</button>
     </nav>
 
-    <footer class="footer">
-        <span>Open-Meteo</span><span class="dot">·</span><span>ipapi.co</span><span class="dot">·</span><span>SQLite</span>
-    </footer>
+    <!-- 加载 -->
+    <div id="loading" class="loading-state">
+      <div class="loader-ring"></div>
+      <p>正在获取天气…</p>
+    </div>
+
+    <!-- 天气主内容 -->
+    <main id="weather-card" class="weather-view hidden">
+      <!-- Hero -->
+      <section class="weather-hero">
+        <p id="region" class="hero-region">—</p>
+        <div class="hero-city-row">
+          <h1 id="city" class="hero-city">—</h1>
+          <button id="fav-btn" class="fav-btn" title="收藏">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+          </button>
+        </div>
+        <div id="weather-icon" class="hero-icon"></div>
+        <span id="temperature" class="hero-temp">—°</span>
+        <p id="weather-desc" class="hero-desc">—</p>
+      </section>
+
+      <!-- 关键数据横滑 -->
+      <div id="stats-scroll" class="stats-scroll"></div>
+
+      <!-- 24h 温度趋势 -->
+      <section class="chart-section">
+        <header class="section-header">
+          <span class="section-label">24 小时趋势</span>
+        </header>
+        <div class="chart-wrap"><canvas id="temp-chart"></canvas></div>
+      </section>
+
+      <!-- 7 天预报 -->
+      <section class="daily-section">
+        <header class="section-header">
+          <span class="section-label">7 天预报</span>
+        </header>
+        <div id="daily-list" class="daily-list"></div>
+      </section>
+
+      <!-- 穿衣建议 -->
+      <section class="advice-section">
+        <div class="advice-title">
+          <span class="advice-title-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg></span>
+          <span class="advice-title-text">穿衣建议</span>
+        </div>
+        <p class="advice-text" id="clothing-main">—</p>
+        <div class="advice-chips" id="clothing-tags"></div>
+      </section>
+
+      <!-- 活动建议 -->
+      <section class="advice-section">
+        <div class="advice-title">
+          <span class="advice-title-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="10" r="3"/><path d="M12 4a8 8 0 018 8c0 4.4-8 8-8 8s-8-3.6-8-8a8 8 0 018-8z"/></svg></span>
+          <span class="advice-title-text">活动建议</span>
+        </div>
+        <p class="advice-text" id="activity-main">—</p>
+        <div class="advice-chips" id="activity-tags"></div>
+      </section>
+    </main>
+
+    <!-- 错误 -->
+    <div id="error-card" class="error-panel hidden">
+      <div class="error-panel-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+      <p class="error-title">获取天气失败</p>
+      <p id="error-msg" class="error-hint"></p>
+      <button id="retry-btn" class="error-retry">重试</button>
+    </div>
+  </div>
+
+  <!-- ====== Tab 2: AI 助手 ====== -->
+  <div id="tab-chat" class="tab-page">
+    <div class="chat-header">
+      <div class="chat-header-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      </div>
+      <span>出行建议</span>
+    </div>
+    <div id="chat-list" class="chat-list">
+      <div class="chat-bubble bot">
+        <div class="chat-avatar">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+        </div>
+        <div class="chat-text">搜索一个城市后，我可以帮你分析天气，给出出行建议。</div>
+      </div>
+    </div>
+    <div class="chat-quick">
+      <button class="chat-quick-btn" data-q="今天适合出门吗">今天适合出门吗</button>
+      <button class="chat-quick-btn" data-q="需要带伞吗">需要带伞吗</button>
+      <button class="chat-quick-btn" data-q="明天怎么穿">明天怎么穿</button>
+      <button class="chat-quick-btn" data-q="未来几天趋势">未来几天趋势</button>
+    </div>
+    <div class="chat-input-row">
+      <input id="chat-input" class="chat-input" placeholder="问任何天气相关的问题…" autocomplete="off">
+      <button id="chat-send" class="chat-send-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ====== Tab 3: 城市指南 ====== -->
+  <div id="tab-guide" class="tab-page">
+    <div id="guide-empty" class="me-card">
+      <div class="me-avatar">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+      </div>
+      <h2 class="me-title">城市指南</h2>
+      <p class="me-sub">搜索城市后，这里会展示当地美食与旅行推荐</p>
+    </div>
+    <div id="guide-content" class="hidden">
+      <div class="guide-tabs">
+        <button class="guide-tab active" data-guide="food">美食</button>
+        <button class="guide-tab" data-guide="travel">景点</button>
+      </div>
+      <div id="food-guide" class="guide-grid"></div>
+      <div id="travel-guide" class="guide-grid hidden"></div>
+    </div>
+  </div>
+
+  <!-- ====== Tab 4: 我的 ====== -->
+  <div id="tab-me" class="tab-page">
+    <!-- 未登录 -->
+    <div id="me-login-block" class="me-card">
+      <div class="me-avatar">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+      <h2 class="me-title">我的账号</h2>
+      <p class="me-sub">登录后同步收藏与搜索历史</p>
+      <div id="me-login-form" class="me-form">
+        <input id="me-user" class="me-input" placeholder="用户名" autocomplete="username">
+        <input id="me-pass" class="me-input" type="password" placeholder="密码（至少 6 位）" autocomplete="current-password">
+        <button id="me-submit" class="btn-primary">登 录</button>
+        <p id="me-msg" class="me-msg"></p>
+        <p class="me-switch">还没有账号？<a id="me-toggle" href="#">点击注册</a></p>
+      </div>
+    </div>
+
+    <!-- 已登录 -->
+    <div id="me-logged-block" class="me-card hidden">
+      <div class="me-avatar logged">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+      <h2 id="me-username" class="me-title">—</h2>
+      <p class="me-sub">已登录</p>
+      <div class="me-section">
+        <p class="me-sec-title">我的收藏</p>
+        <div id="me-fav-list" class="me-list"><p class="me-empty">暂无收藏</p></div>
+      </div>
+      <div class="me-section">
+        <p class="me-sec-title">搜索历史</p>
+        <div id="me-hist-list" class="me-list"><p class="me-empty">暂无记录</p></div>
+        <button id="me-clear-hist" class="btn-danger">清空历史</button>
+      </div>
+      <button id="me-logout" class="btn-outline">退出登录</button>
+    </div>
+  </div>
+
+  <!-- 天气地图弹窗 -->
+  <div id="map-modal" class="modal-overlay hidden">
+    <div class="modal-box map-modal-box">
+      <button id="map-close" class="modal-close">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <div id="map-container" style="width:100%;height:70vh;border-radius:12px;overflow:hidden;position:relative"></div>
+    </div>
+  </div>
+
+  <!-- 底部导航 -->
+  <nav class="tab-bar">
+    <button class="tab-btn active" data-tab="home">
+      <span class="tab-btn-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg></span>
+      <span class="tab-btn-label">天气</span>
+    </button>
+    <button class="tab-btn" data-tab="chat">
+      <span class="tab-btn-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span>
+      <span class="tab-btn-label">出行建议</span>
+    </button>
+    <button class="tab-btn" data-tab="guide">
+      <span class="tab-btn-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg></span>
+      <span class="tab-btn-label">城市指南</span>
+    </button>
+    <button class="tab-btn" data-tab="me">
+      <span class="tab-btn-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+      <span class="tab-btn-label">我的</span>
+    </button>
+  </nav>
 </div>
 
-<script type="module" src="js/main.js?v=4"></script>
+<script type="module" src="js/main.js?v=8"></script>
 </body>
 </html>
