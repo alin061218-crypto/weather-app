@@ -254,25 +254,23 @@ body{
 .chart-wrap canvas{width:100%;height:100%}
 .chart-tip{position:absolute;pointer-events:none;background:var(--surface-raised);border:1px solid var(--border-strong);color:var(--ink);padding:4px 10px;border-radius:var(--radius-sm);font-size:var(--text-xs);z-index:var(--z-dropdown);font-family:var(--font-mono);white-space:nowrap}
 
-/* --- 7 天预报 — 双点连线式温度条 --- */
+/* --- 7 天预报 — 左侧名称+图标，右侧温度 --- */
 .daily-list{display:flex;flex-direction:column;gap:1px}
 .day-row{
-  display:grid;grid-template-columns:38px 26px 1fr 38px;align-items:center;
+  display:flex;align-items:center;
   gap:var(--space-3);padding:10px var(--space-4);border-radius:var(--radius-md);
   transition:background var(--duration-fast) var(--ease-out);cursor:default;
 }
 .day-row:hover{background:var(--surface-glass)}
-.day-name{font-size:var(--text-sm);font-weight:500;color:var(--ink)}
-.day-icon-wrap{display:flex;align-items:center;justify-content:center;color:var(--ink-secondary)}
+.day-name{font-size:var(--text-sm);font-weight:500;color:var(--ink);width:38px;flex-shrink:0}
+.day-icon-wrap{display:flex;align-items:center;justify-content:center;color:var(--ink-secondary);flex-shrink:0}
 .day-icon-wrap svg{width:22px;height:22px}
-.day-temp-with-bar{display:flex;align-items:center;gap:10px}
-.day-temp-lo,.day-temp-hi{font-size:var(--text-sm);font-variant-numeric:tabular-nums;font-family:var(--font-mono);width:36px;flex-shrink:0}
-.day-temp-lo{color:var(--ink-muted);text-align:right}
-.day-temp-hi{color:var(--ink);font-weight:500;text-align:left}
-.day-temp-track{flex:1;height:4px;background:var(--surface-hover);border-radius:var(--radius-full);position:relative;overflow:visible;min-width:40px}
-.day-temp-dot{position:absolute;top:50%;transform:translate(-50%,-50%);width:8px;height:8px;border-radius:50%;background:oklch(0.55 0.10 170 / 0.85);border:2px solid var(--bg);z-index:1}
-.day-temp-line{position:absolute;top:0;bottom:0;border-radius:var(--radius-full);background:oklch(0.55 0.10 170 / 0.45)}
-.day-precip{font-size:var(--text-xs);color:oklch(0.65 0.08 230);text-align:center;font-variant-numeric:tabular-nums}
+.day-desc-text{font-size:var(--text-sm);color:var(--ink-secondary);flex:1;min-width:0}
+.day-temps-right{display:flex;align-items:baseline;gap:2px;flex-shrink:0;font-variant-numeric:tabular-nums;font-family:var(--font-mono)}
+.day-temp-hi{font-size:var(--text-sm);color:var(--ink);font-weight:500}
+.day-temp-sep{font-size:var(--text-xs);color:var(--ink-muted)}
+.day-temp-lo{font-size:var(--text-sm);color:var(--ink-muted)}
+.day-precip{font-size:var(--text-xs);color:oklch(0.65 0.08 230);margin-left:4px}
 
 /* --- 建议区域 --- */
 .advice-section{

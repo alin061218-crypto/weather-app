@@ -464,41 +464,27 @@ function renderWeather(loc, wx) {
     ).join('');
   }
 
-  // 7天预报 — 双点连线式温度条
+  // 7天预报 — 纯文字：温度在右侧，清爽无杂
   const dailyList = $('daily-list');
   if (dailyList && d?.time) {
-    const allTemps = [...(d.temperature_2m_max || []), ...(d.temperature_2m_min || [])];
-    const globalMin = Math.min(...allTemps);
-    const globalMax = Math.max(...allTemps);
-    const range = globalMax - globalMin || 1;
-
     dailyList.innerHTML = '';
     for (let i = 0; i < d.time.length; i++) {
       const lo = Math.round(d.temperature_2m_min[i]);
       const hi = Math.round(d.temperature_2m_max[i]);
       const precip = d.precipitation_probability_max?.[i] || 0;
 
-      // 低温/高温圆点在轨道上的位置（0%～100%）
-      const loPct = ((lo - globalMin) / range * 100).toFixed(1);
-      const hiPct = ((hi - globalMin) / range * 100).toFixed(1);
-      const lineLeft = Math.min(loPct, hiPct);
-      const lineWidth = Math.abs(hiPct - loPct);
-
       const dayDiv = document.createElement('div');
       dayDiv.className = 'day-row';
       dayDiv.innerHTML = `
         <span class="day-name">${F.day(d.time[i])}</span>
         <span class="day-icon-wrap">${weatherIcon(d.weathercode[i], true)}</span>
-        <div class="day-temp-with-bar">
-          <span class="day-temp-lo">${F.ftemp(lo, state.unit)}</span>
-          <div class="day-temp-track">
-            <div class="day-temp-line" style="left:${lineLeft}%;width:${Math.max(lineWidth, 2)}%"></div>
-            <div class="day-temp-dot" style="left:${loPct}%"></div>
-            <div class="day-temp-dot" style="left:${hiPct}%"></div>
-          </div>
+        <span class="day-desc-text">${DESC(d.weathercode[i])}</span>
+        <span class="day-temps-right">
           <span class="day-temp-hi">${F.ftemp(hi, state.unit)}</span>
-        </div>
-        <span class="day-precip">${precip > 0 ? precip + '%' : ''}</span>
+          <span class="day-temp-sep">/</span>
+          <span class="day-temp-lo">${F.ftemp(lo, state.unit)}</span>
+          ${precip > 0 ? `<span class="day-precip"> ${precip}%</span>` : ''}
+        </span>
       `;
       dailyList.appendChild(dayDiv);
     }
