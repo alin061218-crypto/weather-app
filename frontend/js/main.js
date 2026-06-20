@@ -474,11 +474,11 @@ function renderWeather(loc, wx) {
 
     dailyList.innerHTML = '';
     for (let i = 0; i < d.time.length; i++) {
-      const lo = d.temperature_2m_min[i];
-      const hi = d.temperature_2m_max[i];
+      const lo = Math.round(d.temperature_2m_min[i]);
+      const hi = Math.round(d.temperature_2m_max[i]);
       const precip = d.precipitation_probability_max?.[i] || 0;
       const barLeft = ((lo - globalMin) / range * 100).toFixed(0);
-      const barRight = ((globalMax - hi) / range * 100).toFixed(0);
+      const barWidth = ((hi - lo) / range * 100).toFixed(0);
 
       const dayDiv = document.createElement('div');
       dayDiv.className = 'day-row';
@@ -487,10 +487,10 @@ function renderWeather(loc, wx) {
         <span class="day-icon-wrap">${weatherIcon(d.weathercode[i], true)}</span>
         <div class="day-temp-range">
           <span class="day-temp-lo">${F.ftemp(lo, state.unit)}</span>
-          <div class="day-temp-bar"><div class="day-temp-fill" style="--bar-left:${barLeft}%;--bar-right:${barRight}%"></div></div>
+          <div class="day-temp-bar"><div class="day-temp-fill" style="left:${barLeft}%;width:${barWidth}%"></div></div>
           <span class="day-temp-hi">${F.ftemp(hi, state.unit)}</span>
         </div>
-        ${precip > 0 ? `<span class="day-precip">${precip}%</span>` : '<span class="day-precip"></span>'}
+        <span class="day-precip">${precip > 0 ? precip + '%' : ''}</span>
       `;
       dailyList.appendChild(dayDiv);
     }

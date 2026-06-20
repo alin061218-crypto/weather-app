@@ -478,23 +478,20 @@ body {
   align-items: center;
   justify-content: center;
   margin-bottom: var(--space-3);
-  height: 72px;
+  min-height: 80px;
 }
 
 .hero-icon svg {
-  width: 72px;
-  height: 72px;
-  stroke: var(--ink);
-  stroke-width: 1.5;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  fill: none;
+  width: 80px;
+  height: 80px;
+  color: var(--ink);
+  /* stroke 由内联 SVG 属性控制，不在这里覆盖 */
 }
 
 /* 温度 */
 .hero-temp {
   font-family: var(--font-display);
-  font-size: clamp(4rem, 14vw, 5.5rem);
+  font-size: 5rem;
   font-weight: 200;
   line-height: 1;
   color: var(--ink);
@@ -503,8 +500,12 @@ body {
   margin-bottom: var(--space-2);
 }
 
+@media (max-width: 480px) {
+  .hero-temp { font-size: 4rem; }
+}
+
 @media (max-width: 380px) {
-  .hero-temp { font-size: clamp(3rem, 12vw, 4rem); }
+  .hero-temp { font-size: 3.2rem; }
 }
 
 .hero-desc {
@@ -556,11 +557,8 @@ body {
 .stat-chip-icon svg {
   width: 18px;
   height: 18px;
-  stroke: currentColor;
-  stroke-width: 1.8;
-  fill: none;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  color: var(--ink-muted);
+  /* stroke 由内联 SVG 控制 */
 }
 
 .stat-chip-label {
@@ -666,11 +664,8 @@ body {
 .day-icon-wrap svg {
   width: 22px;
   height: 22px;
-  stroke: currentColor;
-  stroke-width: 1.5;
-  fill: none;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  color: var(--ink-secondary);
+  /* stroke 由内联 SVG 控制 */
 }
 
 .day-temp-range {
@@ -691,11 +686,13 @@ body {
 
 .day-temp-fill {
   position: absolute;
+  top: 0;
   height: 100%;
   border-radius: var(--radius-full);
-  background: linear-gradient(to right, oklch(0.65 0.12 200 / 0.6), oklch(0.68 0.14 50 / 0.7));
-  left: var(--bar-left, 20%);
-  right: var(--bar-right, 20%);
+  background: oklch(0.52 0.08 170 / 0.55);
+  left: 0;
+  width: 100%;
+  transition: left 0.3s var(--ease-out), width 0.3s var(--ease-out);
 }
 
 .day-temp-lo,
@@ -969,6 +966,7 @@ body {
   color: var(--ink);
 }
 
+/* --- 聊天列表（自定义滚动条） --- */
 .chat-list {
   flex: 1;
   display: flex;
@@ -978,6 +976,25 @@ body {
   max-height: 50vh;
   overflow-y: auto;
   scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+.chat-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.chat-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-list::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 4px;
+}
+
+.chat-list::-webkit-scrollbar-thumb:hover {
+  background: var(--ink-muted);
 }
 
 .chat-bubble {
