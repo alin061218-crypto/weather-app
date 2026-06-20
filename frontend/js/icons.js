@@ -65,83 +65,80 @@ icon.weather = {
   // ⛅ 多云 — 两朵云 + 微露太阳
   cloudy() {
     return wsvg(`
-      <circle cx="8" cy="8" r="3" fill="currentColor" stroke="none" opacity="0.12"/>
-      <circle cx="8" cy="8" r="2.8"/>
-      <path d="M8 3.5v1.5"/><path d="M8 14.5v1"/>
-      <path d="M18 13a3.5 3.5 0 11-1.5-6.3"/>
-      <path d="M12 16.5a4 4 0 019-1.5"/>
-      <path d="M16 20h7"/>
-      <path d="M14 17h7"/>
+      <circle cx="7" cy="8" r="3" fill="currentColor" stroke="none" opacity="0.12"/>
+      <circle cx="7" cy="8" r="2.8"/>
+      <path d="M7 3.5v1.5"/><path d="M7 14v1"/>
+      <path d="M18 12a3.5 3.5 0 11-1.5-6.3"/>
+      <path d="M11 16a4.5 4.5 0 1110-1.5"/>
+      <path d="M4 20h17"/>
+      <path d="M6 17h15"/>
     `);
   },
 
-  // ☁️ 阴天 — 一整片大厚云
+  // ☁️ 阴天 — 双层大云
   overcast() {
     return wsvg(`
-      <path d="M18 13a3.5 3.5 0 10-1.5-6.3"/>
-      <path d="M8 16a4.5 4.5 0 1111-2"/>
-      <path d="M12 19a4.5 4.5 0 1010-1.5"/>
-      <path d="M6 20h16"/>
-      <path d="M4 17h16"/>
+      <path d="M7 10a4.5 4.5 0 1110-1.5"/>
+      <path d="M10 12.5a4 4 0 108.5-1.5"/>
+      <path d="M4 14h16"/>
+      <path d="M14 16.5a4 4 0 107.5-1.5"/>
+      <path d="M3 20h18"/>
     `);
   },
 
-  // 🌫️ 雾 — 多层横线
+  // 🌫️ 雾 — 层叠横线 + 虚化圆
   fog() {
     return wsvg(`
-      <path d="M4 6h16"/>
-      <path d="M2 9.5h18"/>
-      <path d="M5 13h15"/>
-      <path d="M3 16.5h15"/>
-      <path d="M6 20h12"/>
+      <circle cx="7" cy="8" r="1.2" opacity="0.35" fill="currentColor" stroke="none"/>
+      <circle cx="16" cy="12" r="1.4" opacity="0.3" fill="currentColor" stroke="none"/>
+      <path d="M3 8h14"/>
+      <path d="M3 11.5h16"/>
+      <path d="M4 15h13"/>
+      <path d="M3 18.5h12"/>
     `);
   },
 
-  // 🌧️ 小雨 — 云 + 3条雨滴
+  // 🌧️ 毛毛雨 — 云 + 稀疏短雨滴
   rainLight() {
     return wsvg(`
-      <path d="M18 13a3.5 3.5 0 10-2-6.3"/>
-      <path d="M8 16a4.5 4.5 0 119.5-1.8"/>
-      <path d="M12 19a4 4 0 109-1.5"/>
-      <path d="M5 20h14"/>
-      <path d="M9 16v3"/><path d="M12 16.5v3"/><path d="M15 16v3"/>
+      <path d="M7 9a4.5 4.5 0 119.5-1.8"/>
+      <path d="M11 12a4 4 0 108.5-1.5"/>
+      <path d="M4 14h16"/>
+      <path d="M10 16v2"/>
+      <path d="M14 15v2"/>
     `);
   },
 
-  // 🌧️ 大雨 — 云 + 密集雨滴
+  // 🌧️ 大雨 — 云 + 密集长雨滴
   rainHeavy() {
     return wsvg(`
-      <path d="M18 13a3.5 3.5 0 10-2-6.3"/>
-      <path d="M8 16a4.5 4.5 0 119.5-1.8"/>
-      <path d="M12 19a4 4 0 109-1.5"/>
-      <path d="M4 20h16"/>
-      <path d="M7 16v4"/><path d="M10 16v4"/><path d="M13 16v4"/><path d="M16 16v4"/>
-      <path d="M8.5 20v2"/><path d="M11.5 20v2"/><path d="M14.5 20v2"/>
+      <path d="M7 9a4.5 4.5 0 119.5-1.8"/>
+      <path d="M11 12a4 4 0 108.5-1.5"/>
+      <path d="M3 14h18"/>
+      <path d="M8 16v4"/><path d="M11 16v4"/><path d="M14 16v4"/><path d="M17 16v4"/>
+      <path d="M9.5 20v2"/><path d="M12.5 20v2"/>
     `);
   },
 
-  // ❄️ 雪 — 云 + 雪花
+  // ❄️ 雪 — 云 + 点状雪花
   snow() {
     return wsvg(`
-      <path d="M18 13a3.5 3.5 0 10-2-6.3"/>
-      <path d="M8 16a4.5 4.5 0 119.5-1.8"/>
-      <path d="M12 19a4 4 0 109-1.5"/>
-      <path d="M5 20h14"/>
-      <circle cx="9" cy="17" r="1" fill="currentColor" stroke="none" opacity="0.5"/>
-      <circle cx="12" cy="18" r="1" fill="currentColor" stroke="none" opacity="0.5"/>
-      <circle cx="15" cy="17" r="1" fill="currentColor" stroke="none" opacity="0.5"/>
+      <path d="M7 10a4.5 4.5 0 1110-1.5"/>
+      <path d="M10 12.5a4 4 0 108.5-1.5"/>
+      <path d="M4 14h16"/>
+      <circle cx="8.5" cy="17" r="0.9" fill="currentColor" stroke="none" opacity="0.55"/>
+      <circle cx="12.5" cy="18.5" r="0.9" fill="currentColor" stroke="none" opacity="0.55"/>
+      <circle cx="16.5" cy="17" r="0.9" fill="currentColor" stroke="none" opacity="0.55"/>
     `);
   },
 
-  // ⛈️ 雷暴 — 暗云 + 闪电
+  // ⛈️ 雷暴 — 云 + 利落闪电折线
   storm() {
     return wsvg(`
-      <path d="M18 13a3.5 3.5 0 10-2-6.3"/>
-      <path d="M8 16a4.5 4.5 0 119.5-1.8"/>
-      <path d="M12 19a4 4 0 109-1.5"/>
-      <path d="M5 20h14"/>
-      <polyline points="13 15 10 19 13 19 10 23" fill="currentColor" stroke="none" opacity="0.2"/>
-      <polyline points="13 15 10 19 13 19 10 23"/>
+      <path d="M7 10a4.5 4.5 0 1110-1.5"/>
+      <path d="M10 12.5a4 4 0 108.5-1.5"/>
+      <path d="M4 14h16"/>
+      <polyline points="13 15 9.5 19.5 13 19.5 10 24"/>
     `);
   },
 };

@@ -183,7 +183,7 @@ class RainScene {
     for (let i = 0; i < N; i++) {
       const x = (Math.random() - 0.5) * 10, y = (Math.random() - 0.5) * Y_SPAN, z = (Math.random() - 0.5) * 4;
       dummy.position.set(x, y, z); dummy.updateMatrix(); this.instanced.setMatrixAt(i, dummy.matrix);
-      this.data.push({ y, sp: this.storm ? (1.2 + Math.random() * 2.5) : (0.5 + Math.random() * 1.2), x });
+      this.data.push({ y, sp: this.storm ? (0.8 + Math.random() * 1.5) : (0.3 + Math.random() * 0.7), x });
     }
     this.group.add(this.instanced);
     const cn = this.storm ? 3 : 2;
@@ -196,7 +196,7 @@ class RainScene {
         grp.add(b);
       }
       grp.position.set((Math.random() - 0.5) * 6, 2 + Math.random() * 2, -2);
-      grp.userData = { sp: 0.03 + Math.random() * 0.06 };
+      grp.userData = { sp: 0.01 + Math.random() * 0.03 };
       this.group.add(grp); this.darkClouds.push(grp);
     }
     this._addDust(25, '#a0b0c0', 0.18, 0.06);
@@ -218,7 +218,7 @@ class RainScene {
       const d = this.data[i];
       d.y -= d.sp * dt;
       if (d.y < -Y_SPAN / 2) { d.y = Y_SPAN / 2; d.x = (Math.random() - 0.5) * 10; }
-      d.x += 0.15 * dt; if (d.x > 5) d.x = -5;
+      d.x += 0.08 * dt; if (d.x > 5) d.x = -5;
       dummy.position.set(d.x, d.y, (Math.random() - 0.5) * 4); dummy.updateMatrix();
       this.instanced.setMatrixAt(i, dummy.matrix);
     }
@@ -414,7 +414,7 @@ export class Atmosphere {
 
   _loop() {
     requestAnimationFrame(() => this._loop());
-    const dt = Math.min(0.05, 0.016);
+    const dt = 0.016;
     const time = performance.now() * 0.001;
     this.ptr.lerp(this.ptrTgt, 0.06);
     if (!this.ptrOn) this.ptrTgt.set(9999, 9999);
