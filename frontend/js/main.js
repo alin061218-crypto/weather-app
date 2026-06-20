@@ -464,10 +464,9 @@ function renderWeather(loc, wx) {
     ).join('');
   }
 
-  // 7天预报（列表式新设计）
+  // 7天预报 — 双点连线式温度条
   const dailyList = $('daily-list');
   if (dailyList && d?.time) {
-    // 取本周所有温度的最大最小值
     const allTemps = [...(d.temperature_2m_max || []), ...(d.temperature_2m_min || [])];
     const globalMin = Math.min(...allTemps);
     const globalMax = Math.max(...allTemps);
@@ -478,18 +477,25 @@ function renderWeather(loc, wx) {
       const lo = Math.round(d.temperature_2m_min[i]);
       const hi = Math.round(d.temperature_2m_max[i]);
       const precip = d.precipitation_probability_max?.[i] || 0;
-      // 温度条：left=低温在全局范围的位置, right=高温在全局范围的位置
-      const barLeft = ((lo - globalMin) / range * 100).toFixed(1);
-      const barRight = (100 - ((hi - globalMin) / range * 100)).toFixed(1);
+
+      // 低温/高温圆点在轨道上的位置（0%～100%）
+      const loPct = ((lo - globalMin) / range * 100).toFixed(1);
+      const hiPct = ((hi - globalMin) / range * 100).toFixed(1);
+      const lineLeft = Math.min(loPct, hiPct);
+      const lineWidth = Math.abs(hiPct - loPct);
 
       const dayDiv = document.createElement('div');
       dayDiv.className = 'day-row';
       dayDiv.innerHTML = `
         <span class="day-name">${F.day(d.time[i])}</span>
         <span class="day-icon-wrap">${weatherIcon(d.weathercode[i], true)}</span>
-        <div class="day-temp-range">
+        <div class="day-temp-with-bar">
           <span class="day-temp-lo">${F.ftemp(lo, state.unit)}</span>
-          <div class="day-temp-bar"><div class="day-temp-fill" style="left:${barLeft}%;right:${barRight}%"></div></div>
+          <div class="day-temp-track">
+            <div class="day-temp-line" style="left:${lineLeft}%;width:${Math.max(lineWidth, 2)}%"></div>
+            <div class="day-temp-dot" style="left:${loPct}%"></div>
+            <div class="day-temp-dot" style="left:${hiPct}%"></div>
+          </div>
           <span class="day-temp-hi">${F.ftemp(hi, state.unit)}</span>
         </div>
         <span class="day-precip">${precip > 0 ? precip + '%' : ''}</span>
