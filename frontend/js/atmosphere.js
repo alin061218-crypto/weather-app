@@ -183,7 +183,7 @@ class RainScene {
     for (let i = 0; i < N; i++) {
       const x = (Math.random() - 0.5) * 10, y = (Math.random() - 0.5) * Y_SPAN, z = (Math.random() - 0.5) * 4;
       dummy.position.set(x, y, z); dummy.updateMatrix(); this.instanced.setMatrixAt(i, dummy.matrix);
-      this.data.push({ y, sp: this.storm ? (4 + Math.random() * 7) : (2 + Math.random() * 4), x });
+      this.data.push({ y, sp: this.storm ? (1.2 + Math.random() * 2.5) : (0.5 + Math.random() * 1.2), x });
     }
     this.group.add(this.instanced);
     const cn = this.storm ? 3 : 2;
