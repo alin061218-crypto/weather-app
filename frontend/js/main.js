@@ -460,13 +460,14 @@ function renderWeather(loc, wx) {
     if (h.visibility?.[0] != null) items.push([icon.stat.visibility(), '能见度', (h.visibility[0] / 1000).toFixed(1) + ' km']);
 
     statsEl.innerHTML = items.map(([ico, label, value]) =>
-      `<div class="stat-chip"><span class="stat-chip-icon">${ico}</span><div><span class="stat-chip-label">${label}</span><span class="stat-chip-value">${value}</span></div></div>`
+      `<div class="stat-chip"><span class="stat-chip-icon">${ico}</span><span class="stat-chip-value">${value}</span><span class="stat-chip-label">${label}</span></div>`
     ).join('');
   }
 
   // 7天预报（列表式新设计）
   const dailyList = $('daily-list');
   if (dailyList && d?.time) {
+    // 取本周所有温度的最大最小值
     const allTemps = [...(d.temperature_2m_max || []), ...(d.temperature_2m_min || [])];
     const globalMin = Math.min(...allTemps);
     const globalMax = Math.max(...allTemps);
@@ -477,8 +478,9 @@ function renderWeather(loc, wx) {
       const lo = Math.round(d.temperature_2m_min[i]);
       const hi = Math.round(d.temperature_2m_max[i]);
       const precip = d.precipitation_probability_max?.[i] || 0;
-      const barLeft = ((lo - globalMin) / range * 100).toFixed(0);
-      const barWidth = ((hi - lo) / range * 100).toFixed(0);
+      // 温度条：left=低温在全局范围的位置, right=高温在全局范围的位置
+      const barLeft = ((lo - globalMin) / range * 100).toFixed(1);
+      const barRight = (100 - ((hi - globalMin) / range * 100)).toFixed(1);
 
       const dayDiv = document.createElement('div');
       dayDiv.className = 'day-row';
@@ -487,7 +489,7 @@ function renderWeather(loc, wx) {
         <span class="day-icon-wrap">${weatherIcon(d.weathercode[i], true)}</span>
         <div class="day-temp-range">
           <span class="day-temp-lo">${F.ftemp(lo, state.unit)}</span>
-          <div class="day-temp-bar"><div class="day-temp-fill" style="left:${barLeft}%;width:${barWidth}%"></div></div>
+          <div class="day-temp-bar"><div class="day-temp-fill" style="left:${barLeft}%;right:${barRight}%"></div></div>
           <span class="day-temp-hi">${F.ftemp(hi, state.unit)}</span>
         </div>
         <span class="day-precip">${precip > 0 ? precip + '%' : ''}</span>

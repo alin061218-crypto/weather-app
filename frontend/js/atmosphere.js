@@ -249,41 +249,69 @@ class CloudScene {
   }
 
   _build() {
-    // 几朵大云
+    // 几朵大云 —— 用扁平椭圆形做「棉花糖」自然云
     const cloudDefs = [
-      { x: -2, y: 1.6, z: -2, scale: 0.9 },
-      { x: 1.8, y: 1.2, z: -2.5, scale: 1.1 },
-      { x: -0.5, y: 2.0, z: -1.8, scale: 0.75 },
-      { x: 2.5, y: 0.7, z: -3, scale: 0.85 },
-      { x: -3, y: 0.8, z: -3, scale: 0.7 },
+      { x: -2.2, y: 1.5, z: -2.2, w: 0.9 },
+      { x: 1.8, y: 1.3, z: -2.5, w: 1.1 },
+      { x: -0.3, y: 1.9, z: -1.8, w: 0.7 },
+      { x: 2.6, y: 0.8, z: -3.0, w: 0.8 },
+      { x: -3.0, y: 0.9, z: -3.0, w: 0.65 },
     ];
 
     for (const def of cloudDefs) {
       const cloudGroup = new THREE.Group();
-      const blobCount = 5 + Math.floor(Math.random() * 6);
+      // 用扁平椭圆体（scale Y < scale X/Z）叠出像棉花糖的云
+      const baseR = 0.45 * def.w;
+      const baseY = 0.25 * def.w;
+      const blobCount = 4 + Math.floor(Math.random() * 4);
+
       for (let j = 0; j < blobCount; j++) {
-        const r = 0.2 + Math.random() * 0.5;
-        const g = new THREE.SphereGeometry(r, 12, 10);
-        const m = new THREE.MeshBasicMaterial({
-          color: '#d8dce3',
+        const rx = baseR * (0.5 + Math.random() * 1.3);
+        const ry = baseY * (0.5 + Math.random() * 1.0);
+        const rz = rx * (0.7 + Math.random() * 0.6);
+        const geo = new THREE.SphereGeometry(1, 14, 10);
+        geo.scale(rx, ry, rz);
+        const mat = new THREE.MeshBasicMaterial({
+          color: '#eef0f4',
           transparent: true,
-          opacity: 0.65,
+          opacity: 0.58,
           depthWrite: false,
         });
-        const blob = new THREE.Mesh(g, m);
+        const blob = new THREE.Mesh(geo, mat);
+        const spreadX = def.w * 0.9;
+        const spreadY = def.w * 0.12;
         blob.position.set(
-          (Math.random() - 0.5) * 1.2,
-          (Math.random() - 0.5) * 0.5,
-          (Math.random() - 0.5) * 0.3,
+          (Math.random() - 0.5) * spreadX * 2,
+          (Math.random() - 0.5) * spreadY * 2 - def.w * 0.05,
+          (Math.random() - 0.5) * def.w * 0.4,
         );
         cloudGroup.add(blob);
       }
+
+      // 底部更平（下半部加一些压扁的椭圆）
+      for (let j = 0; j < 3; j++) {
+        const geo = new THREE.SphereGeometry(1, 10, 8);
+        geo.scale(baseR * 1.1, baseY * 0.5, baseR * 0.8);
+        const mat = new THREE.MeshBasicMaterial({
+          color: '#e8ecf1',
+          transparent: true,
+          opacity: 0.5,
+          depthWrite: false,
+        });
+        const blob = new THREE.Mesh(geo, mat);
+        blob.position.set(
+          (Math.random() - 0.5) * def.w * 1.2,
+          -def.w * 0.15 - Math.random() * 0.15,
+          (Math.random() - 0.5) * def.w * 0.3,
+        );
+        cloudGroup.add(blob);
+      }
+
       cloudGroup.position.set(def.x, def.y, def.z);
-      cloudGroup.scale.setScalar(def.scale);
       cloudGroup.userData = {
         baseX: def.x,
         baseY: def.y,
-        speed: 0.08 + Math.random() * 0.18,
+        speed: 0.06 + Math.random() * 0.14,
         phase: Math.random() * Math.PI * 2,
       };
       this.group.add(cloudGroup);
