@@ -278,6 +278,16 @@ app.get('/api/me', authMiddleware, (req, res) => {
 const ADMIN_CREDENTIALS = { username: 'admin', password: 'weather2024' };
 const ADMIN_TOKENS = new Map();
 
+function adminAuth(req, res, next) {
+    const authorization = req.get('Authorization') || '';
+    const match = authorization.match(/^Bearer\s+(.+)$/i);
+    const token = match?.[1];
+    if (!token || !ADMIN_TOKENS.has(token)) {
+        return res.status(401).json({ error: '未授权' });
+    }
+    next();
+}
+
 app.post('/api/admin-login', (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) return res.status(400).json({ error: '用户名密码不能为空' });
@@ -346,8 +356,12 @@ ${history.slice(-30).reverse().map(h => `<tr>
 </tr>`).join('') || '<tr><td colspan=6>暂无记录</td></tr>'}</table>
 
 <script>
+const adminToken = new URLSearchParams(location.search).get('token') || '';
+if (adminToken) history.replaceState(null, '', '/admin');
 async function api(url, method, body) {
-    const r = await fetch(url, {method, headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});
+    const headers = {'Content-Type':'application/json'};
+    if (adminToken) headers.Authorization = 'Bearer ' + adminToken;
+    const r = await fetch(url, {method, headers, body:body?JSON.stringify(body):undefined});
     return r.json();
 }
 async function delUser(id) { if(confirm('确认删除此用户及相关数据?')) { await api('/admin/users/'+id,'DELETE'); location.reload(); } }
@@ -383,7 +397,7 @@ if(d.token){location.href='/admin?token='+d.token}else{document.getElementById('
 });
 
 // Admin API: 删除用户（级联删除收藏和历史）
-app.delete('/admin/users/:id', (req, res) => {
+app.delete('/admin/users/:id', adminAuth, (req, res) => {
     stmt.favDeleteByUser.run(req.params.id);
     stmt.histDeleteByUser.run(req.params.id);
     stmt.userDelete.run(req.params.id);
@@ -391,29 +405,36 @@ app.delete('/admin/users/:id', (req, res) => {
 });
 
 // Admin API: 修改用户
-app.put('/admin/users/:id', (req, res) => {
-    if (req.body.username !== undefined) {
-        const existing = stmt.userByUsername.get(req.body.username);
+app.put('/admin/users/:id', adminAuth, (req, res) => {
+    const username = req.body?.username;
+    if (username !== undefined) {
+        if (typeof username !== 'string' || username.length < 2 || username.length > 30) {
+            return res.status(400).json({ error: '用户名2-30位' });
+        }
+        if (!/^[a-zA-Z0-9_一-龥]+$/.test(username)) {
+            return res.status(400).json({ error: '用户名只能包含中英文、数字和下划线' });
+        }
+        const existing = stmt.userByUsername.get(username);
         if (existing && existing.id !== req.params.id) return res.json({ error: '用户名重复' });
-        stmt.userUpdateName.run(req.body.username, req.params.id);
+        stmt.userUpdateName.run(username, req.params.id);
     }
     res.json({ success: true });
 });
 
 // Admin API: 删除收藏
-app.delete('/admin/favorites/:id', (req, res) => {
+app.delete('/admin/favorites/:id', adminAuth, (req, res) => {
     stmt.favDeleteById.run(req.params.id);
     res.json({ success: true });
 });
 
 // Admin API: 删除历史
-app.delete('/admin/history/:id', (req, res) => {
+app.delete('/admin/history/:id', adminAuth, (req, res) => {
     stmt.histDeleteId.run(req.params.id);
     res.json({ success: true });
 });
 
 // Admin API: 清空缓存
-app.post('/admin/clear-cache', (req, res) => {
+app.post('/admin/clear-cache', adminAuth, (req, res) => {
     stmt.cacheClear.run();
     res.json({ success: true });
 });
