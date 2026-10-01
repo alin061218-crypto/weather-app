@@ -2,6 +2,8 @@
 // Express + JWT + SQLite (better-sqlite3)
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const { rateLimit } = require('express-rate-limit');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
@@ -10,10 +12,50 @@ const Database = require('better-sqlite3');
 const path = require('path');
 
 const app = express();
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_ISSUER = 'weather-app';
 const JWT_AUDIENCE = 'weather-frontend';
+
+const allowedOrigins = new Set([
+    'https://weather.alin061218.online',
+    'http://localhost:3001',
+    'http://127.0.0.1:3001',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://localhost:5173',
+    'http://127.0.0.1:5173'
+]);
+
+const corsOptions = {
+    origin(origin, callback) {
+        callback(null, !origin || allowedOrigins.has(origin));
+    },
+    credentials: true
+};
+
+const createAuthRateLimit = () => rateLimit({
+    windowMs: 60 * 1000,
+    limit: 10,
+    standardHeaders: 'draft-8',
+    legacyHeaders: false,
+    message: { error: '请求过于频繁，请稍后再试' }
+});
+
+const cspDirectives = {
+    defaultSrc: ["'self'"],
+    baseUri: ["'self'"],
+    objectSrc: ["'none'"],
+    frameAncestors: ["'self'"],
+    scriptSrc: ["'self'", "'unsafe-inline'"],
+    styleSrc: ["'self'", "'unsafe-inline'"],
+    imgSrc: ["'self'", 'data:', 'https:'],
+    connectSrc: ["'self'", 'https:'],
+    frameSrc: ["'self'", 'https://embed.windy.com'],
+    upgradeInsecureRequests: process.env.NODE_ENV === 'production' ? [] : null
+};
+
 if (typeof JWT_SECRET !== 'string' || JWT_SECRET.length < 32) {
     console.error('JWT_SECRET must be set and at least 32 characters long');
     process.exit(1);
@@ -124,8 +166,12 @@ const deleteHistoryRows = db.transaction(rows => {
 });
 
 // ===== 中间件 =====
-app.use(cors());
-app.use(express.json());
+app.use(helmet({
+    contentSecurityPolicy: { directives: cspDirectives },
+    referrerPolicy: { policy: 'no-referrer' }
+}));
+app.use('/api', cors(corsOptions));
+app.use(express.json({ limit: '32kb' }));
 app.use(express.static(path.join(__dirname, 'frontend'), { dotfiles: 'deny' }));
 
 // ===== JWT 认证中间件 =====
@@ -148,7 +194,7 @@ function authMiddleware(req, res, next) {
 }
 
 // ===== 1. 用户注册 =====
-app.post('/api/register', async (req, res) => {
+app.post('/api/register', createAuthRateLimit(), async (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) return res.status(400).json({ error: '用户名和密码不能为空' });
     if (typeof username !== 'string' || typeof password !== 'string') return res.status(400).json({ error: '格式错误' });
@@ -171,7 +217,7 @@ app.post('/api/register', async (req, res) => {
 });
 
 // ===== 2. 用户登录 =====
-app.post('/api/login', async (req, res) => {
+app.post('/api/login', createAuthRateLimit(), async (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) return res.status(400).json({ error: '用户名密码不能为空' });
     if (typeof username !== 'string' || typeof password !== 'string') return res.status(400).json({ error: '格式错误' });
@@ -355,17 +401,32 @@ function isAdminTokenValid(token) {
     return true;
 }
 
-function adminAuth(req, res, next) {
+function getCookie(req, name) {
+    const prefix = `${name}=`;
+    const cookie = (req.get('Cookie') || '').split(';').map(part => part.trim()).find(part => part.startsWith(prefix));
+    if (!cookie) return undefined;
+    try {
+        return decodeURIComponent(cookie.slice(prefix.length));
+    } catch {
+        return undefined;
+    }
+}
+
+function getAdminToken(req) {
     const authorization = req.get('Authorization') || '';
     const match = authorization.match(/^Bearer\s+(.+)$/i);
-    const token = match?.[1];
+    return match?.[1] || getCookie(req, 'admin_token');
+}
+
+function adminAuth(req, res, next) {
+    const token = getAdminToken(req);
     if (!token || !isAdminTokenValid(token)) {
         return res.status(401).json({ error: '未授权' });
     }
     next();
 }
 
-app.post('/api/admin-login', async (req, res) => {
+app.post('/api/admin-login', createAuthRateLimit(), async (req, res) => {
     const { username, password } = req.body;
     if (typeof username !== 'string' || typeof password !== 'string' || !username || !password) {
         return res.status(400).json({ error: '用户名密码不能为空' });
@@ -376,6 +437,13 @@ app.post('/api/admin-login', async (req, res) => {
     if (usernameMatches && passwordMatches) {
         const token = crypto.randomBytes(32).toString('hex');
         ADMIN_TOKENS.set(token, Date.now() + ADMIN_TOKEN_TTL_MS);
+        res.cookie('admin_token', token, {
+            httpOnly: true,
+            sameSite: 'strict',
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: ADMIN_TOKEN_TTL_MS,
+            path: '/admin'
+        });
         return res.json({ token });
     }
     res.status(401).json({ error: '用户名或密码错误' });
@@ -412,13 +480,10 @@ input[type=text]{background:rgba(255,255,255,.08);border:1px solid #444;color:#f
 <h2>📋 历史记录</h2>
 <table><thead><tr><th>ID</th><th>城市</th><th>天气</th><th>用户</th><th>时间</th><th>操作</th></tr></thead><tbody id="history"></tbody></table>
 <script>
-const adminToken = new URLSearchParams(location.search).get('token') || '';
-if (adminToken) history.replaceState(null, '', '/admin');
-const authHeaders = {'Authorization': 'Bearer ' + adminToken};
 const $ = id => document.getElementById(id);
 function setError(message) { $('error').textContent = message || ''; }
 async function api(url, method, body) {
-    const options = {method, headers: {...authHeaders}};
+    const options = {method, credentials: 'same-origin', headers: {}};
     if (body !== undefined) {
         options.headers['Content-Type'] = 'application/json';
         options.body = JSON.stringify(body);
@@ -550,7 +615,8 @@ app.get('/admin/api/overview', adminAuth, (req, res) => {
 });
 
 app.get('/admin', (req, res) => {
-    if (req.query.token && isAdminTokenValid(req.query.token)) {
+    if (req.query.token) return res.redirect('/admin');
+    if (isAdminTokenValid(getAdminToken(req))) {
         return sendAdminPage(res);
     }
     return res.send(`<!DOCTYPE html><html lang="zh"><head><meta charset="UTF-8"><title>后台登录</title>
@@ -567,7 +633,7 @@ document.getElementById('loginForm').addEventListener('submit',async(e)=>{e.prev
 const u=document.querySelector('[name=username]').value,p=document.querySelector('[name=password]').value;
 const r=await fetch('/api/admin-login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
 const d=await r.json();
-if(d.token){location.href='/admin?token='+d.token}else{document.getElementById('errMsg').textContent=d.error}
+if(r.ok){location.href='/admin'}else{document.getElementById('errMsg').textContent=d.error}
 });
 </script></body></html>`);
 });
