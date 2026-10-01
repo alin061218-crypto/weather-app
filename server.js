@@ -4,13 +4,30 @@ const express = require('express');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const fs = require('fs');
 const Database = require('better-sqlite3');
 const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const JWT_SECRET = process.env.JWT_SECRET || 'weather_app_secret_key_2024';
+const JWT_SECRET = process.env.JWT_SECRET;
+if (typeof JWT_SECRET !== 'string' || JWT_SECRET.length < 32) {
+    console.error('JWT_SECRET must be set and at least 32 characters long');
+    process.exit(1);
+}
+
+const ADMIN_USER = process.env.ADMIN_USER;
+const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH;
+if (!ADMIN_USER || !ADMIN_PASSWORD_HASH) {
+    console.error('ADMIN_USER and ADMIN_PASSWORD_HASH must be set');
+    process.exit(1);
+}
+if (!/^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/.test(ADMIN_PASSWORD_HASH)) {
+    console.error('ADMIN_PASSWORD_HASH must be a valid bcrypt hash');
+    process.exit(1);
+}
+
 // Railway Volume 持久化路径（容器重启后数据不丢失）
 // Railway 卷挂载到 /data，本地开发用 ./data/
 const DB_ROOT = fs.existsSync('/data') ? '/data' : path.join(__dirname, 'data');
@@ -275,25 +292,46 @@ app.get('/api/me', authMiddleware, (req, res) => {
 });
 
 // ===== 7. 数据后台管理 =====
-const ADMIN_CREDENTIALS = { username: 'admin', password: 'weather2024' };
+const ADMIN_CREDENTIALS = { username: ADMIN_USER, passwordHash: ADMIN_PASSWORD_HASH };
 const ADMIN_TOKENS = new Map();
+const ADMIN_TOKEN_TTL_MS = 60 * 60 * 1000;
+
+function constantTimeEqual(left, right) {
+    const leftBuffer = Buffer.from(left);
+    const rightBuffer = Buffer.from(right);
+    return leftBuffer.length === rightBuffer.length && crypto.timingSafeEqual(leftBuffer, rightBuffer);
+}
+
+function isAdminTokenValid(token) {
+    const expiresAt = ADMIN_TOKENS.get(token);
+    if (!expiresAt || expiresAt <= Date.now()) {
+        ADMIN_TOKENS.delete(token);
+        return false;
+    }
+    return true;
+}
 
 function adminAuth(req, res, next) {
     const authorization = req.get('Authorization') || '';
     const match = authorization.match(/^Bearer\s+(.+)$/i);
     const token = match?.[1];
-    if (!token || !ADMIN_TOKENS.has(token)) {
+    if (!token || !isAdminTokenValid(token)) {
         return res.status(401).json({ error: '未授权' });
     }
     next();
 }
 
-app.post('/api/admin-login', (req, res) => {
+app.post('/api/admin-login', async (req, res) => {
     const { username, password } = req.body;
-    if (!username || !password) return res.status(400).json({ error: '用户名密码不能为空' });
-    if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
-        const token = 'admin_' + Date.now() + '_' + Math.random().toString(36).slice(2);
-        ADMIN_TOKENS.set(token, Date.now());
+    if (typeof username !== 'string' || typeof password !== 'string' || !username || !password) {
+        return res.status(400).json({ error: '用户名密码不能为空' });
+    }
+    const usernameMatches = constantTimeEqual(username, ADMIN_CREDENTIALS.username);
+    const candidateHash = await bcrypt.hash(password, ADMIN_CREDENTIALS.passwordHash.slice(0, 29));
+    const passwordMatches = constantTimeEqual(candidateHash, ADMIN_CREDENTIALS.passwordHash);
+    if (usernameMatches && passwordMatches) {
+        const token = crypto.randomBytes(32).toString('hex');
+        ADMIN_TOKENS.set(token, Date.now() + ADMIN_TOKEN_TTL_MS);
         return res.json({ token });
     }
     res.status(401).json({ error: '用户名或密码错误' });
@@ -374,7 +412,7 @@ async function clearCache() { if(confirm('确认清空所有天气缓存?')) { a
 }
 
 app.get('/admin', (req, res) => {
-    if (req.query.token && ADMIN_TOKENS.has(req.query.token)) {
+    if (req.query.token && isAdminTokenValid(req.query.token)) {
         return sendAdminPage(res);
     }
     return res.send(`<!DOCTYPE html><html lang="zh"><head><meta charset="UTF-8"><title>后台登录</title>
