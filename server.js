@@ -662,7 +662,8 @@ app.get('/api/image', async (req, res) => {
 app.use((err, req, res, next) => {
     console.error(err?.stack || err);
     if (res.headersSent) return next(err);
-    res.status(500).json({ error: '服务器内部错误' });
+    const status = err?.status || err?.statusCode || 500;
+    res.status(status).json({ error: status >= 500 ? '服务器内部错误' : (err?.message || '请求无效') });
 });
 
 // ===== 启动服务器 =====
