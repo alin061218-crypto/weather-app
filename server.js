@@ -81,7 +81,7 @@ const stmt = {
   // users
   userByUsername:  db.prepare('SELECT * FROM users WHERE username = ?'),
   userInsert:      db.prepare('INSERT INTO users (id, username, password, createdAt) VALUES (?, ?, ?, ?)'),
-  userAll:         db.prepare('SELECT * FROM users ORDER BY createdAt DESC'),
+  userAll:         db.prepare('SELECT id, username, createdAt FROM users ORDER BY createdAt DESC'),
   userUpdateName:  db.prepare('UPDATE users SET username = ? WHERE id = ?'),
   userDelete:      db.prepare('DELETE FROM users WHERE id = ?'),
 
@@ -337,13 +337,18 @@ app.post('/api/admin-login', async (req, res) => {
     res.status(401).json({ error: '用户名或密码错误' });
 });
 
-// Admin 后台页面
-function sendAdminPage(res) {
-    const users = stmt.userAll.all();
-    const favs = stmt.favAll.all();
-    const history = stmt.histAll.all();
-    const cacheCount = stmt.cacheCount.get().n;
+function esc(value) {
+    return String(value ?? '').replace(/[&<>"']/g, char => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    }[char]));
+}
 
+// Admin 后台页面只返回固定骨架，所有数据库值由客户端以 textContent 渲染。
+function sendAdminPage(res) {
     const html = `<!DOCTYPE html><html lang="zh"><head><meta charset="UTF-8"><title>数据后台管理</title>
 <style>body{font-family:system-ui,sans-serif;background:#1a1a2e;color:#e0e0e0;padding:20px;max-width:1000px;margin:0 auto}
 h2{color:#e8b86d;margin-top:30px;border-bottom:1px solid #333;padding-bottom:8px}
@@ -355,61 +360,160 @@ tr:hover{background:rgba(255,255,255,.04)}
 .stat-num{font-size:28px;font-weight:700;color:#e8b86d}.stat-label{font-size:11px;color:#888;margin-top:4px}
 button{padding:4px 10px;border-radius:6px;border:none;cursor:pointer;font-size:12px;margin:0 2px}
 .btn-del{background:#c0392b;color:#fff}.btn-del:hover{background:#e74c3c}
-.btn-edit{background:#2980b9;color:#fff}.btn-save{background:#27ae60;color:#fff}
 input[type=text]{background:rgba(255,255,255,.08);border:1px solid #444;color:#fff;padding:4px 8px;border-radius:4px;font-size:12px;width:80px}
-.refresh{color:#81d4fa;font-size:12px;float:right}</style></head><body>
+.error{color:#e09090;font-size:13px;margin:8px 0}</style></head><body>
 <h1>📊 数据后台管理 (SQLite)</h1>
-<button onclick="clearCache()" style="background:#e8b86d;color:#1a1a2e;font-weight:600;padding:8px 16px">清空天气缓存</button>
+<button id="clear-cache" type="button" style="background:#e8b86d;color:#1a1a2e;font-weight:600;padding:8px 16px">清空天气缓存</button>
+<p id="error" class="error" role="alert"></p>
 <div>
-<div class="stat"><div class="stat-num">${users.length}</div><div class="stat-label">注册用户</div></div>
-<div class="stat"><div class="stat-num">${favs.length}</div><div class="stat-label">收藏记录</div></div>
-<div class="stat"><div class="stat-num">${history.length}</div><div class="stat-label">查询历史</div></div>
-<div class="stat"><div class="stat-num">${cacheCount}</div><div class="stat-label">天气缓存</div></div>
+<div class="stat"><div id="user-count" class="stat-num">0</div><div class="stat-label">注册用户</div></div>
+<div class="stat"><div id="favorite-count" class="stat-num">0</div><div class="stat-label">收藏记录</div></div>
+<div class="stat"><div id="history-count" class="stat-num">0</div><div class="stat-label">查询历史</div></div>
+<div class="stat"><div id="cache-count" class="stat-num">0</div><div class="stat-label">天气缓存</div></div>
 </div>
 <h2>👥 用户管理</h2>
-<table><tr><th>ID</th><th>用户名</th><th>密码(哈希)</th><th>注册时间</th><th>操作</th></tr>
-${users.map(u => `<tr>
-<td>${u.id.slice(-6)}</td>
-<td><input type="text" value="${u.username}" onchange="updateUser('${u.id}','username',this.value)" style="width:100px"></td>
-<td style="font-size:10px;max-width:120px;overflow:hidden">${u.password}</td>
-<td>${new Date(u.createdAt).toLocaleString()}</td>
-<td><button class="btn-del" onclick="delUser('${u.id}')">删除</button></td>
-</tr>`).join('') || '<tr><td colspan=5>暂无用户</td></tr>'}</table>
-
+<table><thead><tr><th>ID</th><th>用户名</th><th>注册时间</th><th>操作</th></tr></thead><tbody id="users"></tbody></table>
 <h2>⭐ 收藏管理</h2>
-<table><tr><th>ID</th><th>城市</th><th>省份</th><th>用户ID</th><th>时间</th><th>操作</th></tr>
-${favs.map(f => `<tr>
-<td>${f.id.slice(-6)}</td>
-<td>${f.name}</td><td>${f.admin1||''}</td><td>${f.userId.slice(-6)}</td>
-<td>${new Date(f.createdAt).toLocaleString()}</td>
-<td><button class="btn-del" onclick="delFav('${f.id}')">删除</button></td>
-</tr>`).join('') || '<tr><td colspan=6>暂无收藏</td></tr>'}</table>
-
+<table><thead><tr><th>ID</th><th>城市</th><th>省份</th><th>用户ID</th><th>时间</th><th>操作</th></tr></thead><tbody id="favorites"></tbody></table>
 <h2>📋 历史记录</h2>
-<table><tr><th>ID</th><th>城市</th><th>天气</th><th>用户</th><th>时间</th><th>操作</th></tr>
-${history.slice(-30).reverse().map(h => `<tr>
-<td>${h.id.slice(-6)}</td><td>${h.city}</td><td>${(h.weather||'').substring(0,20)}</td>
-<td>${(h.userId||'').slice(-6)}</td><td>${new Date(h.time).toLocaleString()}</td>
-<td><button class="btn-del" onclick="delHist('${h.id}')">删除</button></td>
-</tr>`).join('') || '<tr><td colspan=6>暂无记录</td></tr>'}</table>
-
+<table><thead><tr><th>ID</th><th>城市</th><th>天气</th><th>用户</th><th>时间</th><th>操作</th></tr></thead><tbody id="history"></tbody></table>
 <script>
 const adminToken = new URLSearchParams(location.search).get('token') || '';
 if (adminToken) history.replaceState(null, '', '/admin');
+const authHeaders = {'Authorization': 'Bearer ' + adminToken};
+const $ = id => document.getElementById(id);
+function setError(message) { $('error').textContent = message || ''; }
 async function api(url, method, body) {
-    const headers = {'Content-Type':'application/json'};
-    if (adminToken) headers.Authorization = 'Bearer ' + adminToken;
-    const r = await fetch(url, {method, headers, body:body?JSON.stringify(body):undefined});
-    return r.json();
+    const options = {method, headers: {...authHeaders}};
+    if (body !== undefined) {
+        options.headers['Content-Type'] = 'application/json';
+        options.body = JSON.stringify(body);
+    }
+    const response = await fetch(url, options);
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || '请求失败');
+    return data;
 }
-async function delUser(id) { if(confirm('确认删除此用户及相关数据?')) { await api('/admin/users/'+id,'DELETE'); location.reload(); } }
-async function updateUser(id,field,val) { await api('/admin/users/'+id,'PUT',{[field]:val}); }
-async function delFav(id) { if(confirm('确认删除?')) { await api('/admin/favorites/'+id,'DELETE'); location.reload(); } }
-async function delHist(id) { if(confirm('确认删除?')) { await api('/admin/history/'+id,'DELETE'); location.reload(); } }
-async function clearCache() { if(confirm('确认清空所有天气缓存?')) { await api('/admin/clear-cache','POST'); location.reload(); } }
+function addTextCell(row, value) {
+    const cell = document.createElement('td');
+    cell.textContent = value == null ? '' : String(value);
+    row.appendChild(cell);
+    return cell;
+}
+function addActionCell(row, label, handler) {
+    const cell = document.createElement('td');
+    const button = document.createElement('button');
+    button.className = 'btn-del';
+    button.type = 'button';
+    button.textContent = label;
+    button.addEventListener('click', handler);
+    cell.appendChild(button);
+    row.appendChild(cell);
+}
+function showEmpty(tbody, colspan, message) {
+    const row = document.createElement('tr');
+    const cell = document.createElement('td');
+    cell.colSpan = colspan;
+    cell.textContent = message;
+    row.appendChild(cell);
+    tbody.appendChild(row);
+}
+function renderUsers(users) {
+    const tbody = $('users');
+    tbody.replaceChildren();
+    if (!users.length) return showEmpty(tbody, 4, '暂无用户');
+    users.forEach(user => {
+        const row = document.createElement('tr');
+        addTextCell(row, String(user.id).slice(-6));
+        const nameCell = document.createElement('td');
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = user.username || '';
+        input.addEventListener('change', async () => {
+            try { await api('/admin/users/' + encodeURIComponent(user.id), 'PUT', {username: input.value}); await loadOverview(); }
+            catch (error) { setError(error.message); }
+        });
+        nameCell.appendChild(input);
+        row.appendChild(nameCell);
+        addTextCell(row, new Date(user.createdAt).toLocaleString());
+        addActionCell(row, '删除', async () => {
+            if (!confirm('确认删除此用户及相关数据?')) return;
+            try { await api('/admin/users/' + encodeURIComponent(user.id), 'DELETE'); await loadOverview(); }
+            catch (error) { setError(error.message); }
+        });
+        tbody.appendChild(row);
+    });
+}
+function renderFavorites(favorites) {
+    const tbody = $('favorites');
+    tbody.replaceChildren();
+    if (!favorites.length) return showEmpty(tbody, 6, '暂无收藏');
+    favorites.forEach(favorite => {
+        const row = document.createElement('tr');
+        addTextCell(row, String(favorite.id).slice(-6));
+        addTextCell(row, favorite.name);
+        addTextCell(row, favorite.admin1 || '');
+        addTextCell(row, String(favorite.userId).slice(-6));
+        addTextCell(row, new Date(favorite.createdAt).toLocaleString());
+        addActionCell(row, '删除', async () => {
+            if (!confirm('确认删除?')) return;
+            try { await api('/admin/favorites/' + encodeURIComponent(favorite.id), 'DELETE'); await loadOverview(); }
+            catch (error) { setError(error.message); }
+        });
+        tbody.appendChild(row);
+    });
+}
+function renderHistory(history) {
+    const tbody = $('history');
+    tbody.replaceChildren();
+    const rows = history.slice(-30).reverse();
+    if (!rows.length) return showEmpty(tbody, 6, '暂无记录');
+    rows.forEach(item => {
+        const row = document.createElement('tr');
+        addTextCell(row, String(item.id).slice(-6));
+        addTextCell(row, item.city);
+        addTextCell(row, String(item.weather || '').substring(0, 20));
+        addTextCell(row, String(item.userId || '').slice(-6));
+        addTextCell(row, new Date(item.time).toLocaleString());
+        addActionCell(row, '删除', async () => {
+            if (!confirm('确认删除?')) return;
+            try { await api('/admin/history/' + encodeURIComponent(item.id), 'DELETE'); await loadOverview(); }
+            catch (error) { setError(error.message); }
+        });
+        tbody.appendChild(row);
+    });
+}
+async function loadOverview() {
+    try {
+        setError('');
+        const data = await api('/admin/api/overview', 'GET');
+        $('user-count').textContent = data.users.length;
+        $('favorite-count').textContent = data.favorites.length;
+        $('history-count').textContent = data.history.length;
+        $('cache-count').textContent = data.cacheCount;
+        renderUsers(data.users);
+        renderFavorites(data.favorites);
+        renderHistory(data.history);
+    } catch (error) { setError(error.message); }
+}
+$('clear-cache').addEventListener('click', async () => {
+    if (!confirm('确认清空所有天气缓存?')) return;
+    try { await api('/admin/clear-cache', 'POST'); await loadOverview(); }
+    catch (error) { setError(error.message); }
+});
+loadOverview();
 </script></body></html>`;
     res.send(html);
 }
+
+app.get('/admin/api/overview', adminAuth, (req, res) => {
+    res.json({
+        users: stmt.userAll.all(),
+        favorites: stmt.favAll.all(),
+        history: stmt.histAll.all(),
+        cacheCount: stmt.cacheCount.get().n
+    });
+});
 
 app.get('/admin', (req, res) => {
     if (req.query.token && isAdminTokenValid(req.query.token)) {
