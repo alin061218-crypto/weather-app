@@ -72,7 +72,8 @@ PUT /admin/users/1790858973969 {"username":"<img src=x>"} -> 400 {"error":"用�
 - `ADMIN_TOKENS.set(token, Date.now())` 存了时间戳但从未读取 → token **永不过期**
 - token 由 `Math.random()` 生成，非 CSPRNG
 - 口令用 `===` 比较，非恒定时间比较
-- `server.js:278` 仍是硬编码口令 `admin` / `weather2024`
+- `server.js:278` 仍是硬编码管理员口令（用户名与口令均写在源码里，已于 TASK-002 移除并轮换；
+  为避免明文口令进入仓库，此处不记录口令字面值）
 
 **复现命令**
 ```powershell
