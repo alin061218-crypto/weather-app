@@ -12,6 +12,8 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_ISSUER = 'weather-app';
+const JWT_AUDIENCE = 'weather-frontend';
 if (typeof JWT_SECRET !== 'string' || JWT_SECRET.length < 32) {
     console.error('JWT_SECRET must be set and at least 32 characters long');
     process.exit(1);
@@ -80,6 +82,7 @@ db.exec(`
 const stmt = {
   // users
   userByUsername:  db.prepare('SELECT * FROM users WHERE username = ?'),
+  userById:        db.prepare('SELECT id, username, createdAt FROM users WHERE id = ?'),
   userInsert:      db.prepare('INSERT INTO users (id, username, password, createdAt) VALUES (?, ?, ?, ?)'),
   userAll:         db.prepare('SELECT id, username, createdAt FROM users ORDER BY createdAt DESC'),
   userUpdateName:  db.prepare('UPDATE users SET username = ? WHERE id = ?'),
@@ -102,7 +105,6 @@ const stmt = {
   histOldest:      db.prepare('SELECT id FROM history WHERE userId = ? ORDER BY time ASC LIMIT ?'),
   histDeleteById:  db.prepare('DELETE FROM history WHERE id = ?'),
   histDeleteByUser:db.prepare('DELETE FROM history WHERE userId = ?'),
-  histDeleteId:    db.prepare('DELETE FROM history WHERE id = ?'),
   histAll:         db.prepare('SELECT * FROM history ORDER BY time DESC'),
 
   // cache
@@ -117,6 +119,10 @@ const stmt = {
   histCountAll:    db.prepare('SELECT COUNT(*) AS n FROM history'),
 };
 
+const deleteHistoryRows = db.transaction(rows => {
+    for (const row of rows) stmt.histDeleteById.run(row.id);
+});
+
 // ===== 中间件 =====
 app.use(cors());
 app.use(express.json());
@@ -127,7 +133,14 @@ function authMiddleware(req, res, next) {
     const token = req.headers.authorization?.replace('Bearer ', '');
     if (!token) return res.status(401).json({ error: '请先登录' });
     try {
-        req.user = jwt.verify(token, JWT_SECRET);
+        const payload = jwt.verify(token, JWT_SECRET, {
+            algorithms: ['HS256'],
+            issuer: JWT_ISSUER,
+            audience: JWT_AUDIENCE
+        });
+        const user = stmt.userById.get(payload.id);
+        if (!user) return res.status(401).json({ error: '用户不存在或已注销' });
+        req.user = { ...payload, username: user.username };
         next();
     } catch {
         res.status(401).json({ error: '登录已过期，请重新登录' });
@@ -146,10 +159,14 @@ app.post('/api/register', async (req, res) => {
     if (stmt.userByUsername.get(username)) return res.status(400).json({ error: '用户名已存在' });
 
     const hashed = await bcrypt.hash(password, 10);
-    const id = Date.now().toString();
+    const id = crypto.randomUUID();
     stmt.userInsert.run(id, username, hashed, new Date().toISOString());
 
-    const token = jwt.sign({ id, username }, JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ id, username }, JWT_SECRET, {
+        expiresIn: '7d',
+        issuer: JWT_ISSUER,
+        audience: JWT_AUDIENCE
+    });
     res.json({ token, user: { id, username } });
 });
 
@@ -166,7 +183,11 @@ app.post('/api/login', async (req, res) => {
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) return res.status(400).json({ error: '用户名或密码错误' });
 
-    const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, {
+        expiresIn: '7d',
+        issuer: JWT_ISSUER,
+        audience: JWT_AUDIENCE
+    });
     res.json({ token, user: { id: user.id, username: user.username } });
 });
 
@@ -184,12 +205,12 @@ app.get('/api/weather', async (req, res) => {
     }
 
     const cacheKey = latNum.toFixed(2) + ',' + lonNum.toFixed(2);
-    const cached = stmt.cacheGet.get(cacheKey);
-    if (cached && Date.now() - cached.time < 600000) {
-        return res.json(JSON.parse(cached.data));
-    }
 
     try {
+        const cached = stmt.cacheGet.get(cacheKey);
+        if (cached && Date.now() - cached.time < 600000) {
+            return res.json(JSON.parse(cached.data));
+        }
         const params = 'current_weather=true&hourly=temperature_2m,weathercode,relativehumidity_2m,cloudcover,apparent_temperature,uv_index,precipitation_probability,pressure_msl,visibility&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max,sunrise,sunset,uv_index_max&timezone=auto&forecast_hours=24&forecast_days=7';
         const r = await fetch(`${WEATHER_API}?latitude=${lat}&longitude=${lon}&${params}`);
         const data = await r.json();
@@ -223,7 +244,9 @@ app.get('/api/location', async (req, res) => {
 // 城市搜索代理
 app.get('/api/search', async (req, res) => {
     const { q } = req.query;
-    if (!q) return res.json([]);
+    if (q === undefined) return res.json([]);
+    if (typeof q !== 'string' || q.length > 64) return res.status(400).json({ error: '搜索词格式错误' });
+    if (!q.trim()) return res.json([]);
     try {
         const r = await fetch(`${GEO_API}?name=${encodeURIComponent(q)}&count=5&language=zh&format=json`);
         const d = await r.json();
@@ -241,13 +264,19 @@ app.get('/api/favorites', authMiddleware, (req, res) => {
 
 app.post('/api/favorites', authMiddleware, (req, res) => {
     const { name, admin1, country, lat, lon } = req.body;
-    if (!name || lat == null || lon == null) return res.status(400).json({ error: '缺少城市信息' });
+    const validText = (value, maxLength) => value == null || (typeof value === 'string' && value.length <= maxLength);
+    const validCoordinates = Number.isFinite(lat) && Number.isFinite(lon)
+        && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180;
+    if (typeof name !== 'string' || !name.trim() || !validText(name, 128)
+        || !validText(admin1, 128) || !validText(country, 128) || !validCoordinates) {
+        return res.status(400).json({ error: '收藏信息格式错误' });
+    }
 
     if (stmt.favCheck.get(req.user.id, lat, lon)) {
         return res.status(400).json({ error: '已收藏过该城市' });
     }
 
-    const fav = { id: Date.now().toString(), userId: req.user.id, name, admin1: admin1 || '', country: country || '', lat, lon, createdAt: new Date().toISOString() };
+    const fav = { id: crypto.randomUUID(), userId: req.user.id, name, admin1: admin1 || '', country: country || '', lat, lon, createdAt: new Date().toISOString() };
     stmt.favInsert.run(fav.id, fav.userId, fav.name, fav.admin1, fav.country, fav.lat, fav.lon, fav.createdAt);
     res.json(fav);
 });
@@ -266,15 +295,23 @@ app.get('/api/history', authMiddleware, (req, res) => {
 
 app.post('/api/history', authMiddleware, (req, res) => {
     const { city, lat, lon, weather } = req.body;
-    const id = Date.now().toString();
+    const validCoordinates = Number.isFinite(lat) && Number.isFinite(lon)
+        && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180;
+    if (typeof city !== 'string' || !city.trim() || city.length > 64 || !validCoordinates) {
+        return res.status(400).json({ error: '历史记录格式错误' });
+    }
+    if (weather != null && typeof weather !== 'string') {
+        return res.status(400).json({ error: '天气描述格式错误' });
+    }
+
+    const id = crypto.randomUUID();
     stmt.histInsert.run(id, req.user.id, city, lat, lon, weather || '', new Date().toISOString());
 
     // 每用户保留最近 100 条
     const cnt = stmt.histCount.get(req.user.id);
     if (cnt.n > 100) {
         const old = stmt.histOldest.all(req.user.id, cnt.n - 100);
-        const delOld = db.prepare('DELETE FROM history WHERE id = ?');
-        for (const r of old) delOld.run(r.id);
+        deleteHistoryRows(old);
     }
 
     res.json({ success: true });
@@ -571,7 +608,7 @@ app.delete('/admin/favorites/:id', adminAuth, (req, res) => {
 
 // Admin API: 删除历史
 app.delete('/admin/history/:id', adminAuth, (req, res) => {
-    stmt.histDeleteId.run(req.params.id);
+    stmt.histDeleteById.run(req.params.id);
     res.json({ success: true });
 });
 
@@ -587,7 +624,9 @@ const IMAGE_CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 缓存7天
 
 app.get('/api/image', async (req, res) => {
     const { q } = req.query;
-    if (!q) return res.status(400).json({ error: '缺少搜索词' });
+    if (typeof q !== 'string' || q.length > 64 || !q.trim()) {
+        return res.status(400).json({ error: '搜索词格式错误' });
+    }
 
     const cacheKey = q.trim();
     const cached = imageCache.get(cacheKey);
@@ -618,6 +657,12 @@ app.get('/api/image', async (req, res) => {
     } catch (e) {
         return res.json({ url: null, error: e.message });
     }
+});
+
+app.use((err, req, res, next) => {
+    console.error(err?.stack || err);
+    if (res.headersSent) return next(err);
+    res.status(500).json({ error: '服务器内部错误' });
 });
 
 // ===== 启动服务器 =====
