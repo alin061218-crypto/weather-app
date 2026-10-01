@@ -126,7 +126,7 @@ const deleteHistoryRows = db.transaction(rows => {
 // ===== 中间件 =====
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'frontend')));
+app.use(express.static(path.join(__dirname, 'frontend'), { dotfiles: 'deny' }));
 
 // ===== JWT 认证中间件 =====
 function authMiddleware(req, res, next) {
@@ -212,7 +212,10 @@ app.get('/api/weather', async (req, res) => {
             return res.json(JSON.parse(cached.data));
         }
         const params = 'current_weather=true&hourly=temperature_2m,weathercode,relativehumidity_2m,cloudcover,apparent_temperature,uv_index,precipitation_probability,pressure_msl,visibility&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max,sunrise,sunset,uv_index_max&timezone=auto&forecast_hours=24&forecast_days=7';
-        const r = await fetch(`${WEATHER_API}?latitude=${lat}&longitude=${lon}&${params}`);
+        const r = await fetch(`${WEATHER_API}?latitude=${latNum}&longitude=${lonNum}&${params}`, {
+            signal: AbortSignal.timeout(8000)
+        });
+        if (!r.ok) throw new Error(`Weather API returned ${r.status}`);
         const data = await r.json();
         stmt.cacheSet.run(cacheKey, JSON.stringify(data), Date.now());
         res.json(data);
@@ -223,15 +226,19 @@ app.get('/api/weather', async (req, res) => {
 
 // IP 定位代理
 app.get('/api/location', async (req, res) => {
+    const forwardedFor = req.get('x-forwarded-for');
+    const clientIp = forwardedFor?.split(',')[0]?.trim();
     try {
-        const r = await fetch(IP_API, { signal: AbortSignal.timeout(5000) });
+        const locationUrl = clientIp ? `https://ipapi.co/${encodeURIComponent(clientIp)}/json/` : IP_API;
+        const r = await fetch(locationUrl, { signal: AbortSignal.timeout(5000) });
         const d = await r.json();
         if (d.error) throw new Error(d.reason || 'ipapi error');
         res.json({ city: d.city, region: d.region, country: d.country_name, lat: d.latitude, lon: d.longitude });
     } catch {
         // ipapi 失败尝试 ip-api.com
         try {
-            const r2 = await fetch('http://ip-api.com/json/', { signal: AbortSignal.timeout(5000) });
+            const fallbackUrl = clientIp ? `https://ip-api.com/json/${encodeURIComponent(clientIp)}` : 'https://ip-api.com/json/';
+            const r2 = await fetch(fallbackUrl, { signal: AbortSignal.timeout(5000) });
             const d2 = await r2.json();
             if (d2.status === 'success') {
                 return res.json({ city: d2.city, region: d2.regionName, country: d2.country, lat: d2.lat, lon: d2.lon });
@@ -373,16 +380,6 @@ app.post('/api/admin-login', async (req, res) => {
     }
     res.status(401).json({ error: '用户名或密码错误' });
 });
-
-function esc(value) {
-    return String(value ?? '').replace(/[&<>"']/g, char => ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#39;'
-    }[char]));
-}
 
 // Admin 后台页面只返回固定骨架，所有数据库值由客户端以 textContent 渲染。
 function sendAdminPage(res) {
@@ -618,47 +615,6 @@ app.post('/admin/clear-cache', adminAuth, (req, res) => {
     res.json({ success: true });
 });
 
-// ===== 必应图片搜索代理 =====
-const imageCache = new Map();
-const IMAGE_CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 缓存7天
-
-app.get('/api/image', async (req, res) => {
-    const { q } = req.query;
-    if (typeof q !== 'string' || q.length > 64 || !q.trim()) {
-        return res.status(400).json({ error: '搜索词格式错误' });
-    }
-
-    const cacheKey = q.trim();
-    const cached = imageCache.get(cacheKey);
-    if (cached && Date.now() - cached.time < IMAGE_CACHE_TTL) {
-        return res.json({ url: cached.url, source: 'cache' });
-    }
-
-    try {
-        const searchUrl = `https://cn.bing.com/images/search?q=${encodeURIComponent(q)}&first=1`;
-        const r = await fetch(searchUrl, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
-                'Accept': 'text/html',
-                'Accept-Language': 'zh-CN,zh;q=0.9'
-            },
-            signal: AbortSignal.timeout(10000)
-        });
-        const html = await r.text();
-        // 必应把真实图片URL藏在 murl 或 data-src 里
-        let match = html.match(/murl&quot;:&quot;([^&]+)&quot;/);
-        if (!match) match = html.match(/data-src=&quot;([^&]+)&quot;/);
-        if (match && match[1]) {
-            const imgUrl = match[1].replace(/\\u002F/g, '/');
-            imageCache.set(cacheKey, { url: imgUrl, time: Date.now() });
-            return res.json({ url: imgUrl, source: 'bing' });
-        }
-        return res.json({ url: null, source: 'none' });
-    } catch (e) {
-        return res.json({ url: null, error: e.message });
-    }
-});
-
 app.use((err, req, res, next) => {
     console.error(err?.stack || err);
     if (res.headersSent) return next(err);
@@ -675,7 +631,6 @@ app.listen(PORT, () => {
     console.log(`  GET  /api/weather   - 获取天气(代理)`);
     console.log(`  GET  /api/location  - IP定位(代理)`);
     console.log(`  GET  /api/search    - 城市搜索(代理)`);
-    console.log(`  GET  /api/image     - 必应图片搜索代理`);
     console.log(`  GET/POST/DELETE /api/favorites - 收藏管理`);
     console.log(`  GET/POST/DELETE /api/history - 查询历史`);
     console.log(`  GET  /admin         - 数据后台管理`);
