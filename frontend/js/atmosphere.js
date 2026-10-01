@@ -42,9 +42,9 @@ class SunScene {
 
   _build() {
     if (!this.isDay) {
-      const moon = new THREE.Mesh(new THREE.SphereGeometry(0.35, 32, 32), new THREE.MeshBasicMaterial({ color: '#f5f0e0' }));
+      const moon = new THREE.Mesh(new THREE.SphereGeometry(0.35, 32, 32), new THREE.MeshBasicMaterial({ color: '#e8e0d0' }));
       moon.position.set(1.8, 1.4, -2); this.group.add(moon);
-      const halo = new THREE.Mesh(new THREE.SphereGeometry(0.55, 32, 32), new THREE.MeshBasicMaterial({ color: '#f5f0e0', transparent: true, opacity: 0.08, depthWrite: false }));
+      const halo = new THREE.Mesh(new THREE.SphereGeometry(0.55, 32, 32), new THREE.MeshBasicMaterial({ color: '#e8e0d0', transparent: true, opacity: 0.06, depthWrite: false }));
       halo.position.copy(moon.position); this.group.add(halo);
       const N = 120, arr = new Float32Array(N * 3);
       for (let i = 0; i < N; i++) {
@@ -52,23 +52,23 @@ class SunScene {
         this.starData.push({ tw: 0.4 + Math.random() * 0.8, ph: Math.random() * Math.PI * 2, sp: 0.8 + Math.random() * 2.5 });
       }
       const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.BufferAttribute(arr, 3));
-      const sm = new THREE.PointsMaterial({ map: glowTex('#ffffff', 'transparent', 16), color: '#ffffff', size: 0.07, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.75 });
+      const sm = new THREE.PointsMaterial({ map: glowTex('#ffffff', 'transparent', 16), color: '#ffffff', size: 0.06, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.7 });
       this.stars = new THREE.Points(sg, sm); this.group.add(this.stars);
     } else {
-      const sun = new THREE.Mesh(new THREE.SphereGeometry(0.45, 32, 32), new THREE.MeshBasicMaterial({ color: '#ffe8b0' }));
+      const sun = new THREE.Mesh(new THREE.SphereGeometry(0.45, 32, 32), new THREE.MeshBasicMaterial({ color: '#fff4d6' }));
       sun.position.set(1.5, 1.5, -2); this.group.add(sun);
       for (let s = 0.7; s <= 1.6; s += 0.3) {
-        const h = new THREE.Mesh(new THREE.SphereGeometry(s, 32, 32), new THREE.MeshBasicMaterial({ color: '#ffe8b0', transparent: true, opacity: 0.04, depthWrite: false }));
+        const h = new THREE.Mesh(new THREE.SphereGeometry(s, 32, 32), new THREE.MeshBasicMaterial({ color: '#fff4d6', transparent: true, opacity: 0.03, depthWrite: false }));
         h.position.copy(sun.position); this.group.add(h);
       }
-      const rt = glowTex('#ffe8b0', 'transparent', 32);
+      const rt = glowTex('#fff4d6', 'transparent', 32);
       for (let i = 0; i < 8; i++) {
         const a = (i / 8) * Math.PI * 2 + Math.random() * 0.2, len = 1.5 + Math.random() * 2;
         const r = new THREE.Mesh(new THREE.PlaneGeometry(0.05, len), new THREE.MeshBasicMaterial({ map: rt, transparent: true, opacity: 0.2 + Math.random() * 0.15, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide }));
         r.position.set(sun.position.x + Math.cos(a) * len / 2, sun.position.y + Math.sin(a) * len / 2, sun.position.z); r.rotation.z = a; this.group.add(r);
       }
     }
-    this._addDust(60, '#ffe8b0', 0.22, 0.07);
+    this._addDust(60, '#fff4d6', 0.18, 0.06);
     this.scene.add(this.group);
   }
 
@@ -120,13 +120,13 @@ class CloudScene {
       for (let j = 0; j < n; j++) {
         const rx = br * (0.5 + Math.random() * 1.3), ry = by * (0.5 + Math.random() * 1.0), rz = rx * (0.7 + Math.random() * 0.6);
         const g = new THREE.SphereGeometry(1, 14, 10); g.scale(rx, ry, rz);
-        const b = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: '#eef0f4', transparent: true, opacity: 0.55, depthWrite: false }));
+        const b = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: '#c8ced6', transparent: true, opacity: 0.50, depthWrite: false }));
         b.position.set((Math.random() - 0.5) * def.w * 1.8, (Math.random() - 0.5) * def.w * 0.24 - def.w * 0.05, (Math.random() - 0.5) * def.w * 0.4);
         grp.add(b);
       }
       for (let j = 0; j < 3; j++) {
         const g = new THREE.SphereGeometry(1, 10, 8); g.scale(br * 1.1, by * 0.5, br * 0.8);
-        const b = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: '#e8ecf1', transparent: true, opacity: 0.45, depthWrite: false }));
+        const b = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: '#bcc4ce', transparent: true, opacity: 0.38, depthWrite: false }));
         b.position.set((Math.random() - 0.5) * def.w * 1.2, -def.w * 0.15 - Math.random() * 0.15, (Math.random() - 0.5) * def.w * 0.3);
         grp.add(b);
       }
@@ -134,7 +134,7 @@ class CloudScene {
       grp.userData = { bx: def.x, by: def.y, sp: 0.04 + Math.random() * 0.10, ph: Math.random() * Math.PI * 2 };
       this.group.add(grp); this.clouds.push(grp);
     }
-    this._addDust(50, '#d0d8e0', 0.28, 0.05);
+    this._addDust(50, '#b8c0cc', 0.22, 0.05);
     this.scene.add(this.group);
   }
 
@@ -177,13 +177,13 @@ class RainScene {
   _build() {
     const N = this.storm ? 220 : 140, Y_SPAN = 9;
     const geo = new THREE.CylinderGeometry(0.012, 0.012, 0.28, 4);
-    const mat = new THREE.MeshBasicMaterial({ color: this.storm ? '#8898b0' : '#b0c8e0', transparent: true, opacity: 0.45, depthWrite: false });
+    const mat = new THREE.MeshBasicMaterial({ color: this.storm ? '#7a86a0' : '#9cb4d0', transparent: true, opacity: 0.40, depthWrite: false });
     this.instanced = new THREE.InstancedMesh(geo, mat, N); this.data = [];
     const dummy = new THREE.Object3D();
     for (let i = 0; i < N; i++) {
       const x = (Math.random() - 0.5) * 10, y = (Math.random() - 0.5) * Y_SPAN, z = (Math.random() - 0.5) * 4;
       dummy.position.set(x, y, z); dummy.updateMatrix(); this.instanced.setMatrixAt(i, dummy.matrix);
-      this.data.push({ y, sp: this.storm ? (0.8 + Math.random() * 1.5) : (0.3 + Math.random() * 0.7), x });
+      this.data.push({ y, sp: this.storm ? (0.4 + Math.random() * 0.7) : (0.08 + Math.random() * 0.14), x });
     }
     this.group.add(this.instanced);
     const cn = this.storm ? 3 : 2;
@@ -191,7 +191,7 @@ class RainScene {
       const grp = new THREE.Group();
       for (let j = 0; j < 5; j++) {
         const r = 0.25 + Math.random() * 0.4;
-        const b = new THREE.Mesh(new THREE.SphereGeometry(r, 10, 8), new THREE.MeshBasicMaterial({ color: '#505868', transparent: true, opacity: 0.42, depthWrite: false }));
+        const b = new THREE.Mesh(new THREE.SphereGeometry(r, 10, 8), new THREE.MeshBasicMaterial({ color: '#3a4050', transparent: true, opacity: 0.38, depthWrite: false }));
         b.position.set((Math.random() - 0.5) * 1.5, (Math.random() - 0.5) * 0.4, 0);
         grp.add(b);
       }
@@ -199,7 +199,7 @@ class RainScene {
       grp.userData = { sp: 0.01 + Math.random() * 0.03 };
       this.group.add(grp); this.darkClouds.push(grp);
     }
-    this._addDust(25, '#a0b0c0', 0.18, 0.06);
+    this._addDust(25, '#98a8b8', 0.15, 0.06);
     this.scene.add(this.group);
   }
 
@@ -258,7 +258,7 @@ class SnowScene {
       this.data.push({ y: arr[i * 3 + 1], x: arr[i * 3], sp: 0.15 + Math.random() * 0.35, wa: 0.2 + Math.random() * 0.6, wf: 1.0 + Math.random() * 1.5, ph: Math.random() * Math.PI * 2 });
     }
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(arr, 3));
-    this.points = new THREE.Points(g, new THREE.PointsMaterial({ map: glowTex('#ffffff', 'transparent', 12), color: '#f8f8ff', size: 0.09, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.6 }));
+    this.points = new THREE.Points(g, new THREE.PointsMaterial({ map: glowTex('#ffffff', 'transparent', 12), color: '#e8e8f8', size: 0.09, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.55 }));
     this.group.add(this.points);
 
     // 雪氛微尘（柔和白雾）
@@ -266,7 +266,7 @@ class SnowScene {
     const darr = new Float32Array(DN * 3);
     for (let i = 0; i < DN; i++) { darr[i * 3] = (Math.random() - 0.5) * 12; darr[i * 3 + 1] = (Math.random() - 0.5) * 8; darr[i * 3 + 2] = (Math.random() - 0.5) * 5 - 0.5; }
     const dg = new THREE.BufferGeometry(); dg.setAttribute('position', new THREE.BufferAttribute(darr, 3));
-    this.dustPts = new THREE.Points(dg, new THREE.PointsMaterial({ map: glowTex('#f0f0f8', 'transparent', 32), color: '#e8e8f4', size: 0.35, blending: THREE.NormalBlending, depthWrite: false, transparent: true, opacity: 0.16 }));
+    this.dustPts = new THREE.Points(dg, new THREE.PointsMaterial({ map: glowTex('#e8e8f0', 'transparent', 32), color: '#d8dce8', size: 0.35, blending: THREE.NormalBlending, depthWrite: false, transparent: true, opacity: 0.14 }));
     this.group.add(this.dustPts);
     for (let i = 0; i < DN; i++) this.dustData.push({ bx: darr[i * 3], by: darr[i * 3 + 1], bz: darr[i * 3 + 2], ph: Math.random() * Math.PI * 2, fq: 0.05 + Math.random() * 0.12, amp: 0.3 + Math.random() * 0.7 });
 
@@ -318,7 +318,7 @@ class FogScene {
       this.data.push({ bx: arr[i * 3], by: arr[i * 3 + 1], bz: arr[i * 3 + 2], ph: Math.random() * Math.PI * 2, fq: 0.04 + Math.random() * 0.10, amp: 0.4 + Math.random() * 1.6 });
     }
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(arr, 3));
-    const m = new THREE.PointsMaterial({ map: glowTex('#d8dce3', 'transparent', 64), color: '#c8ced6', size: 1.6, blending: THREE.NormalBlending, depthWrite: false, transparent: true, opacity: 0.22 });
+    const m = new THREE.PointsMaterial({ map: glowTex('#d0d6de', 'transparent', 64), color: '#bac2cc', size: 1.6, blending: THREE.NormalBlending, depthWrite: false, transparent: true, opacity: 0.18 });
     this.points = new THREE.Points(g, m); this.group.add(this.points);
     this.scene.add(this.group);
   }

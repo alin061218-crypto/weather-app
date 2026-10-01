@@ -623,8 +623,12 @@ class TempChart {
     const xf = i => pad.l + (i / (temps.length - 1)) * pw;
     const yf = v => pad.t + ph - ((v - min) / range) * ph;
 
+    // 读 CSS 变量确定主题色
+    const cs = getComputedStyle(document.documentElement);
+    const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+
     // 背景网格
-    ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+    ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)';
     ctx.lineWidth = 0.5;
     for (let i = 0; i <= 4; i++) {
       const y = pad.t + (ph / 4) * i;
@@ -634,7 +638,7 @@ class TempChart {
       ctx.lineTo(pad.l + pw, y);
       ctx.stroke();
 
-      ctx.fillStyle = 'rgba(255,255,255,0.35)';
+      ctx.fillStyle = isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)';
       ctx.font = '10px system-ui, sans-serif';
       ctx.textAlign = 'right';
       ctx.fillText(F.ftemp(Math.round(val), this.unit), pad.l - 6, y + 4);
@@ -643,16 +647,17 @@ class TempChart {
     // 时间标签
     const step = Math.max(1, Math.floor(temps.length / 6));
     ctx.textAlign = 'center';
-    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.fillStyle = isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)';
     ctx.font = '10px system-ui, sans-serif';
     for (let i = 0; i < temps.length; i += step) {
       ctx.fillText(F.time(time[i]), xf(i), pad.t + ph + 15);
     }
 
-    // 面积填充（使用设计令牌色）
+    // 面积填充
+    const primaryColor = cs.getPropertyValue('--primary').trim() || '#5b9cf5';
     const grad = ctx.createLinearGradient(0, pad.t, 0, pad.t + ph);
-    grad.addColorStop(0, 'oklch(0.58 0.08 170 / 0.25)');
-    grad.addColorStop(1, 'oklch(0.58 0.08 170 / 0)');
+    grad.addColorStop(0, primaryColor + '40');
+    grad.addColorStop(1, primaryColor + '00');
 
     ctx.beginPath();
     ctx.moveTo(xf(0), yf(temps[0]));
@@ -673,7 +678,7 @@ class TempChart {
       const xc = (xf(i - 1) + xf(i)) / 2;
       ctx.bezierCurveTo(xc, yf(temps[i - 1]), xc, yf(temps[i]), xf(i), yf(temps[i]));
     }
-    ctx.strokeStyle = 'oklch(0.58 0.08 170 / 0.7)';
+    ctx.strokeStyle = primaryColor + 'b3';
     ctx.lineWidth = 2;
     ctx.stroke();
 
@@ -681,7 +686,7 @@ class TempChart {
     for (let i = 0; i < temps.length; i++) {
       ctx.beginPath();
       ctx.arc(xf(i), yf(temps[i]), 2.5, 0, Math.PI * 2);
-      ctx.fillStyle = 'oklch(0.58 0.08 170 / 0.9)';
+      ctx.fillStyle = primaryColor + 'e6';
       ctx.fill();
     }
   }
