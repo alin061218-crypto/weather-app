@@ -23,6 +23,8 @@ const WX_PARAMS = 'current_weather=true&hourly=temperature_2m,weathercode,relati
 let authToken = localStorage.getItem('wx_token') || '';
 let currentUser = null;
 let atmosphere = null;
+let favoritesCache = null;
+let favBusy = false;
 
 let state = {
   city: null,
@@ -32,6 +34,8 @@ let state = {
   currentTab: 'home',
   theme: localStorage.getItem('wx_theme') || 'dark',
 };
+let weatherGeneration = 0;
+const CACHE_MAX_AGE = 60 * 60 * 1000;
 
 // ═══════════════════════════════════════════════════════════
 //  工具函数
@@ -672,8 +676,8 @@ class TempChart {
     // 面积填充
     const primaryColor = cs.getPropertyValue('--primary').trim() || '#5b9cf5';
     const grad = ctx.createLinearGradient(0, pad.t, 0, pad.t + ph);
-    grad.addColorStop(0, primaryColor + '40');
-    grad.addColorStop(1, primaryColor + '00');
+    grad.addColorStop(0, primaryColor);
+    grad.addColorStop(1, 'transparent');
 
     ctx.beginPath();
     ctx.moveTo(xf(0), yf(temps[0]));
@@ -684,8 +688,11 @@ class TempChart {
     ctx.lineTo(xf(temps.length - 1), pad.t + ph);
     ctx.lineTo(xf(0), pad.t + ph);
     ctx.closePath();
+    ctx.save();
+    ctx.globalAlpha = 0.25;
     ctx.fillStyle = grad;
     ctx.fill();
+    ctx.restore();
 
     // 线条
     ctx.beginPath();
@@ -694,17 +701,23 @@ class TempChart {
       const xc = (xf(i - 1) + xf(i)) / 2;
       ctx.bezierCurveTo(xc, yf(temps[i - 1]), xc, yf(temps[i]), xf(i), yf(temps[i]));
     }
-    ctx.strokeStyle = primaryColor + 'b3';
+    ctx.save();
+    ctx.globalAlpha = 0.7;
+    ctx.strokeStyle = primaryColor;
     ctx.lineWidth = 2;
     ctx.stroke();
+    ctx.restore();
 
     // 数据点
+    ctx.save();
+    ctx.globalAlpha = 0.9;
     for (let i = 0; i < temps.length; i++) {
       ctx.beginPath();
       ctx.arc(xf(i), yf(temps[i]), 2.5, 0, Math.PI * 2);
-      ctx.fillStyle = primaryColor + 'e6';
+      ctx.fillStyle = primaryColor;
       ctx.fill();
     }
+    ctx.restore();
   }
 }
 
@@ -735,6 +748,7 @@ QA('.tab-btn').forEach(btn => {
 //  搜索 & 主流程
 // ═══════════════════════════════════════════════════════════
 async function init() {
+  const generation = ++weatherGeneration;
   let loc = null;
   toggle('loading');
 
@@ -748,6 +762,7 @@ async function init() {
       loc = { city: name || '当前位置', region: '', country: '中国', lat: pos.coords.latitude, lon: pos.coords.longitude };
     } catch {}
   }
+  if (generation !== weatherGeneration) return;
 
   // 2. IP 兜底
   if (!loc) {
@@ -758,6 +773,7 @@ async function init() {
         loc = { city: cn || d.city, region: d.region || '', country: d.country || '', lat: d.lat, lon: d.lon };
       }
     } catch {}
+    if (generation !== weatherGeneration) return;
     if (!loc) {
       try {
         const d2 = await fetchJSON(API.ip, 6000);
@@ -768,24 +784,29 @@ async function init() {
       } catch {}
     }
   }
+  if (generation !== weatherGeneration) return;
 
   // 3. 北京兜底
   if (!loc) loc = { city: '北京', region: '', country: '中国', lat: 39.904, lon: 116.407 };
 
   try {
     const wx = await getWeather(loc.lat, loc.lon);
+    if (generation !== weatherGeneration) return;
     state.city = loc;
     state.weather = wx;
     localStorage.setItem('wx_last', JSON.stringify({ loc, wx, ts: Date.now() }));
     renderWeather(loc, wx);
   } catch (e) {
+    if (generation !== weatherGeneration) return;
     const raw = localStorage.getItem('wx_last');
     try {
       const c = raw && JSON.parse(raw);
-      if (c?.loc && c?.wx) {
+      const age = Date.now() - c?.ts;
+      if (c?.loc && c?.wx && Number.isFinite(c.ts) && age >= 0 && age <= CACHE_MAX_AGE) {
+        state.city = c.loc;
+        state.weather = c.wx;
         renderWeather(c.loc, c.wx);
-        $('error-msg').textContent = '显示缓存数据';
-        toggle('weather-card');
+        $('weather-desc').textContent += ' · 显示缓存数据';
         return;
       }
     } catch {}
@@ -801,6 +822,7 @@ function initSearch() {
   const recentEl = $('recent-list');
   const rsec = $('recent-section');
   let last = [];
+  let searchGeneration = 0;
 
   function showSearchMessage(message) {
     res.innerHTML = '';
@@ -811,10 +833,19 @@ function initSearch() {
     res.classList.remove('hidden');
   }
 
-  const search = F.debounce(async q => {
+  const search = F.debounce(async (q, generation) => {
+    if (generation !== searchGeneration) return;
     if (q.length < 2) { res.classList.add('hidden'); last = []; return; }
-    try { last = await doSearch(q); }
-    catch (e) { last = []; showSearchMessage(e.message || '搜索失败'); return; }
+    let found;
+    try { found = await doSearch(q); }
+    catch (e) {
+      if (generation !== searchGeneration) return;
+      last = [];
+      showSearchMessage(e.message || '搜索失败');
+      return;
+    }
+    if (generation !== searchGeneration) return;
+    last = found;
     res.innerHTML = '';
     res.classList.remove('hidden');
     if (!last.length) { showSearchMessage('未找到相关城市，请检查名称'); return; }
@@ -822,32 +853,41 @@ function initSearch() {
       const li = document.createElement('li');
       li.className = 'search-item';
       li.innerHTML = `<span class="si-name">${esc(c.name)}</span><span class="si-meta">${esc([c.admin1, c.country].filter(Boolean).join('，'))}</span>`;
-      li.addEventListener('click', () => { selectCity(c); res.classList.add('hidden'); });
+      li.addEventListener('click', () => { searchGeneration++; selectCity(c); res.classList.add('hidden'); });
       res.appendChild(li);
     }
   }, 250);
 
   inp.addEventListener('input', () => {
+    const generation = ++searchGeneration;
+    last = [];
     clr.classList.toggle('hidden', !inp.value);
-    search(inp.value.trim());
+    if (inp.value.trim().length < 2) res.classList.add('hidden');
+    search(inp.value.trim(), generation);
   });
 
   inp.addEventListener('keydown', async e => {
     if (e.key !== 'Enter') return;
     e.preventDefault();
+    const generation = ++searchGeneration;
     const q = inp.value.trim();
     if (!q) return;
     if (last.length) { selectCity(last[0]); res.classList.add('hidden'); }
     else {
       try {
         const r = await doSearch(q);
+        if (generation !== searchGeneration) return;
         if (r.length) selectCity(r[0]);
         else showSearchMessage('未找到相关城市，请检查名称');
-      } catch (err) { showSearchMessage(err.message || '搜索失败'); }
+      } catch (err) {
+        if (generation === searchGeneration) showSearchMessage(err.message || '搜索失败');
+      }
     }
   });
 
   clr.addEventListener('click', () => {
+    searchGeneration++;
+    last = [];
     inp.value = '';
     clr.classList.add('hidden');
     res.classList.add('hidden');
@@ -876,6 +916,7 @@ function initSearch() {
 }
 
 async function selectCity(c) {
+  const generation = ++weatherGeneration;
   const inp = $('search-input');
   inp.value = c.name;
   $('search-clear').classList.remove('hidden');
@@ -890,6 +931,7 @@ async function selectCity(c) {
   const loc = { city: c.name, region: c.admin1 || '', country: c.country || '', lat: c.lat, lon: c.lon };
   try {
     const wx = await getWeather(c.lat, c.lon);
+    if (generation !== weatherGeneration) return;
     state.city = loc;
     state.weather = wx;
     renderWeather(loc, wx);
@@ -901,6 +943,7 @@ async function selectCity(c) {
       });
     }
   } catch (e) {
+    if (generation !== weatherGeneration) return;
     $('error-msg').textContent = e.message;
     toggle('error-card');
   }
@@ -913,7 +956,7 @@ function checkAuth() {
   authToken = localStorage.getItem('wx_token') || '';
   if (authToken) {
     fetchJSON(`${API_BASE}/api/me`, 3000).then(d => {
-      if (d && d.user) { currentUser = d.user; updateMeUI(); }
+      if (d && d.user) { currentUser = d.user; updateMeUI(); loadMeFavorites(); }
       else if (d?.status === 401) logout();
     });
   }
@@ -935,6 +978,7 @@ function logout() {
   localStorage.removeItem('wx_token');
   authToken = '';
   currentUser = null;
+  favoritesCache = null;
   updateMeUI();
   updateStarUI();
 }
@@ -982,9 +1026,18 @@ $('me-clear-hist').addEventListener('click', async () => {
 
 async function loadMeFavorites() {
   const list = $('me-fav-list');
-  if (!currentUser) { list.innerHTML = '<p class="me-empty">请先登录</p>'; return; }
+  if (!currentUser) { favoritesCache = null; list.innerHTML = '<p class="me-empty">请先登录</p>'; return; }
+  const user = currentUser;
   const d = await fetchJSON(`${API_BASE}/api/favorites`);
-  if (!d || d.error) { list.innerHTML = '<p class="me-empty">加载失败</p>'; return; }
+  if (currentUser !== user) return;
+  if (!Array.isArray(d)) { list.innerHTML = '<p class="me-empty">加载失败</p>'; return; }
+  favoritesCache = d;
+  updateStarUI();
+  renderMeFavorites(d);
+}
+
+function renderMeFavorites(d) {
+  const list = $('me-fav-list');
   if (!d.length) { list.innerHTML = '<p class="me-empty">暂无收藏，在天气页搜索城市后点击星标收藏</p>'; return; }
   list.innerHTML = d.map(f => `<div class="fav-item"><div class="fav-item-click" data-lat="${esc(f.lat)}" data-lon="${esc(f.lon)}" data-name="${esc(f.name)}" data-admin1="${esc(f.admin1)}" data-country="${esc(f.country)}"><div class="fav-item-name">${esc(f.name)}</div><div class="fav-item-meta">${esc(f.admin1)} ${esc(f.country)}</div></div><button class="fav-item-del" data-id="${esc(f.id)}">&times;</button></div>`).join('');
   QA('.fav-item-click', list).forEach(el => {
@@ -996,9 +1049,12 @@ async function loadMeFavorites() {
   QA('.fav-item-del', list).forEach(btn => {
     btn.addEventListener('click', async (e) => {
       e.stopPropagation();
-      await fetchJSON(`${API_BASE}/api/favorites/${btn.dataset.id}`, 3000, { method: 'DELETE' });
-      loadMeFavorites();
-      updateStarUI();
+      const result = await fetchJSON(`${API_BASE}/api/favorites/${btn.dataset.id}`, 3000, { method: 'DELETE' });
+      if (result && !result.error && Array.isArray(favoritesCache)) {
+        favoritesCache = favoritesCache.filter(f => String(f.id) !== btn.dataset.id);
+        renderMeFavorites(favoritesCache);
+        updateStarUI();
+      }
     });
   });
 }
@@ -1019,62 +1075,57 @@ async function loadMeHistory() {
 }
 
 // 收藏星标
-function addFavButton(loc) {
+async function onFavClick(e) {
+  e.stopPropagation();
+  if (!currentUser) { switchTab('me'); return; }
+  if (favBusy || !state.city) return;
+  favBusy = true;
   const btn = $('fav-btn');
-  if (!btn) return;
-
-  btn.classList.remove('active');
-  btn.querySelector('svg').style.fill = 'none';
-
-  btn.addEventListener('click', async (e) => {
-    e.stopPropagation();
-    if (!currentUser) { switchTab('me'); return; }
-    if (btn.classList.contains('active')) {
-      const d = await fetchJSON(`${API_BASE}/api/favorites`);
-      if (Array.isArray(d)) {
-        const fav = d.find(f => Math.abs(f.lat - loc.lat) < 0.01 && Math.abs(f.lon - loc.lon) < 0.01);
-        if (fav) {
-          await fetchJSON(`${API_BASE}/api/favorites/${fav.id}`, 3000, { method: 'DELETE' });
-          btn.classList.remove('active');
-        }
-      }
-    } else {
-      const d = await fetchJSON(`${API_BASE}/api/favorites`, 3000, {
+  const user = currentUser;
+  btn.disabled = true;
+  try {
+    if (!Array.isArray(favoritesCache)) await loadMeFavorites();
+    if (currentUser !== user || !Array.isArray(favoritesCache)) return;
+    const loc = state.city;
+    const fav = favoritesCache.find(f => Math.abs(f.lat - loc.lat) < 0.01 && Math.abs(f.lon - loc.lon) < 0.01);
+    const d = fav
+      ? await fetchJSON(`${API_BASE}/api/favorites/${fav.id}`, 3000, { method: 'DELETE' })
+      : await fetchJSON(`${API_BASE}/api/favorites`, 3000, {
         method: 'POST',
         body: JSON.stringify({ name: loc.city || loc.name, admin1: loc.region || loc.admin1 || '', country: loc.country || '', lat: loc.lat, lon: loc.lon })
       });
-      if (d && !d.error) btn.classList.add('active');
-    }
-    loadMeFavorites();
-  });
-
-  if (currentUser) {
-    fetchJSON(`${API_BASE}/api/favorites`).then(d => {
-      if (Array.isArray(d) && d.find(f => Math.abs(f.lat - loc.lat) < 0.01 && Math.abs(f.lon - loc.lon) < 0.01)) {
-        btn.classList.add('active');
-      }
-    });
+    if (currentUser !== user || !d || d.error) return;
+    if (fav) favoritesCache = favoritesCache.filter(f => f.id !== fav.id);
+    else favoritesCache.unshift(d);
+    renderMeFavorites(favoritesCache);
+    updateStarUI();
+  } finally {
+    favBusy = false;
+    btn.disabled = false;
   }
+}
+
+function addFavButton() {
+  const btn = $('fav-btn');
+  if (!btn) return;
+  btn.removeEventListener('click', onFavClick);
+  btn.addEventListener('click', onFavClick);
+  updateStarUI();
 }
 
 function updateStarUI() {
   const btn = $('fav-btn');
   if (!btn || !state.city) return;
-  if (!currentUser) { btn.classList.remove('active'); return; }
-  fetchJSON(`${API_BASE}/api/favorites`).then(d => {
-    if (Array.isArray(d) && d.find(f => Math.abs(f.lat - state.city.lat) < 0.01 && Math.abs(f.lon - state.city.lon) < 0.01)) {
-      btn.classList.add('active');
-    } else {
-      btn.classList.remove('active');
-    }
-  });
+  const active = !!currentUser && Array.isArray(favoritesCache) && favoritesCache.some(f =>
+    Math.abs(f.lat - state.city.lat) < 0.01 && Math.abs(f.lon - state.city.lon) < 0.01);
+  btn.classList.toggle('active', active);
 }
 
 // 拦截 renderWeather 加收藏按钮
 const _origRW = renderWeather;
 renderWeather = function (loc, wx) {
   _origRW(loc, wx);
-  if (loc.lat && loc.lon) addFavButton(loc);
+  if (Number.isFinite(loc.lat) && Number.isFinite(loc.lon)) addFavButton();
 };
 
 // ═══════════════════════════════════════════════════════════
@@ -1206,10 +1257,10 @@ function initMap() {
   container.appendChild(frame);
 
   btn.addEventListener('click', () => {
-    const lat = state.city?.lat || 39.9;
-    const lon = state.city?.lon || 116.4;
+    const lat = state.city?.lat ?? 39.9;
+    const lon = state.city?.lon ?? 116.4;
     const url = `https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=°C&metricWind=km/h&zoom=7&overlay=wind&product=ecmwf&lat=${lat}&lon=${lon}&detailLat=${lat}&detailLon=${lon}&detail=true&message=true`;
-    if (frame.src !== url && !frame.src.includes('windy')) { frame.src = url; }
+    if (frame.getAttribute('src') !== url) frame.src = url;
     modal.classList.remove('hidden');
   });
 

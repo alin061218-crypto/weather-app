@@ -1,32 +1,24 @@
-TASK-006 after - 6a (PowerShell 7.6.5, Edge 154.0.4258.48)
-Command: node --check frontend/js/main.js
-Exit code: 0; stdout: (empty)
-Command: git diff --check
-Exit code: 0; stdout: (empty); git emitted only LF/CRLF advisory.
+TASK-006 after - complete (PowerShell 7.6.5, Edge 154.0.4258.48)
+Code checks:
+- node --check frontend/js/main.js => exit 0, no output.
+- git diff --check => exit 0, only LF/CRLF advisory.
 
-Acceptance command (PowerShell 7):
-Select-String -Path frontend\js\main.js -Pattern 'innerHTML\s*=' | Where-Object { $_.Line -notmatch 'esc\(|^\s*(el|list|res|foodEl|travelEl|dailyList|statsEl)\.innerHTML\s*=\s*(.\s*)?$' }
-Output (all remaining hits manually reviewed):
-frontend/js/main.js:451: $('weather-icon').innerHTML = weatherIcon(cur.weathercode, isDay);
-frontend/js/main.js:478: statsEl.innerHTML = items.map(([ico, label, value]) =>
-frontend/js/main.js:486: dailyList.innerHTML = '';
-frontend/js/main.js:494: dayDiv.innerHTML = `
-frontend/js/main.js:535: if (tel) tel.innerHTML = adv.tags.map(t => ...);
-frontend/js/main.js:554: if (foodEl) foodEl.innerHTML = g.food.split(',').map(f =>
-frontend/js/main.js:558: if (travelEl) travelEl.innerHTML = g.travel.split(',').map(t =>
-frontend/js/main.js:806,818: res.innerHTML = '';
-frontend/js/main.js:985,987,988,1008,1010,1011: list.innerHTML = fixed UI strings.
-Review: weatherIcon and icon.* return fixed SVG templates; stats/daily use weather API numeric values and fixed labels/icons; advice/guide use fixed in-file strings; the rest clear a list or assign fixed UI strings. The five specified untrusted search/recent/favorite/history/chat interpolations now call esc().
+Browser manual acceptance (deterministic API harness; OPTIONS omitted from counts):
+1. Five unit toggles then one favorite click, authenticated:
+{"GET_before_toggles":1,"GET_after_toggles":1,"GET_after_click":1,"POST_count":1,"DELETE_count":0,"active":true,"errors":[]}
+A second click produced DELETE_count 1, GET_count remained 1, active false.
+2. Delayed GPS Beijing (1800 ms), select Shanghai immediately:
+{"selectedCity":"上海","settledCity":"上海","api":["GET /api/weather?lat=31.23&lon=121.474"],"errors":[]}
+3. Delayed search AlphaPlace (1200 ms), then BetaPlace (100 ms):
+{"input":"BetaPlace","results":"BetaPlaceB，中国","api":["GET /api/search?q=AlphaPlace","GET /api/search?q=BetaPlace"],"errors":[]}
+4. Fresh offline cache seeded for Shanghai:
+{"city":"上海","visibleText":"晴 · 显示缓存数据","textVisible":true,"mapCoords":"31.23,121.474","errors":[]}
+Screenshot: cache-after.png.
+5. Expired cache (2 hours old) while offline:
+{"errorVisible":true,"weatherVisible":false,"message":"网络失败：Failed to fetch","errors":[]}
+6. Map: first Beijing, close, select Shanghai, reopen:
+{"city":"上海","firstMap":"39.904,116.407","secondMap":"31.23,121.474","sameURL":false,"errors":[]}
+Screenshot: map-after.png.
+7. CSS --primary set to oklch(70% 0.12 240), redraw chart: page errors [] (no addColorStop parse error).
 
-Browser: Chat tab -> send <img src=x onerror=alert(1)> -> reload.
-{ "alertsAfterSend": 0, "alertsAfterReload": 0, "renderedImageElements": 0, "userText": "<img src=x onerror=alert(1)>" }
-Browser: search NoSuchCityzzzz, mock /api/search returns [].
-{ "resultsHidden": false, "resultsText": "未找到相关城市，请检查名称", "errorCardVisible": false }
-Browser: login API network abort / HTTP 503 JSON / HTTP 200 malformed JSON.
-[{"kind":"network","message":"网络失败：Failed to fetch"},{"kind":"http","message":"HTTP 503：maintenance"},{"kind":"parse","message":"解析失败：Unexpected token 'o', \"not-json\" is not valid JSON"}]
-Browser: /api/me returns 401 versus network abort; malformed wx_last on offline load.
-{ "tokenAfter401": null, "tokenAfterNetwork": "test-token", "malformedCacheErrorVisible": true, "malformedCacheLoadingVisible": false, "malformedCachePageErrors": [] }
-Browser: malicious <img> in search, recent, favorites, history.
-{ "searchImages": 0, "recentImages": 0, "favoriteImages": 0, "historyImages": 0, "alerts": 0 }
-
-6b after: pending.
+6a regression retained: chat payload <img src=x onerror=alert(1)> rendered as text, 0 alert before/after reload; unknown city displays '未找到相关城市，请检查名称'; network/HTTP/parse messages remain distinct.
