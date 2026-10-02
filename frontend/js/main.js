@@ -227,6 +227,20 @@ function getCityGuide(name) {
   return null;
 }
 
+function weatherScene(code, isDay) {
+  if (code === 0 || code === 1) return isDay ? 'clear-day' : 'clear-night';
+  if (code === 2 || code === 3) return 'cloudy';
+  if (code >= 45 && code <= 48) return 'fog';
+  if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return 'rain';
+  if ((code >= 71 && code <= 77) || (code >= 85 && code <= 86)) return 'snow';
+  if (code >= 95) return 'storm';
+  return 'overcast';
+}
+
+function setWeatherScene(code, isDay) {
+  document.body.dataset.weather = weatherScene(code, isDay);
+}
+
 function findCity(lat, lon) {
   let best = null, bestD = Infinity;
   for (const { name, lat: clat, lon: clon } of cityCache || []) {
@@ -364,6 +378,7 @@ function renderWeather(loc, wx) {
   const d = wx.daily;
   const name = resolveCity(loc);
   const isDay = cur.is_day === 1;
+  setWeatherScene(cur.weathercode, isDay);
 
   // 城市和地区
   $('city').textContent = name;
@@ -459,16 +474,35 @@ function renderAdvice(mid, tid, adv) {
 
 // 城市指南（纯文字/圆点装饰，无 emoji）
 function renderCityGuide(name) {
-  const g = getCityGuide(name);
+  const cleanName = String(name || '').replace(/[市州县区]$/, '');
+  const directGuide = CITY_GUIDE[name] || CITY_GUIDE[cleanName];
+  const g = directGuide || getCityGuide(name);
   const empty = $('guide-empty');
   const content = $('guide-content');
-  if (!g) {
+  const emptyTitle = $('guide-empty-title');
+  const emptyDetail = $('guide-empty-detail');
+  const fallbackEl = $('guide-fallback');
+  if (!directGuide) {
     if (empty) empty.classList.remove('hidden');
     if (content) content.classList.add('hidden');
+    const selected = Boolean(state.city && name);
+    if (emptyTitle) emptyTitle.textContent = selected ? `${name} 的指南正在补充中` : '搜索城市后，这里会展示当地美食与旅行推荐';
+    if (emptyDetail) {
+      emptyDetail.textContent = selected ? '本地指南尚未收录，先看看所属地级市的推荐。' : '';
+      emptyDetail.classList.toggle('hidden', !selected);
+    }
+    const record = (cityCache || []).find(city => city.name === name || city.name.replace(/[市州县区]$/, '') === String(name).replace(/[市州县区]$/, ''));
+    const parent = record?.parent || COUNTY[name] || COUNTY[cleanName];
+    const parentGuide = parent && CITY_GUIDE[parent];
+    if (fallbackEl) {
+      fallbackEl.textContent = parentGuide ? `所属地级市：${parent}。推荐：${parentGuide.travel.split(',').slice(0, 3).join('、')}` : '';
+      fallbackEl.classList.toggle('hidden', !parentGuide);
+    }
     return;
   }
   if (empty) empty.classList.add('hidden');
   if (content) content.classList.remove('hidden');
+  if (fallbackEl) fallbackEl.classList.add('hidden');
 
   const foodEl = $('food-guide');
   const travelEl = $('travel-guide');
@@ -512,6 +546,10 @@ class TempChart {
     this._createTip();
     this._onResize = () => this._draw();
     window.addEventListener('resize', this._onResize);
+    this._resizeObserver = typeof ResizeObserver === 'function'
+      ? new ResizeObserver(() => this._draw())
+      : null;
+    if (this._resizeObserver && this.cvs.parentElement) this._resizeObserver.observe(this.cvs.parentElement);
   }
 
   update(h, unit) { this.data = h; this.unit = unit; this._draw(); }

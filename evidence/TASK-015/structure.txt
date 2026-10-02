@@ -1,0 +1,11 @@
+PASS	transition: all
+PASS	font-face
+PASS	tab backdrop filter removed
+PASS	modal backdrop filter retained
+PASS	stats grid
+PASS	auto-fit
+PASS	tabular nums
+PASS	skeleton
+PASS	ResizeObserver
+PASS	weather data attribute
+PASS	pressure metric

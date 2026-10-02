@@ -57,8 +57,18 @@
 
     <!-- 加载 -->
     <div id="loading" class="loading-state">
-      <div class="loader-ring"></div>
-      <p>正在获取天气…</p>
+      <div class="skeleton-hero" aria-hidden="true">
+        <span class="skeleton-line skeleton-region"></span>
+        <span class="skeleton-line skeleton-city"></span>
+        <span class="skeleton-line skeleton-temp"></span>
+        <span class="skeleton-line skeleton-desc"></span>
+      </div>
+      <div class="skeleton-stats" aria-hidden="true">
+        <span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span>
+      </div>
+      <div class="skeleton-list" aria-hidden="true"><span></span><span></span><span></span></div>
+      <p class="skeleton-status">正在获取天气…</p>
     </div>
 
     <!-- 天气主内容 -->
@@ -77,7 +87,7 @@
         <p id="weather-desc" class="hero-desc">—</p>
       </section>
 
-      <!-- 关键数据横滑 -->
+      <!-- 关键数据仪表栅格 -->
       <div id="stats-scroll" class="stats-scroll"></div>
 
       <!-- 24h 温度趋势 -->
@@ -163,7 +173,9 @@
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
       </div>
       <h2 class="me-title">城市指南</h2>
-      <p class="me-sub">搜索城市后，这里会展示当地美食与旅行推荐</p>
+      <p id="guide-empty-title" class="me-sub">搜索城市后，这里会展示当地美食与旅行推荐</p>
+      <p id="guide-empty-detail" class="guide-empty-detail hidden"></p>
+      <p id="guide-fallback" class="guide-fallback hidden"></p>
     </div>
     <div id="guide-content" class="hidden">
       <div class="guide-tabs">
