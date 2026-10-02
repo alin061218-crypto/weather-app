@@ -3,6 +3,7 @@
 
 /* ---------- 暗黑主题（默认） ---------- */
 :root {
+  --width-data: 1208px;
   /* 表面色 — 从深到浅的层次 */
   --bg: #0a0e17;
   --surface: #121724;
@@ -127,16 +128,16 @@
 }
 
 /* Seven weather contexts keep the text on a dark, readable atmospheric base. */
-body[data-weather="clear-day"] { --scene-bg: #182334; --scene-ink: #f3f6fa; --scene-secondary: #c3cbd8; --ink-muted: #a9b4c5; --scrim-text: linear-gradient(100deg, rgba(8,12,20,.62), rgba(8,12,20,.3) 44%, transparent 74%); }
-body[data-weather="clear-night"] { --scene-bg: #0a0e17; --scene-ink: #eef3fa; --scene-secondary: #c3cbd8; --ink-muted: #a9b4c5; --scrim-text: linear-gradient(100deg, rgba(8,12,20,.42), transparent 74%); }
-body[data-weather="cloudy"] { --scene-bg: #172233; --scene-ink: #eef2f7; --scene-secondary: #c3cbd8; --ink-muted: #a9b4c5; --scrim-text: linear-gradient(100deg, rgba(8,12,20,.58), transparent 74%); }
-body[data-weather="overcast"] { --scene-bg: #151f2e; --scene-ink: #eef2f7; --scene-secondary: #c3cbd8; --ink-muted: #a9b4c5; --scrim-text: linear-gradient(100deg, rgba(8,12,20,.6), transparent 74%); }
-body[data-weather="rain"] { --scene-bg: #101c2e; --scene-ink: #eef2f7; --scene-secondary: #c3cbd8; --ink-muted: #a9b4c5; --scrim-text: linear-gradient(100deg, rgba(8,12,20,.62), transparent 74%); }
-body[data-weather="snow"] { --scene-bg: #2b3648; --scene-ink: #f2f5f9; --scene-secondary: #d1d8e2; --ink-muted: #b4becd; --scrim-text: linear-gradient(100deg, rgba(8,12,20,.56), transparent 74%); }
-body[data-weather="fog"] { --scene-bg: #262e3a; --scene-ink: #f2f5f9; --scene-secondary: #d1d8e2; --ink-muted: #b4becd; --scrim-text: linear-gradient(100deg, rgba(8,12,20,.56), transparent 74%); }
-body[data-weather="storm"] { --scene-bg: #111827; --scene-ink: #f2f5f9; --scene-secondary: #cfd7e2; --ink-muted: #b1bdcd; --scrim-text: linear-gradient(100deg, rgba(8,12,20,.64), transparent 74%); }
-[data-theme="light"] body[data-weather] { --scene-bg: #f6f4f0; --scene-ink: #1a1d24; --scene-secondary: #3f4a5c; --ink-muted: #596476; }
-[data-theme="light"] body[data-weather="clear-night"] { --scene-bg: #243047; --scene-ink: #f2f5f9; --scene-secondary: #d1d8e2; --ink-muted: #b4becd; }
+body[data-weather="clear-day"] { --scene-bg: #182334; --scene-ink: #f3f6fa; --scene-secondary: #c3cbd8; --scene-muted: #a9b4c5; --scrim-text: linear-gradient(100deg, rgba(8,12,20,.62), rgba(8,12,20,.3) 44%, transparent 74%); }
+body[data-weather="clear-night"] { --scene-bg: #0a0e17; --scene-ink: #eef3fa; --scene-secondary: #c3cbd8; --scene-muted: #a9b4c5; --scrim-text: linear-gradient(100deg, rgba(8,12,20,.42), transparent 74%); }
+body[data-weather="cloudy"] { --scene-bg: #172233; --scene-ink: #eef2f7; --scene-secondary: #c3cbd8; --scene-muted: #a9b4c5; --scrim-text: linear-gradient(100deg, rgba(8,12,20,.58), transparent 74%); }
+body[data-weather="overcast"] { --scene-bg: #151f2e; --scene-ink: #eef2f7; --scene-secondary: #c3cbd8; --scene-muted: #a9b4c5; --scrim-text: linear-gradient(100deg, rgba(8,12,20,.6), transparent 74%); }
+body[data-weather="rain"] { --scene-bg: #101c2e; --scene-ink: #eef2f7; --scene-secondary: #c3cbd8; --scene-muted: #a9b4c5; --scrim-text: linear-gradient(100deg, rgba(8,12,20,.62), transparent 74%); }
+body[data-weather="snow"] { --scene-bg: #2b3648; --scene-ink: #f2f5f9; --scene-secondary: #d1d8e2; --scene-muted: #b4becd; --scrim-text: linear-gradient(100deg, rgba(8,12,20,.56), transparent 74%); }
+body[data-weather="fog"] { --scene-bg: #262e3a; --scene-ink: #f2f5f9; --scene-secondary: #d1d8e2; --scene-muted: #b4becd; --scrim-text: linear-gradient(100deg, rgba(8,12,20,.56), transparent 74%); }
+body[data-weather="storm"] { --scene-bg: #111827; --scene-ink: #f2f5f9; --scene-secondary: #cfd7e2; --scene-muted: #b1bdcd; --scrim-text: linear-gradient(100deg, rgba(8,12,20,.64), transparent 74%); }
+[data-theme="light"] body[data-weather] { --scene-bg: #f6f4f0; --scene-ink: #1a1d24; --scene-secondary: #3f4a5c; --scene-muted: #596476; }
+[data-theme="light"] body[data-weather="clear-night"] { --scene-bg: #243047; --scene-ink: #f2f5f9; --scene-secondary: #d1d8e2; --scene-muted: #b4becd; }
 
 /* ---------- 全局重置 ---------- */
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -158,7 +159,7 @@ body {
   line-height: 1.5;
   letter-spacing: 0;
 }
-body[data-weather] { --ink: var(--scene-ink); --ink-secondary: var(--scene-secondary); }
+body[data-weather] { --ink: var(--scene-ink); --ink-secondary: var(--scene-secondary); --ink-muted: var(--scene-muted); }
 [data-theme="light"] #atmosphere { opacity: .35; }
 
 /* ====== Three.js 背景层 ====== */
@@ -170,7 +171,7 @@ body[data-weather] { --ink: var(--scene-ink); --ink-secondary: var(--scene-secon
 .ambient-glow {
   position: fixed;
   top: -30%; left: 50%; transform: translateX(-50%);
-  width: 600px; height: 600px;
+  width: min(600px, 100vw); height: min(600px, 100vw);
   border-radius: 50%;
   background: radial-gradient(circle, var(--primary-glow) 0%, transparent 65%);
   z-index: var(--z-bg);
@@ -835,7 +836,7 @@ body[data-weather] { --ink: var(--scene-ink); --ink-secondary: var(--scene-secon
 .me-input::placeholder { color: var(--ink-muted); }
 .btn-primary {
   width: 100%; height: 46px;
-  background: var(--primary); color: #fff;
+  background: var(--primary); color: var(--primary-on);
   border: none; border-radius: var(--radius-md);
   font-size: var(--text-base); font-weight: 600;
   cursor: pointer; font-family: var(--font-sans);
@@ -956,6 +957,11 @@ body[data-weather] { --ink: var(--scene-ink); --ink-secondary: var(--scene-secon
 }
 .tab-btn.active { color: var(--primary); }
 .tab-btn.active::before { transform: translateX(-50%) scaleX(1); }
+.tab-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
+  border-radius: var(--radius-md);
+}
 .tab-btn-icon { display: flex; align-items: center; justify-content: center; }
 .tab-btn-icon svg {
   width: 22px; height: 22px;
@@ -1040,7 +1046,7 @@ body[data-weather] { --ink: var(--scene-ink); --ink-secondary: var(--scene-secon
   .skeleton-stats { grid-template-columns: repeat(8, minmax(0, 1fr)); }
 }
 @media (min-width: 840px) {
-  .app { max-width: 1208px; padding-left: 88px; padding-right: 0; padding-bottom: var(--space-8); }
+  .app { max-width: var(--width-data); padding-left: 88px; padding-right: 0; padding-bottom: var(--space-8); }
   .weather-view { display: grid; grid-template-columns: 380px minmax(0, 1fr); gap: var(--space-10); align-items: start; }
   .weather-hero { grid-column: 1 / -1; grid-row: 1; }
   .stats-scroll { grid-column: 1 / -1; grid-row: 2; }
@@ -1056,7 +1062,7 @@ body[data-weather] { --ink: var(--scene-ink); --ink-secondary: var(--scene-secon
   .hero-temp { grid-row: 3; }
   .hero-desc { grid-row: 4; }
   .stats-scroll { grid-template-columns: repeat(8, minmax(0, 1fr)); }
-  .tab-bar { position: fixed; top: 50%; bottom: auto; left: max(16px, calc(50% - 640px)); transform: translateY(-50%); width: 72px; flex-direction: column; border-radius: var(--radius-lg); }
+  .tab-bar { position: fixed; top: 50%; bottom: auto; left: max(16px, calc(50% - (var(--width-data) / 2))); transform: translateY(-50%); width: 72px; flex-direction: column; border-radius: var(--radius-lg); }
   .tab-btn { width: 72px; height: 72px; }
   .tab-btn::before { top: 50%; left: 4px; transform: translateY(-50%) scaleY(0); width: 2px; height: 24px; }
   .tab-btn.active::before { transform: translateY(-50%) scaleY(1); }

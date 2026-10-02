@@ -241,6 +241,11 @@ app.post('/api/login', createAuthRateLimit(), async (req, res) => {
 const WEATHER_API = 'https://api.open-meteo.com/v1/forecast';
 const GEO_API = 'https://geocoding-api.open-meteo.com/v1/search';
 const IP_API = 'https://ipapi.co/json/';
+// Canonical weather contract. Keep this synchronized with frontend/js/main.js WX_PARAMS;
+// the frontend normally reads this value through /api/wx-params before direct fallback.
+const WEATHER_PARAMS = 'current_weather=true&hourly=temperature_2m,weathercode,relativehumidity_2m,cloudcover,apparent_temperature,uv_index,precipitation_probability,pressure_msl,visibility&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max,sunrise,sunset,uv_index_max&timezone=auto&forecast_days=7';
+
+app.get('/api/wx-params', (_req, res) => res.type('text/plain').send(WEATHER_PARAMS));
 
 app.get('/api/weather', async (req, res) => {
     const { lat, lon } = req.query;
@@ -257,8 +262,7 @@ app.get('/api/weather', async (req, res) => {
         if (cached && Date.now() - cached.time < 600000) {
             return res.json(JSON.parse(cached.data));
         }
-        const params = 'current_weather=true&hourly=temperature_2m,weathercode,relativehumidity_2m,cloudcover,apparent_temperature,uv_index,precipitation_probability,pressure_msl,visibility&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max,sunrise,sunset,uv_index_max&timezone=auto&forecast_hours=24&forecast_days=7';
-        const r = await fetch(`${WEATHER_API}?latitude=${latNum}&longitude=${lonNum}&${params}`, {
+        const r = await fetch(`${WEATHER_API}?latitude=${latNum}&longitude=${lonNum}&${WEATHER_PARAMS}`, {
             signal: AbortSignal.timeout(8000)
         });
         if (!r.ok) throw new Error(`Weather API returned ${r.status}`);

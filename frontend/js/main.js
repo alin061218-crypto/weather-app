@@ -18,7 +18,10 @@ const API = {
   wx: 'https://api.open-meteo.com/v1/forecast'
 };
 
+// Canonical contract lives in server.js WEATHER_PARAMS and /api/wx-params.
+// Keep this emergency copy synchronized for a backend that is completely unreachable.
 const WX_PARAMS = 'current_weather=true&hourly=temperature_2m,weathercode,relativehumidity_2m,cloudcover,apparent_temperature,uv_index,precipitation_probability,pressure_msl,visibility&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max,sunrise,sunset,uv_index_max&timezone=auto&forecast_days=7';
+let weatherParamsPromise = null;
 
 let authToken = localStorage.getItem('wx_token') || '';
 let currentUser = null;
@@ -166,9 +169,25 @@ async function geoSearch(q) {
 async function getWeather(lat, lon) {
   const d = await fetchJSON(`${API_BASE}/api/weather?lat=${lat}&lon=${lon}`, 10000);
   if (d && !d.error) return d;
-  const d2 = await fetchJSON(`${API.wx}?latitude=${lat}&longitude=${lon}&${WX_PARAMS}`, 10000);
+  const params = await getWeatherParams();
+  const d2 = await fetchJSON(`${API.wx}?latitude=${lat}&longitude=${lon}&${params}`, 10000);
   if (!d2 || d2.error) throw new Error(d2?.error || d?.error || '天气数据获取失败');
   return d2;
+}
+
+async function getWeatherParams() {
+  if (!weatherParamsPromise) {
+    weatherParamsPromise = (async () => {
+      if (!API_BASE) return WX_PARAMS;
+      try {
+        const response = await fetch(`${API_BASE}/api/wx-params`, { cache: 'no-store' });
+        const params = (await response.text()).trim();
+        if (response.ok && params && params.includes('forecast_days=7') && !params.includes('forecast_hours=')) return params;
+      } catch {}
+      return WX_PARAMS;
+    })();
+  }
+  return weatherParamsPromise;
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -593,7 +612,15 @@ class TempChart {
     if (this._resizeObserver && this.cvs.parentElement) this._resizeObserver.observe(this.cvs.parentElement);
   }
 
-  update(h, unit) { this.data = h; this.unit = unit; this._draw(); }
+  update(h, unit) {
+    this.data = {
+      ...h,
+      time: Array.isArray(h?.time) ? h.time.slice(0, 24) : [],
+      temperature_2m: Array.isArray(h?.temperature_2m) ? h.temperature_2m.slice(0, 24) : []
+    };
+    this.unit = unit;
+    this._draw();
+  }
 
   _createTip() {
     this.tip = document.createElement('div');
@@ -607,10 +634,11 @@ class TempChart {
     if (!this.data) return;
     const r = this.cvs.getBoundingClientRect();
     const mx = e.clientX - r.left;
-    const t = this.data.time;
-    const tmp = this.data.temperature_2m;
-    const idx = Math.round((mx - 40) / (r.width - 56) * (tmp.length - 1));
-    if (idx < 0 || idx >= tmp.length) { this.tip.classList.add('hidden'); return; }
+    const t = (this.data.time || []).slice(0, 24);
+    const tmp = (this.data.temperature_2m || []).slice(0, 24);
+    const pointCount = Math.min(t.length, tmp.length, 24);
+    const idx = Math.round((mx - 40) / (r.width - 56) * (pointCount - 1));
+    if (pointCount < 2 || idx < 0 || idx >= pointCount) { this.tip.classList.add('hidden'); return; }
     this.tip.classList.remove('hidden');
     this.tip.textContent = F.time(t[idx]) + '  ' + F.ftemp(tmp[idx], this.unit);
     const desiredLeft = 40 + idx / (tmp.length - 1) * (r.width - 56) - this.tip.offsetWidth / 2;
@@ -621,7 +649,13 @@ class TempChart {
 
   _draw() {
     if (!this.data) return;
-    const { time, temperature_2m: temps } = this.data;
+    const time = (this.data.time || []).slice(0, 24);
+    const temps = (this.data.temperature_2m || []).slice(0, 24);
+    this.pointCount = Math.min(time.length, temps.length, 24);
+    this.cvs.dataset.pointCount = String(this.pointCount);
+    this.cvs.dataset.axisStart = F.time(time[0]);
+    this.cvs.dataset.axisEnd = F.time(time[this.pointCount - 1]);
+    if (this.pointCount < 2) return;
     const W = this.cvs.clientWidth, H = this.cvs.clientHeight;
     if (W < 10 || H < 10) return;
     const dpr = devicePixelRatio || 1;
@@ -664,11 +698,11 @@ class TempChart {
     }
 
     // 时间标签
-    const step = Math.max(1, Math.floor(temps.length / 6));
+    const axisIndexes = [...new Set([0, 6, 12, 18, temps.length - 1].filter(i => i >= 0 && i < temps.length))];
     ctx.textAlign = 'center';
     ctx.fillStyle = cs.getPropertyValue('--ink-secondary').trim() || (isDark ? '#c3cbd8' : '#3f4a5c');
     ctx.font = '12px system-ui, sans-serif';
-    for (let i = 0; i < temps.length; i += step) {
+    for (const i of axisIndexes) {
       ctx.fillText(F.time(time[i]), xf(i), pad.t + ph + 15);
     }
 
