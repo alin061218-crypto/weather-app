@@ -1,0 +1,7 @@
+PASS	stats do not use auto-fit
+PASS	compact stats use four columns
+PASS	wide stats use eight columns
+PASS	stats have no top or left outer border
+PASS	stat chips have no right or bottom border
+PASS	stat hover rule removed
+PASS	only later stat chips have left separators

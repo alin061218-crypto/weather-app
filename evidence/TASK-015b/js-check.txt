@@ -1,0 +1,1 @@
+PASS: node --check frontend/js/main.js

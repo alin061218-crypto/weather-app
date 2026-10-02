@@ -395,7 +395,7 @@ function renderWeather(loc, wx) {
   // 描述
   $('weather-desc').textContent = DESC(cur.weathercode);
 
-  // 关键数据横滑（SVG 图标替换 emoji）
+  // 关键数据横向指标带（SVG 图标替换 emoji）
   const statsEl = $('stats-scroll');
   if (statsEl) {
     const items = [];
