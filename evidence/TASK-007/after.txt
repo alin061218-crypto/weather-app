@@ -1,0 +1,25 @@
+TASK-007 after
+
+Source: git show 32b8f1f:frontend/js/main.js.
+The 689 populated historical DB rows keep their exact name, province, latitude and longitude.
+All 375 COUNTY mappings are stored as parent fields in cities.json.
+The six COUNTY names absent from the historical DB are added once, giving 695 unique records.
+
+Coordinate provenance for the six added names (Open-Meteo Geocoding API, checked 2026-10-02):
+- 格尔木: query 格尔木, 青海/海西, 36.40672,94.90061.
+- 库尔勒: query 库尔勒, 新疆/巴音郭楞, 41.76055,86.15231.
+- 伊州: query 伊州区, 新疆/哈密, 42.82352,93.51632.
+- 高昌: query 高昌, 新疆/吐鲁番, 42.94076,89.1862.
+- 阿图什: query Artux, 新疆/克孜勒苏, 39.70842,76.17971.
+- 贵德: no matching 贵德县 result. Uses 36.28139,100.61306 from query 恰卜恰, the seat of 海南藏族自治州; data field coordinateSource is exactly “所属地级市坐标”. It is shown in search results and the weather region line.
+API endpoint: https://geocoding-api.open-meteo.com/v1/search?name=<query>&count=5&language=zh&format=json
+
+Acceptance:
+- node -e "const d=require('./frontend/data/cities.json');console.log('cities =',d.length)" => cities = 695.
+- node evidence/TASK-007/verify.cjs => PASS: 695 cities; 689 historical rows unchanged; 375 COUNTY mappings; 义乌 coordinates stable; one fetch; fallback labeled; retry and timeout work.
+- node evidence/TASK-007/browser-check.cjs => Edge page migrates old recent/favorite 义乌 coordinates to 29.069,119.658, keeps its favorite star active, then search/select 义乌 twice uses that same coordinate. The page fetches cities.json once. Searching/selecting 贵德 displays “所属地级市坐标” in both the result and weather region line.
+- node --check frontend/js/main.js => exit 0.
+- Select-String main.js for Math.random() * 0.02, more cities from original and 略 placeholders => 0 matches.
+- git diff --check => exit 0.
+
+Browser check serves the frontend from a temporary local HTTP server. Only location and weather API responses are deterministic test doubles; cities.json and the page JavaScript are the real files.

@@ -136,113 +136,31 @@ async function getWeather(lat, lon) {
 
 // ═══════════════════════════════════════════════════════════
 //  本地城市数据库
-//  复用原有 DB + COUNTY（略，实际从原文件保留）
 // ═══════════════════════════════════════════════════════════
-const DB = [
-['北京','北京',39.904,116.407],['上海','上海',31.230,121.474],['天津','天津',39.343,117.362],['重庆','重庆',29.432,106.912],
-['广州','广东',23.129,113.264],['深圳','广东',22.543,114.058],['杭州','浙江',30.274,120.155],['南京','江苏',32.062,118.778],
-['武汉','湖北',30.593,114.306],['成都','四川',30.573,104.067],['西安','陕西',34.342,108.940],['郑州','河南',34.747,113.625],
-['济南','山东',36.651,116.997],['青岛','山东',36.067,120.383],['沈阳','辽宁',41.806,123.432],['大连','辽宁',38.914,121.615],
-['哈尔滨','黑龙江',45.804,126.535],['长春','吉林',43.817,125.324],['长沙','湖南',28.228,112.939],['福州','福建',26.075,119.297],
-['厦门','福建',24.480,118.089],['石家庄','河北',38.043,114.515],['太原','山西',37.871,112.549],['合肥','安徽',31.821,117.227],
-['南昌','江西',28.682,115.858],['昆明','云南',25.039,102.718],['贵阳','贵州',26.647,106.630],['南宁','广西',22.817,108.367],
-['海口','海南',20.044,110.200],['兰州','甘肃',36.061,103.834],['西宁','青海',36.617,101.779],['银川','宁夏',38.487,106.231],
-['呼和浩特','内蒙古',40.843,111.750],['乌鲁木齐','新疆',43.826,87.617],['拉萨','西藏',29.650,91.100],
-['苏州','江苏',31.309,120.602],['无锡','江苏',31.491,120.312],['常州','江苏',31.810,119.974],['南通','江苏',31.980,120.894],
-['徐州','江苏',34.205,117.285],['扬州','江苏',32.394,119.413],['镇江','江苏',32.190,119.425],['盐城','江苏',33.350,120.164],
-['淮安','江苏',33.610,119.015],['泰州','江苏',32.456,119.926],['宿迁','江苏',33.963,118.275],['连云港','江苏',34.597,119.221],
-['宁波','浙江',29.868,121.544],['温州','浙江',27.994,120.699],['嘉兴','浙江',30.771,120.756],['湖州','浙江',30.893,120.088],
-['绍兴','浙江',30.030,120.580],['金华','浙江',29.078,119.647],['衢州','浙江',28.936,118.874],['舟山','浙江',30.017,122.207],
-['台州','浙江',28.656,121.421],['丽水','浙江',28.467,119.923],
-['珠海','广东',22.271,113.577],['汕头','广东',23.354,116.682],['佛山','广东',23.022,113.122],['东莞','广东',23.021,113.752],
-['中山','广东',22.516,113.393],['惠州','广东',23.112,114.417],['江门','广东',22.579,113.082],['湛江','广东',21.271,110.359],
-['肇庆','广东',23.047,112.465],['茂名','广东',21.663,110.925],['梅州','广东',24.289,116.123],['韶关','广东',24.802,113.598],
-['清远','广东',23.682,113.057],['揭阳','广东',23.550,116.373],['潮州','广东',23.657,116.622],
-['烟台','山东',37.465,121.448],['潍坊','山东',36.707,119.162],['威海','山东',37.513,122.120],['临沂','山东',35.105,118.356],
-['淄博','山东',36.814,118.055],['济宁','山东',35.415,116.587],['泰安','山东',36.200,117.080],['日照','山东',35.416,119.527],
-['聊城','山东',36.456,115.986],['德州','山东',37.436,116.359],['滨州','山东',37.382,118.017],['菏泽','山东',35.234,115.481],
-['枣庄','山东',34.811,117.324],['东营','山东',37.434,118.675],
-['洛阳','河南',34.618,112.454],['开封','河南',34.798,114.308],['南阳','河南',32.991,112.529],['新乡','河南',35.303,113.927],
-['安阳','河南',36.098,114.393],['许昌','河南',34.036,113.852],['商丘','河南',34.414,115.656],['信阳','河南',32.147,114.093],
-['周口','河南',33.626,114.697],['驻马店','河南',33.011,114.022],['平顶山','河南',33.767,113.193],
-['唐山','河北',39.631,118.180],['保定','河北',38.874,115.465],['邯郸','河北',36.626,114.539],['廊坊','河北',39.538,116.684],
-['沧州','河北',38.305,116.839],['邢台','河北',37.071,114.504],['秦皇岛','河北',39.936,119.600],
-['宜昌','湖北',30.691,111.291],['襄阳','湖北',32.009,112.122],['荆州','湖北',30.335,112.241],['黄石','湖北',30.200,115.039],
-['十堰','湖北',32.652,110.798],['孝感','湖北',30.925,113.917],['黄冈','湖北',30.454,114.872],
-['株洲','湖南',27.828,113.135],['湘潭','湖南',27.830,112.944],['衡阳','湖南',26.893,112.572],['岳阳','湖南',29.357,113.129],
-['常德','湖南',29.032,111.699],['郴州','湖南',25.771,113.015],['邵阳','湖南',27.239,111.468],
-['绵阳','四川',31.468,104.679],['德阳','四川',31.127,104.398],['宜宾','四川',28.751,104.643],['南充','四川',30.842,106.111],
-['泸州','四川',28.872,105.442],['乐山','四川',29.552,103.766],
-['鞍山','辽宁',41.109,122.994],['抚顺','辽宁',41.881,123.957],['锦州','辽宁',41.095,121.127],['营口','辽宁',40.667,122.235],
-['丹东','辽宁',40.001,124.355],['本溪','辽宁',41.294,123.767],['辽阳','辽宁',41.267,123.174],
-['吉林市','吉林',43.838,126.550],['四平','吉林',43.166,124.350],['通化','吉林',41.729,125.940],['延边','吉林',42.891,129.509],
-['齐齐哈尔','黑龙江',47.354,123.918],['大庆','黑龙江',46.588,125.103],['牡丹江','黑龙江',44.553,129.632],
-['咸阳','陕西',34.330,108.709],['宝鸡','陕西',34.363,107.238],['渭南','陕西',34.500,109.510],['延安','陕西',36.585,109.490],
-['汉中','陕西',33.068,107.024],['榆林','陕西',38.286,109.734],
-['泉州','福建',24.874,118.676],['漳州','福建',24.513,117.647],['莆田','福建',25.454,119.008],['龙岩','福建',25.075,117.017],
-['芜湖','安徽',31.353,118.433],['蚌埠','安徽',32.916,117.389],['安庆','安徽',30.531,117.059],
-['九江','江西',29.705,116.002],['赣州','江西',25.832,114.934],['景德镇','江西',29.274,117.178],
-['大同','山西',40.076,113.300],['长治','山西',36.195,113.117],['运城','山西',35.016,111.007],['临汾','山西',36.089,111.519],
-['遵义','贵州',27.721,106.927],['六盘水','贵州',26.592,104.830],['安顺','贵州',26.253,105.948],['毕节','贵州',27.299,105.305],
-['大理','云南',25.592,100.230],['丽江','云南',26.873,100.230],['曲靖','云南',25.489,103.796],
-['天水','甘肃',34.581,105.725],['酒泉','甘肃',39.733,98.494],['张掖','甘肃',38.926,100.450],
-['桂林','广西',25.274,110.290],['柳州','广西',24.326,109.416],['北海','广西',21.473,109.119],['梧州','广西',23.477,111.279],
-['包头','内蒙古',40.658,109.840],['鄂尔多斯','内蒙古',39.609,109.781],['赤峰','内蒙古',42.258,118.889],
-['克拉玛依','新疆',45.579,84.889],['喀什','新疆',39.468,75.990],['伊犁','新疆',43.917,81.324],
-['三亚','海南',18.253,109.512],['香港','香港',22.319,114.169],['澳门','澳门',22.199,113.544],['台北','台湾',25.033,121.565],
-// ... more cities from original
-];
+let cityCache = null;
+let cityLoad = null;
+const COUNTY = Object.create(null);
 
-const COUNTY = {
-'义乌':'金华','东阳':'金华','永康':'金华','慈溪':'宁波','余姚':'宁波','诸暨':'绍兴','海宁':'嘉兴','桐乡':'嘉兴',
-'温岭':'台州','临海':'台州','乐清':'温州','瑞安':'温州','建德':'杭州','富阳':'杭州','临安':'杭州',
-'江阴':'无锡','宜兴':'无锡','昆山':'苏州','常熟':'苏州','张家港':'苏州','太仓':'苏州',
-'丹阳':'镇江','句容':'镇江','溧阳':'常州','金坛':'常州','如皋':'南通','海门':'南通','启东':'南通',
-'兴化':'泰州','靖江':'泰州','泰兴':'泰州','东台':'盐城','大丰':'盐城','新沂':'徐州','邳州':'徐州',
-'仪征':'扬州','高邮':'扬州','盱眙':'淮安','洪泽':'淮安','沭阳':'宿迁','东海':'连云港','赣榆':'连云港','灌云':'连云港','灌南':'连云港',
-'晋江':'泉州','石狮':'泉州','南安':'泉州','福清':'福州','长乐':'福州',
-'胶州':'青岛','即墨':'青岛','平度':'青岛','龙口':'烟台','莱州':'烟台','招远':'烟台','蓬莱':'烟台',
-'寿光':'潍坊','诸城':'潍坊','青州':'潍坊','高密':'潍坊','荣成':'威海','乳山':'威海','文登':'威海',
-'新泰':'泰安','肥城':'泰安','曲阜':'济宁','邹城':'济宁','兖州':'济宁','梁山':'济宁','滕州':'枣庄','章丘':'济南',
-'乐陵':'德州','禹城':'德州','临清':'聊城','邹平':'滨州','曹县':'菏泽','广饶':'东营',
-'登封':'郑州','新密':'郑州','新郑':'郑州','巩义':'郑州','偃师':'洛阳','禹州':'许昌','长葛':'许昌',
-'汝州':'平顶山','林州':'安阳','卫辉':'新乡','辉县':'新乡','永城':'商丘','项城':'周口','邓州':'南阳','灵宝':'三门峡',
-'辛集':'石家庄','藁城':'石家庄','晋州':'石家庄','遵化':'唐山','迁安':'唐山','武安':'邯郸',
-'涿州':'保定','定州':'保定','高碑店':'保定','任丘':'沧州','泊头':'沧州','河间':'沧州','黄骅':'沧州',
-'霸州':'廊坊','三河':'廊坊','沙河':'邢台','南宫':'邢台','深州':'衡水','冀州':'衡水',
-'大冶':'黄石','丹江口':'十堰','宜都':'宜昌','枝江':'宜昌','当阳':'宜昌',
-'老河口':'襄阳','枣阳':'襄阳','钟祥':'荆门','汉川':'孝感','麻城':'黄冈','赤壁':'咸宁',
-'醴陵':'株洲','湘乡':'湘潭','耒阳':'衡阳','武冈':'邵阳','汨罗':'岳阳','津市':'常德','沅江':'益阳','吉首':'湘西','浏阳':'长沙',
-'瓦房店':'大连','庄河':'大连','海城':'鞍山','东港':'丹东','凤城':'丹东','凌海':'锦州','盖州':'营口','大石桥':'营口',
-'灯塔':'辽阳','调兵山':'铁岭','开原':'铁岭','北票':'朝阳','凌源':'朝阳','兴城':'葫芦岛',
-'德惠':'长春','榆树':'长春','公主岭':'长春','蛟河':'吉林市','桦甸':'吉林市','舒兰':'吉林市','磐石':'吉林市',
-'梨树':'四平','梅河口':'通化','集安':'通化','扶余':'松原','洮南':'白城','延吉':'延边','敦化':'延边','珲春':'延边',
-'尚志':'哈尔滨','五常':'哈尔滨','讷河':'齐齐哈尔','虎林':'鸡西','密山':'鸡西',
-'铁力':'伊春','同江':'佳木斯','富锦':'佳木斯','绥芬河':'牡丹江','海林':'牡丹江','宁安':'牡丹江',
-'北安':'黑河','五大连池':'黑河','安达':'绥化','肇东':'绥化','海伦':'绥化',
-'巢湖':'合肥','桐城':'安庆','明光':'滁州','天长':'滁州','广德':'宣城',
-'瑞金':'赣州','井冈山':'吉安','樟树':'宜春','丰城':'宜春','高安':'宜春','贵溪':'鹰潭','乐平':'景德镇','德兴':'上饶',
-'韩城':'渭南','华阴':'渭南','兴平':'咸阳','神木':'榆林',
-'都江堰':'成都','彭州':'成都','崇州':'成都','邛崃':'成都','广汉':'德阳','什邡':'德阳','绵竹':'德阳','江油':'绵阳',
-'阆中':'南充','峨眉山':'乐山','射洪':'遂宁','隆昌':'内江',
-'汾阳':'吕梁','孝义':'吕梁','介休':'晋中','原平':'忻州','侯马':'临汾','霍州':'临汾','永济':'运城','河津':'运城',
-'高平':'晋城','怀仁':'朔州','古交':'太原','潞城':'长治',
-'仁怀':'遵义','赤水':'遵义','敦煌':'酒泉','玉门':'酒泉','灵武':'银川','格尔木':'海西',
-'大理市':'大理','瑞丽':'德宏','腾冲':'保山','弥勒':'红河','宣威':'曲靖','安宁':'昆明',
-'文昌':'海口','琼海':'海口','万宁':'海口','桂平':'贵港','北流':'玉林','岑溪':'梧州','东兴':'防城港',
-'都匀':'黔南','凯里':'黔东南','兴义':'黔西南','清镇':'贵阳','库尔勒':'巴音郭楞','武夷山':'南平','福安':'宁德','福鼎':'宁德','永安':'三明',
-// ... more
-};
-
-// 补充区县到 DB
-for (const cn of Object.keys(COUNTY)) {
-  const pn = COUNTY[cn];
-  const p = DB.find(c => c && c.length >= 4 && c[0] === pn);
-  if (p && !DB.some(c => c && c[0] === cn)) {
-    if (typeof p[2] === 'number' && typeof p[3] === 'number') {
-      DB.push([cn, p[1], p[2] + (Math.random() - 0.5) * 0.02, p[3] + (Math.random() - 0.5) * 0.02]);
-    }
+async function loadCities() {
+  if (cityCache) return cityCache;
+  if (!cityLoad) {
+    const ctrl = new AbortController();
+    const timeout = setTimeout(() => ctrl.abort(), 5000);
+    cityLoad = fetch('/data/cities.json', { signal: ctrl.signal })
+      .then(response => {
+        if (!response.ok) throw new Error('城市库加载失败：HTTP ' + response.status);
+        return response.json();
+      })
+      .then(rows => {
+        if (!Array.isArray(rows)) throw new Error('城市库格式错误');
+        cityCache = rows;
+        for (const city of rows) if (city.parent) COUNTY[city.name] = city.parent;
+        return rows;
+      })
+      .finally(() => clearTimeout(timeout))
+      .catch(error => { cityLoad = null; throw error; });
   }
+  return cityLoad;
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -311,18 +229,17 @@ function getCityGuide(name) {
 
 function findCity(lat, lon) {
   let best = null, bestD = Infinity;
-  for (const entry of DB) {
-    const [n, p, clat, clon] = entry;
-    if (typeof clat !== 'number' || typeof clon !== 'number' || isNaN(clat) || isNaN(clon)) continue;
+  for (const { name, lat: clat, lon: clon } of cityCache || []) {
+    if (!Number.isFinite(clat) || !Number.isFinite(clon)) continue;
     const d = (clat - lat) ** 2 + (clon - lon) ** 2;
-    if (d < bestD) { bestD = d; best = n; }
+    if (d < bestD) { bestD = d; best = name; }
   }
   const raw = bestD < 0.5 ? best : null;
   if (raw && COUNTY[raw]) return COUNTY[raw];
   return raw;
 }
 
-function searchLocal(q) {
+async function searchLocal(q) {
   let s = q;
   for (const sf of ['自治县', '自治州', '县级市', '开发区', '新区', '特区', '地区', '街道', '市', '县', '区', '镇', '乡']) {
     if (s.endsWith(sf)) { s = s.slice(0, -sf.length); break; }
@@ -330,8 +247,8 @@ function searchLocal(q) {
   s = s.toLowerCase().trim();
   if (s.length < 2) return [];
   const scored = [];
-  for (const [n, p, lat, lon] of DB) {
-    const nl = n.toLowerCase();
+  for (const city of await loadCities()) {
+    const nl = city.name.toLowerCase();
     let sc = 0;
     if (nl === s) sc = 100;
     else if (nl.startsWith(s)) sc = 80;
@@ -339,7 +256,7 @@ function searchLocal(q) {
     else if (nl.includes(s)) sc = 60;
     else if (s.includes(nl)) sc = 55;
     else if (s.length >= 2 && nl.length >= 2 && nl.slice(0, 2) === s.slice(0, 2)) sc = 40;
-    if (sc > 0) scored.push({ name: n, admin1: p, country: '中国', lat, lon, _s: sc });
+    if (sc > 0) scored.push({ ...city, country: '中国', _s: sc });
   }
   scored.sort((a, b) => b._s - a._s);
   return scored.slice(0, 5).map(({ _s, ...c }) => c);
@@ -348,7 +265,8 @@ function searchLocal(q) {
 async function doSearch(query) {
   const NOT_CITY = /(机场|航空|车站|高铁|服务区|收费站|隧道|大桥|加油|停车|公墓|陵园)/;
   const nameOK = n => n && !NOT_CITY.test(n) && n.length >= 2;
-  const local = searchLocal(query);
+  let local = [];
+  try { local = await searchLocal(query); } catch {}
   if (local.length > 0) return local;
   const qs = [query];
   if (!query.endsWith('市') && !query.endsWith('县') && !query.endsWith('区') && query.length <= 4) qs.push(query + '市');
@@ -449,7 +367,7 @@ function renderWeather(loc, wx) {
 
   // 城市和地区
   $('city').textContent = name;
-  $('region').textContent = [loc.region || loc.admin1, loc.country].filter(Boolean).join('，') || '';
+  $('region').textContent = [loc.region || loc.admin1, loc.country, loc.coordinateSource].filter(Boolean).join('，') || '';
 
   // 天气图标（SVG 替换 emoji）
   $('weather-icon').innerHTML = weatherIcon(cur.weathercode, isDay);
@@ -751,6 +669,8 @@ async function init() {
   const generation = ++weatherGeneration;
   let loc = null;
   toggle('loading');
+  try { await loadCities(); } catch {}
+  if (generation !== weatherGeneration) return;
 
   // 1. GPS
   if ('geolocation' in navigator) {
@@ -852,7 +772,7 @@ function initSearch() {
     for (const c of last) {
       const li = document.createElement('li');
       li.className = 'search-item';
-      li.innerHTML = `<span class="si-name">${esc(c.name)}</span><span class="si-meta">${esc([c.admin1, c.country].filter(Boolean).join('，'))}</span>`;
+      li.innerHTML = `<span class="si-name">${esc(c.name)}</span><span class="si-meta">${esc([c.admin1, c.country, c.coordinateSource].filter(Boolean).join('，'))}</span>`;
       li.addEventListener('click', () => { searchGeneration++; selectCity(c); res.classList.add('hidden'); });
       res.appendChild(li);
     }
@@ -920,15 +840,19 @@ async function selectCity(c) {
   const inp = $('search-input');
   inp.value = c.name;
   $('search-clear').classList.remove('hidden');
+  const canonical = (cityCache || []).find(city => city.name === c.name && city.admin1 === c.admin1)
+    || (cityCache || []).find(city => city.name === c.name);
+  if (canonical) c = { ...c, ...canonical };
+  const coordinateSource = c.coordinateSource || '';
 
   try {
     const recent = JSON.parse(localStorage.getItem('wx_recent') || '[]');
-    const filtered = recent.filter(x => !(Math.abs(x.lat - c.lat) < 0.01 && Math.abs(x.lon - c.lon) < 0.01));
-    filtered.unshift({ name: c.name, admin1: c.admin1, country: c.country, lat: c.lat, lon: c.lon });
+    const filtered = recent.filter(x => !(x.name === c.name && x.admin1 === c.admin1));
+    filtered.unshift({ name: c.name, admin1: c.admin1, country: c.country, lat: c.lat, lon: c.lon, coordinateSource });
     localStorage.setItem('wx_recent', JSON.stringify(filtered.slice(0, 5)));
   } catch {}
 
-  const loc = { city: c.name, region: c.admin1 || '', country: c.country || '', lat: c.lat, lon: c.lon };
+  const loc = { city: c.name, region: c.admin1 || '', country: c.country || '', lat: c.lat, lon: c.lon, coordinateSource };
   try {
     const wx = await getWeather(c.lat, c.lon);
     if (generation !== weatherGeneration) return;
@@ -1074,6 +998,11 @@ async function loadMeHistory() {
   });
 }
 
+function favoriteMatchesCity(fav, loc) {
+  if (fav.name && loc.city && fav.name === loc.city && (!fav.admin1 || !loc.region || fav.admin1 === loc.region)) return true;
+  return Math.abs(fav.lat - loc.lat) < 0.01 && Math.abs(fav.lon - loc.lon) < 0.01;
+}
+
 // 收藏星标
 async function onFavClick(e) {
   e.stopPropagation();
@@ -1087,7 +1016,7 @@ async function onFavClick(e) {
     if (!Array.isArray(favoritesCache)) await loadMeFavorites();
     if (currentUser !== user || !Array.isArray(favoritesCache)) return;
     const loc = state.city;
-    const fav = favoritesCache.find(f => Math.abs(f.lat - loc.lat) < 0.01 && Math.abs(f.lon - loc.lon) < 0.01);
+    const fav = favoritesCache.find(f => favoriteMatchesCity(f, loc));
     const d = fav
       ? await fetchJSON(`${API_BASE}/api/favorites/${fav.id}`, 3000, { method: 'DELETE' })
       : await fetchJSON(`${API_BASE}/api/favorites`, 3000, {
@@ -1116,8 +1045,7 @@ function addFavButton() {
 function updateStarUI() {
   const btn = $('fav-btn');
   if (!btn || !state.city) return;
-  const active = !!currentUser && Array.isArray(favoritesCache) && favoritesCache.some(f =>
-    Math.abs(f.lat - state.city.lat) < 0.01 && Math.abs(f.lon - state.city.lon) < 0.01);
+  const active = !!currentUser && Array.isArray(favoritesCache) && favoritesCache.some(f => favoriteMatchesCity(f, state.city));
   btn.classList.toggle('active', active);
 }
 

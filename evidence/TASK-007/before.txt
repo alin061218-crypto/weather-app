@@ -1,0 +1,15 @@
+TASK-007 before (HEAD 880ccf9)
+
+Current main.js DB: 182 literal entries; after the COUNTY expansion: 371 entries.
+Current COUNTY mapping: 245 entries.
+frontend/data/cities.json: absent.
+Current coordinate expansion contains one Math.random() * 0.02 expression.
+Placeholder comments matching 略 / more cities from original / // ... more: 3.
+
+Deterministic replay of the current expansion with random() fixed to 0 and 1:
+  义乌 at random() = 0: ["义乌","浙江",29.067999999999998,119.637]
+  义乌 at random() = 1: ["义乌","浙江",29.088,119.65700000000001]
+
+Historical source 32b8f1f: 689 populated DB rows and 375 COUNTY mappings.
+Its array length is 690 because it contains one sparse slot; JSON extraction must omit that slot.
+369 COUNTY names already have their own DB row. The other six are 格尔木、库尔勒、贵德、伊州、高昌、阿图什.
