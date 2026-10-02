@@ -8,6 +8,9 @@ const API_BASE = (location.hostname === 'localhost' || location.hostname === '12
 const $ = id => document.getElementById(id);
 const Q = (sel, el) => (el || document).querySelector(sel);
 const QA = (sel, el) => [...(el || document).querySelectorAll(sel)];
+const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({
+  '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+}[c]));
 
 const API = {
   ip: 'https://ipapi.co/json/',
@@ -81,10 +84,22 @@ async function fetchJSON(url, timeout = 5000, opts = {}) {
   if (authToken) headers.Authorization = `Bearer ${authToken}`;
   if (opts.method) headers['Content-Type'] = 'application/json';
   try {
-    const r = await fetch(url, { signal: ctrl.signal, headers, method: opts.method, body: opts.body });
-    return await r.json();
-  } catch { return null; }
-  finally { clearTimeout(t); }
+    let r;
+    try {
+      r = await fetch(url, { signal: ctrl.signal, headers, method: opts.method, body: opts.body });
+    } catch (e) {
+      return { error: e.name === 'AbortError' ? '网络失败：请求超时' : `网络失败：${e.message || '无法连接'}`, kind: 'network' };
+    }
+    let data;
+    try {
+      data = await r.json();
+    } catch (e) {
+      if (!r.ok) return { error: `HTTP ${r.status}：${r.statusText || '请求失败'}`, kind: 'http', status: r.status };
+      return { error: `解析失败：${e.message || '响应不是有效 JSON'}`, kind: 'parse' };
+    }
+    if (!r.ok) return { error: `HTTP ${r.status}：${data?.error || data?.message || r.statusText || '请求失败'}`, kind: 'http', status: r.status };
+    return data;
+  } finally { clearTimeout(t); }
 }
 
 async function ipLocation() {
@@ -103,6 +118,7 @@ async function geoSearch(q) {
   const d = await fetchJSON(`${API_BASE}/api/search?q=${encodeURIComponent(q)}`, 4000);
   if (d && Array.isArray(d)) return d.map(r => ({ name: r.name || '', admin1: r.admin1 || '', country: r.country || '', lat: r.lat, lon: r.lon }));
   const d2 = await fetchJSON(`${API.geo}?name=${encodeURIComponent(q)}&count=5&language=zh&format=json`, 4000);
+  if (d2?.error) throw new Error(d2.error);
   return d2?.results?.map(r => ({ name: r.name || '', admin1: r.admin1 || '', country: r.country || '', lat: r.latitude, lon: r.longitude })) || [];
 }
 
@@ -110,7 +126,7 @@ async function getWeather(lat, lon) {
   const d = await fetchJSON(`${API_BASE}/api/weather?lat=${lat}&lon=${lon}`, 10000);
   if (d && !d.error) return d;
   const d2 = await fetchJSON(`${API.wx}?latitude=${lat}&longitude=${lon}&${WX_PARAMS}`, 10000);
-  if (!d2) throw new Error('天气数据获取失败');
+  if (!d2 || d2.error) throw new Error(d2?.error || d?.error || '天气数据获取失败');
   return d2;
 }
 
@@ -764,15 +780,17 @@ async function init() {
     renderWeather(loc, wx);
   } catch (e) {
     const raw = localStorage.getItem('wx_last');
-    if (raw) {
-      const c = JSON.parse(raw);
-      renderWeather(c.loc, c.wx);
-      $('error-msg').textContent = '显示缓存数据';
-      toggle('weather-card');
-    } else {
-      $('error-msg').textContent = e.message;
-      toggle('error-card');
-    }
+    try {
+      const c = raw && JSON.parse(raw);
+      if (c?.loc && c?.wx) {
+        renderWeather(c.loc, c.wx);
+        $('error-msg').textContent = '显示缓存数据';
+        toggle('weather-card');
+        return;
+      }
+    } catch {}
+    $('error-msg').textContent = e.message;
+    toggle('error-card');
   }
 }
 
@@ -784,16 +802,26 @@ function initSearch() {
   const rsec = $('recent-section');
   let last = [];
 
+  function showSearchMessage(message) {
+    res.innerHTML = '';
+    const li = document.createElement('li');
+    li.className = 'search-item';
+    li.textContent = message;
+    res.appendChild(li);
+    res.classList.remove('hidden');
+  }
+
   const search = F.debounce(async q => {
     if (q.length < 2) { res.classList.add('hidden'); last = []; return; }
-    last = await doSearch(q);
+    try { last = await doSearch(q); }
+    catch (e) { last = []; showSearchMessage(e.message || '搜索失败'); return; }
     res.innerHTML = '';
     res.classList.remove('hidden');
-    if (!last.length) { res.classList.add('hidden'); return; }
+    if (!last.length) { showSearchMessage('未找到相关城市，请检查名称'); return; }
     for (const c of last) {
       const li = document.createElement('li');
       li.className = 'search-item';
-      li.innerHTML = `<span class="si-name">${c.name}</span><span class="si-meta">${[c.admin1, c.country].filter(Boolean).join('，')}</span>`;
+      li.innerHTML = `<span class="si-name">${esc(c.name)}</span><span class="si-meta">${esc([c.admin1, c.country].filter(Boolean).join('，'))}</span>`;
       li.addEventListener('click', () => { selectCity(c); res.classList.add('hidden'); });
       res.appendChild(li);
     }
@@ -810,7 +838,13 @@ function initSearch() {
     const q = inp.value.trim();
     if (!q) return;
     if (last.length) { selectCity(last[0]); res.classList.add('hidden'); }
-    else { const r = await doSearch(q); if (r.length) selectCity(r[0]); }
+    else {
+      try {
+        const r = await doSearch(q);
+        if (r.length) selectCity(r[0]);
+        else showSearchMessage('未找到相关城市，请检查名称');
+      } catch (err) { showSearchMessage(err.message || '搜索失败'); }
+    }
   });
 
   clr.addEventListener('click', () => {
@@ -829,7 +863,7 @@ function initSearch() {
     const rc = loadRecent();
     if (!rc.length) { rsec.classList.add('hidden'); return; }
     rsec.classList.remove('hidden');
-    recentEl.innerHTML = rc.map(c => `<span class="recent-chip">${c.name}</span>`).join('');
+    recentEl.innerHTML = rc.map(c => `<span class="recent-chip">${esc(c.name)}</span>`).join('');
     QA('.recent-chip', recentEl).forEach((el, i) => {
       el.addEventListener('click', () => selectCity(rc[i]));
     });
@@ -880,7 +914,8 @@ function checkAuth() {
   if (authToken) {
     fetchJSON(`${API_BASE}/api/me`, 3000).then(d => {
       if (d && d.user) { currentUser = d.user; updateMeUI(); }
-    }).catch(() => { logout(); });
+      else if (d?.status === 401) logout();
+    });
   }
 }
 
@@ -951,7 +986,7 @@ async function loadMeFavorites() {
   const d = await fetchJSON(`${API_BASE}/api/favorites`);
   if (!d || d.error) { list.innerHTML = '<p class="me-empty">加载失败</p>'; return; }
   if (!d.length) { list.innerHTML = '<p class="me-empty">暂无收藏，在天气页搜索城市后点击星标收藏</p>'; return; }
-  list.innerHTML = d.map(f => `<div class="fav-item"><div class="fav-item-click" data-lat="${f.lat}" data-lon="${f.lon}" data-name="${f.name}" data-admin1="${f.admin1||''}" data-country="${f.country||''}"><div class="fav-item-name">${f.name}</div><div class="fav-item-meta">${f.admin1||''} ${f.country||''}</div></div><button class="fav-item-del" data-id="${f.id}">&times;</button></div>`).join('');
+  list.innerHTML = d.map(f => `<div class="fav-item"><div class="fav-item-click" data-lat="${esc(f.lat)}" data-lon="${esc(f.lon)}" data-name="${esc(f.name)}" data-admin1="${esc(f.admin1)}" data-country="${esc(f.country)}"><div class="fav-item-name">${esc(f.name)}</div><div class="fav-item-meta">${esc(f.admin1)} ${esc(f.country)}</div></div><button class="fav-item-del" data-id="${esc(f.id)}">&times;</button></div>`).join('');
   QA('.fav-item-click', list).forEach(el => {
     el.addEventListener('click', () => {
       selectCity({ name: el.dataset.name, admin1: el.dataset.admin1, country: el.dataset.country, lat: parseFloat(el.dataset.lat), lon: parseFloat(el.dataset.lon) });
@@ -974,7 +1009,7 @@ async function loadMeHistory() {
   const d = await fetchJSON(`${API_BASE}/api/history`);
   if (!d || d.error) { list.innerHTML = '<p class="me-empty">加载失败</p>'; return; }
   if (!d.length) { list.innerHTML = '<p class="me-empty">暂无记录</p>'; return; }
-  list.innerHTML = d.map(h => `<div class="fav-item" style="cursor:pointer"><div class="fav-item-click" data-lat="${h.lat}" data-lon="${h.lon}" data-name="${h.city}"><div class="fav-item-name">${h.city}</div><div class="fav-item-meta">${h.weather||''} · ${new Date(h.time).toLocaleString()}</div></div></div>`).join('');
+  list.innerHTML = d.map(h => `<div class="fav-item" style="cursor:pointer"><div class="fav-item-click" data-lat="${esc(h.lat)}" data-lon="${esc(h.lon)}" data-name="${esc(h.city)}"><div class="fav-item-name">${esc(h.city)}</div><div class="fav-item-meta">${esc(h.weather)} · ${esc(new Date(h.time).toLocaleString())}</div></div></div>`).join('');
   QA('.fav-item-click', list).forEach(el => {
     el.addEventListener('click', () => {
       selectCity({ name: el.dataset.name, lat: parseFloat(el.dataset.lat), lon: parseFloat(el.dataset.lon) });
@@ -996,7 +1031,7 @@ function addFavButton(loc) {
     if (!currentUser) { switchTab('me'); return; }
     if (btn.classList.contains('active')) {
       const d = await fetchJSON(`${API_BASE}/api/favorites`);
-      if (d) {
+      if (Array.isArray(d)) {
         const fav = d.find(f => Math.abs(f.lat - loc.lat) < 0.01 && Math.abs(f.lon - loc.lon) < 0.01);
         if (fav) {
           await fetchJSON(`${API_BASE}/api/favorites/${fav.id}`, 3000, { method: 'DELETE' });
@@ -1015,7 +1050,7 @@ function addFavButton(loc) {
 
   if (currentUser) {
     fetchJSON(`${API_BASE}/api/favorites`).then(d => {
-      if (d && d.find(f => Math.abs(f.lat - loc.lat) < 0.01 && Math.abs(f.lon - loc.lon) < 0.01)) {
+      if (Array.isArray(d) && d.find(f => Math.abs(f.lat - loc.lat) < 0.01 && Math.abs(f.lon - loc.lon) < 0.01)) {
         btn.classList.add('active');
       }
     });
@@ -1027,7 +1062,7 @@ function updateStarUI() {
   if (!btn || !state.city) return;
   if (!currentUser) { btn.classList.remove('active'); return; }
   fetchJSON(`${API_BASE}/api/favorites`).then(d => {
-    if (d && d.find(f => Math.abs(f.lat - state.city.lat) < 0.01 && Math.abs(f.lon - state.city.lon) < 0.01)) {
+    if (Array.isArray(d) && d.find(f => Math.abs(f.lat - state.city.lat) < 0.01 && Math.abs(f.lon - state.city.lon) < 0.01)) {
       btn.classList.add('active');
     } else {
       btn.classList.remove('active');
@@ -1112,7 +1147,7 @@ function initChat() {
     const avatarIcon = role === 'bot'
       ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>'
       : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
-    div.innerHTML = `<div class="chat-avatar">${avatarIcon}</div><div class="chat-text">${text.replace(/\n/g, '<br>')}</div>`;
+    div.innerHTML = `<div class="chat-avatar">${avatarIcon}</div><div class="chat-text">${esc(text).replace(/\n/g, '<br>')}</div>`;
     list.appendChild(div);
     list.scrollTop = list.scrollHeight;
   }

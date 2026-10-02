@@ -1,0 +1,36 @@
+TASK-006 before (source HEAD 21815ef, main.js unchanged)
+Environment: PowerShell 7.6.5; Edge 154.0.4258.48 headless; frontend served read-only at http://127.0.0.1:31876. Playwright drove real DOM/events and counted browser requests. Weather/search/auth API responses were deterministic local mocks; Atmosphere and Windy iframe content were stubbed only in the browser harness. No project code changed before these observations.
+
+6a Select-String -Path frontend/js/main.js -Pattern 'li.innerHTML','recentEl.innerHTML','list.innerHTML = d.map','div.innerHTML = .*chat-text'
+frontend/js/main.js:796: li.innerHTML = `<span class="si-name">${c.name}</span><span class="si-meta">${[c.admin1, c.country].filter(Boolean).join('，')}</span>`;
+frontend/js/main.js:832: recentEl.innerHTML = rc.map(c => `<span class="recent-chip">${c.name}</span>`).join('');
+frontend/js/main.js:954: list.innerHTML = d.map(f => `<div class="fav-item">...${f.name}...${f.admin1}...${f.country}...</div>`).join('');
+frontend/js/main.js:977: list.innerHTML = d.map(h => `<div class="fav-item">...${h.city}...${h.weather}...</div>`).join('');
+frontend/js/main.js:1115: div.innerHTML = `<div class="chat-avatar">${avatarIcon}</div><div class="chat-text">${text.replace(/\n/g, '<br>')}</div>`;
+
+6a Browser: Chat tab -> send <img src=x onerror=alert(1)> -> reload.
+{ "alertsAfterSend": 1, "alertsAfterReload": 2, "renderedImageElements": 1 }
+Browser: search NoSuchCityzzzz (mock /api/search returned []).
+{ "resultsHidden": true, "resultsText": "", "errorCardVisible": false, "api": ["GET /api/search?q=NoSuchCityzzzz"] }
+
+6b Browser: authenticated Beijing page -> click #temperature 5 times -> click #fav-btn once. Counted browser Network requests (OPTIONS excluded).
+{ "GET_before_toggles": 1, "GET_after_toggles": 6, "POST_count": 6, "DELETE_count": 0 }
+POST requests: POST /api/favorites x6. Extra GET during 5 rerenders: GET /api/favorites x5.
+
+6b Browser: hold GPS Beijing callback for 1800 ms -> search/select Shanghai -> wait 2100 ms.
+{ "selectedCity": "上海", "settledCity": "北京", "api": ["GET /api/weather?lat=31.23&lon=121.474", "GET /api/weather?lat=39.904&lon=116.407"] }
+
+6b Browser: seed fresh wx_last for Shanghai -> abort both weather endpoints -> open page. Screenshot: cache-before.png.
+{ "city": "上海", "region": "上海，中国", "errorMsgText": "显示缓存数据", "errorMsgVisible": false, "weatherCardVisible": true }
+
+6b Browser: open Beijing map -> close -> search/select Shanghai -> reopen map. Screenshot: map-before.png. Windy iframe body was replaced by a coordinate display; URL is the app-generated URL.
+{ "city": "上海", "firstMap": "39.904,116.407", "secondMap": "39.904,116.407", "sameURL": true }
+
+6b Browser: search AlphaPlace (response delayed 1200 ms) -> search BetaPlace (100 ms) -> wait for both.
+{ "input": "BetaPlace", "results": "AlphaPlaceA，中国", "api": ["GET /api/search?q=AlphaPlace", "GET /api/search?q=BetaPlace"] }
+
+6b Browser: set CSS --primary to oklch(70% 0.12 240) -> redraw chart.
+{ "pageErrors": ["Failed to execute 'addColorStop' on 'CanvasGradient': The value provided ('oklch(70% 0.12 240)40') could not be parsed as a color."] }
+
+6a Browser: log in with mocked network abort / HTTP 503 JSON {error:maintenance} / HTTP 200 invalid JSON.
+[{"kind":"network","message":"操作失败"},{"kind":"http","message":"maintenance"},{"kind":"parse","message":"操作失败"}]
