@@ -106,6 +106,7 @@ class SunScene {
 class CloudScene {
   constructor(scene, overcast = false) {
     this.scene = scene; this.overcast = overcast;
+    this.lightTheme = document.documentElement.getAttribute('data-theme') === 'light';
     this.group = new THREE.Group(); this.clouds = []; this.dustData = [];
     this._build();
   }
@@ -120,13 +121,13 @@ class CloudScene {
       for (let j = 0; j < n; j++) {
         const rx = br * (0.5 + Math.random() * 1.3), ry = by * (0.5 + Math.random() * 1.0), rz = rx * (0.7 + Math.random() * 0.6);
         const g = new THREE.SphereGeometry(1, 14, 10); g.scale(rx, ry, rz);
-        const b = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: '#c8ced6', transparent: true, opacity: 0.50, depthWrite: false }));
+        const b = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: this.lightTheme ? '#b8c0ca' : '#c8ced6', transparent: true, opacity: this.lightTheme ? 0.24 : 0.28, depthWrite: false }));
         b.position.set((Math.random() - 0.5) * def.w * 1.8, (Math.random() - 0.5) * def.w * 0.24 - def.w * 0.05, (Math.random() - 0.5) * def.w * 0.4);
         grp.add(b);
       }
       for (let j = 0; j < 3; j++) {
         const g = new THREE.SphereGeometry(1, 10, 8); g.scale(br * 1.1, by * 0.5, br * 0.8);
-        const b = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: '#bcc4ce', transparent: true, opacity: 0.38, depthWrite: false }));
+        const b = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: this.lightTheme ? '#d0d5dc' : '#bcc4ce', transparent: true, opacity: this.lightTheme ? 0.18 : 0.20, depthWrite: false }));
         b.position.set((Math.random() - 0.5) * def.w * 1.2, -def.w * 0.15 - Math.random() * 0.15, (Math.random() - 0.5) * def.w * 0.3);
         grp.add(b);
       }
@@ -134,7 +135,7 @@ class CloudScene {
       grp.userData = { bx: def.x, by: def.y, sp: 0.04 + Math.random() * 0.10, ph: Math.random() * Math.PI * 2 };
       this.group.add(grp); this.clouds.push(grp);
     }
-    this._addDust(50, '#b8c0cc', 0.22, 0.05);
+    this._addDust(50, this.lightTheme ? '#9ea8b5' : '#b8c0cc', this.lightTheme ? 0.10 : 0.14, 0.05);
     this.scene.add(this.group);
   }
 
@@ -168,22 +169,27 @@ class CloudScene {
 //  雨 —— InstancedMesh 细杆雨滴
 // ═══════════════════════════════════════════════════
 class RainScene {
-  constructor(scene, storm = false) {
-    this.scene = scene; this.group = new THREE.Group(); this.storm = storm;
+  constructor(scene, storm = false, level = 'rain') {
+    this.scene = scene; this.group = new THREE.Group(); this.storm = storm; this.level = level;
+    this.reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches || false;
+    this.lightTheme = document.documentElement.getAttribute('data-theme') === 'light';
     this.darkClouds = []; this.dustData = [];
     this._build();
   }
 
   _build() {
-    const N = this.storm ? 220 : 140, Y_SPAN = 9;
-    const geo = new THREE.CylinderGeometry(0.012, 0.012, 0.28, 4);
-    const mat = new THREE.MeshBasicMaterial({ color: this.storm ? '#7a86a0' : '#9cb4d0', transparent: true, opacity: 0.40, depthWrite: false });
+    const N = this.storm ? 110 : this.level === 'drizzle' ? 60 : this.level === 'heavy' ? 130 : 100, Y_SPAN = 9;
+    const length = this.storm ? 0.18 : this.level === 'drizzle' ? 0.05 : this.level === 'heavy' ? 0.14 : 0.10;
+    const geo = new THREE.CylinderGeometry(0.012, 0.012, length, 4);
+    const mat = new THREE.MeshBasicMaterial({ color: this.lightTheme ? '#667386' : (this.storm ? '#7a86a0' : '#9cb4d0'), transparent: true, opacity: this.lightTheme ? 0.13 : (this.storm ? 0.22 : 0.22), depthWrite: false });
     this.instanced = new THREE.InstancedMesh(geo, mat, N); this.data = [];
     const dummy = new THREE.Object3D();
     for (let i = 0; i < N; i++) {
-      const x = (Math.random() - 0.5) * 10, y = (Math.random() - 0.5) * Y_SPAN, z = (Math.random() - 0.5) * 4;
+      const centerClear = Math.random() < 0.40;
+      const x = centerClear ? (Math.random() < 0.5 ? -1.5 - Math.random() * 3.5 : 1.5 + Math.random() * 3.5) : (Math.random() - 0.5) * 10;
+      const y = (Math.random() - 0.5) * Y_SPAN, z = (Math.random() - 0.5) * 4;
       dummy.position.set(x, y, z); dummy.updateMatrix(); this.instanced.setMatrixAt(i, dummy.matrix);
-      this.data.push({ y, sp: this.storm ? (0.4 + Math.random() * 0.7) : (0.08 + Math.random() * 0.14), x });
+      this.data.push({ y, sp: this.storm ? (0.30 + Math.random() * 0.20) : this.level === 'drizzle' ? (0.05 + Math.random() * 0.05) : this.level === 'heavy' ? (0.22 + Math.random() * 0.16) : (0.10 + Math.random() * 0.12), x });
     }
     this.group.add(this.instanced);
     const cn = this.storm ? 3 : 2;
@@ -191,7 +197,7 @@ class RainScene {
       const grp = new THREE.Group();
       for (let j = 0; j < 5; j++) {
         const r = 0.25 + Math.random() * 0.4;
-        const b = new THREE.Mesh(new THREE.SphereGeometry(r, 10, 8), new THREE.MeshBasicMaterial({ color: '#3a4050', transparent: true, opacity: 0.38, depthWrite: false }));
+        const b = new THREE.Mesh(new THREE.SphereGeometry(r, 10, 8), new THREE.MeshBasicMaterial({ color: this.lightTheme ? '#c4cbd4' : '#3a4050', transparent: true, opacity: this.lightTheme ? 0.16 : 0.20, depthWrite: false }));
         b.position.set((Math.random() - 0.5) * 1.5, (Math.random() - 0.5) * 0.4, 0);
         grp.add(b);
       }
@@ -199,7 +205,7 @@ class RainScene {
       grp.userData = { sp: 0.01 + Math.random() * 0.03 };
       this.group.add(grp); this.darkClouds.push(grp);
     }
-    this._addDust(25, '#98a8b8', 0.15, 0.06);
+    this._addDust(25, this.lightTheme ? '#7d8794' : '#98a8b8', this.lightTheme ? 0.08 : 0.12, 0.06);
     this.scene.add(this.group);
   }
 
@@ -213,6 +219,7 @@ class RainScene {
   }
 
   update(dt, time, ptr) {
+    if (this.reducedMotion) return;
     const dummy = new THREE.Object3D(), Y_SPAN = 9;
     for (let i = 0; i < this.data.length; i++) {
       const d = this.data[i];
@@ -250,7 +257,7 @@ class SnowScene {
 
   _build() {
     // 雪花
-    const N = 120;
+    const N = 80;
     const arr = new Float32Array(N * 3);
     this.data = [];
     for (let i = 0; i < N; i++) {
@@ -362,6 +369,7 @@ export class Atmosphere {
   constructor(el) {
     if (!el) return;
     this.el = el; this.scene = null; this.currentType = null; this.currentScene = null;
+    this.reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches || false;
     this.ptr = new THREE.Vector2(9999, 9999); this.ptrTgt = new THREE.Vector2(9999, 9999); this.ptrOn = false;
     this._init(); this._bind(); this._loop();
   }
@@ -393,7 +401,7 @@ export class Atmosphere {
       case 'clear-night': this.currentScene = new SunScene(this.scene, false); break;
       case 'cloudy':     this.currentScene = new CloudScene(this.scene, false); break;
       case 'overcast':   this.currentScene = new CloudScene(this.scene, true); break;
-      case 'rain':       this.currentScene = new RainScene(this.scene, false); break;
+      case 'rain':       this.currentScene = new RainScene(this.scene, false, code <= 57 ? 'drizzle' : code >= 65 || code === 82 ? 'heavy' : 'rain'); break;
       case 'snow':       this.currentScene = new SnowScene(this.scene); break;
       case 'fog':        this.currentScene = new FogScene(this.scene); break;
       case 'storm':      this.currentScene = new StormScene(this.scene); break;
@@ -419,7 +427,7 @@ export class Atmosphere {
     this.ptr.lerp(this.ptrTgt, 0.06);
     if (!this.ptrOn) this.ptrTgt.set(9999, 9999);
     const ptr = this.ptrOn ? this.ptr : null;
-    if (this.currentScene?.update) this.currentScene.update(dt, time, ptr);
+    if (!this.reducedMotion && this.currentScene?.update) this.currentScene.update(dt, time, ptr);
 
     if (this.currentScene?.lightningFlash !== undefined) {
       const f = this.currentScene.lightningFlash;

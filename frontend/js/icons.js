@@ -55,10 +55,7 @@ icon.weather = {
       <path d="M10 4v1.5"/><path d="M10 17.5v1.5"/>
       <path d="M5.5 6.5l1 1"/><path d="M13.5 11.5l1 1"/>
       <path d="M4 10h1"/><path d="M14.5 8h1"/>
-      <path d="M18 14a3 3 0 11-1.5-5.6"/>
-      <path d="M13 16.5a3.5 3.5 0 018-1.5"/>
-      <path d="M16 18h6"/>
-      <path d="M16 15.5h6"/>
+      <path d="M14 18h6.2a2.8 2.8 0 000-5.6h-.3a4.4 4.4 0 00-8.3-.8A3.2 3.2 0 0014 18z" fill="currentColor" fill-opacity=".16"/>
     `);
   },
 
@@ -68,21 +65,15 @@ icon.weather = {
       <circle cx="7" cy="8" r="3" fill="currentColor" stroke="none" opacity="0.12"/>
       <circle cx="7" cy="8" r="2.8"/>
       <path d="M7 3.5v1.5"/><path d="M7 14v1"/>
-      <path d="M18 12a3.5 3.5 0 11-1.5-6.3"/>
-      <path d="M11 16a4.5 4.5 0 1110-1.5"/>
-      <path d="M4 20h17"/>
-      <path d="M6 17h15"/>
+      <path d="M9 19h10.2a3.8 3.8 0 000-7.6h-.4a5.5 5.5 0 00-10.4-1A4.5 4.5 0 009 19z" fill="currentColor" fill-opacity=".16"/>
     `);
   },
 
   // ☁️ 阴天 — 双层大云
   overcast() {
     return wsvg(`
-      <path d="M7 10a4.5 4.5 0 1110-1.5"/>
-      <path d="M10 12.5a4 4 0 108.5-1.5"/>
-      <path d="M4 14h16"/>
-      <path d="M14 16.5a4 4 0 107.5-1.5"/>
-      <path d="M3 20h18"/>
+      <path d="M5 18.5h14a4.5 4.5 0 000-9h-.5a6.4 6.4 0 00-12.1-1.1A5.2 5.2 0 005 18.5z" fill="currentColor" fill-opacity=".2"/>
+      <path d="M3 20.5h18"/>
     `);
   },
 
@@ -101,60 +92,53 @@ icon.weather = {
   // 🌧️ 毛毛雨 — 云 + 稀疏短雨滴
   rainLight() {
     return wsvg(`
-      <path d="M7 9a4.5 4.5 0 119.5-1.8"/>
-      <path d="M11 12a4 4 0 108.5-1.5"/>
-      <path d="M4 14h16"/>
-      <path d="M10 16v2"/>
-      <path d="M14 15v2"/>
+      <path d="M5 14.5h14a4 4 0 000-8h-.4a5.8 5.8 0 00-10.9-1A4.7 4.7 0 005 14.5z" fill="currentColor" fill-opacity=".18"/>
+      <path d="M9 17v3"/><path d="M15 17v3"/>
     `);
   },
 
   // 🌧️ 大雨 — 云 + 密集长雨滴
   rainHeavy() {
     return wsvg(`
-      <path d="M7 9a4.5 4.5 0 119.5-1.8"/>
-      <path d="M11 12a4 4 0 108.5-1.5"/>
-      <path d="M3 14h18"/>
-      <path d="M8 16v4"/><path d="M11 16v4"/><path d="M14 16v4"/><path d="M17 16v4"/>
-      <path d="M9.5 20v2"/><path d="M12.5 20v2"/>
+      <path d="M4 14.5h16a4.5 4.5 0 000-9h-.5a6.4 6.4 0 00-12.1-1.1A5.2 5.2 0 004 14.5z" fill="currentColor" fill-opacity=".2"/>
+      <path d="M7 17v4"/><path d="M11 16v5"/><path d="M15 17v4"/><path d="M19 16v5"/>
     `);
   },
 
   // ❄️ 雪 — 云 + 点状雪花
   snow() {
     return wsvg(`
-      <path d="M7 10a4.5 4.5 0 1110-1.5"/>
-      <path d="M10 12.5a4 4 0 108.5-1.5"/>
-      <path d="M4 14h16"/>
-      <circle cx="8.5" cy="17" r="0.9" fill="currentColor" stroke="none" opacity="0.55"/>
-      <circle cx="12.5" cy="18.5" r="0.9" fill="currentColor" stroke="none" opacity="0.55"/>
-      <circle cx="16.5" cy="17" r="0.9" fill="currentColor" stroke="none" opacity="0.55"/>
+      <path d="M4 14.5h16a4.5 4.5 0 000-9h-.5a6.4 6.4 0 00-12.1-1.1A5.2 5.2 0 004 14.5z" fill="currentColor" fill-opacity=".18"/>
+      <path d="M8 17v4M6.5 18.5h3M7 17.5l2 2M9 17.5l-2 2"/>
+      <path d="M16 17v4M14.5 18.5h3M15 17.5l2 2M17 17.5l-2 2"/>
     `);
   },
 
   // ⛈️ 雷暴 — 云 + 利落闪电折线
   storm() {
     return wsvg(`
-      <path d="M7 10a4.5 4.5 0 1110-1.5"/>
-      <path d="M10 12.5a4 4 0 108.5-1.5"/>
-      <path d="M4 14h16"/>
-      <polyline points="13 15 9.5 19.5 13 19.5 10 24"/>
+      <path d="M4 14.5h16a4.5 4.5 0 000-9h-.5a6.4 6.4 0 00-12.1-1.1A5.2 5.2 0 004 14.5z" fill="currentColor" fill-opacity=".2"/>
+      <path d="M13 14l-4 6h3l-1 4 5-7h-3z" fill="currentColor" stroke="none"/>
     `);
   },
 };
 
+// WMO 4677: all codes used by Open-Meteo, kept explicit so every code has a visual contract.
+export const WMO_ICON_MAP = {
+  0: 'clearDay', 1: 'partlyCloudy', 2: 'cloudy', 3: 'overcast',
+  45: 'fog', 48: 'fog',
+  51: 'rainLight', 53: 'rainLight', 55: 'rainLight', 56: 'rainLight', 57: 'rainLight',
+  61: 'rainLight', 63: 'rainHeavy', 65: 'rainHeavy', 66: 'rainLight', 67: 'rainHeavy',
+  71: 'snow', 73: 'snow', 75: 'snow', 77: 'snow', 80: 'rainLight', 81: 'rainHeavy', 82: 'rainHeavy',
+  85: 'snow', 86: 'snow', 95: 'storm', 96: 'storm', 99: 'storm',
+};
+
 // ── 根据 WMO 天气代码获取对应图标 ─────────────────
 export function weatherIcon(code, isDay = true) {
-  if (code === 0) return isDay ? icon.weather.clearDay() : icon.weather.clearNight();
-  if (code === 1) return isDay ? icon.weather.partlyCloudy() : icon.weather.clearNight();
-  if (code === 2) return icon.weather.cloudy();
-  if (code === 3) return icon.weather.overcast();
-  if (code >= 45 && code <= 48) return icon.weather.fog();
-  if ((code >= 51 && code <= 57) || (code >= 80 && code <= 81)) return icon.weather.rainLight();
-  if ((code >= 61 && code <= 67) || code === 82) return icon.weather.rainHeavy();
-  if ((code >= 71 && code <= 77) || (code >= 85 && code <= 86)) return icon.weather.snow();
-  if (code >= 95) return icon.weather.storm();
-  return icon.weather.clearDay();
+  if (code === 0 && !isDay) return icon.weather.clearNight();
+  if (code === 1 && !isDay) return icon.weather.clearNight();
+  const name = WMO_ICON_MAP[code] || 'clearDay';
+  return icon.weather[name]();
 }
 
 // ── 数据指标图标 ──────────────────────────────────

@@ -18,7 +18,7 @@ const API = {
   wx: 'https://api.open-meteo.com/v1/forecast'
 };
 
-const WX_PARAMS = 'current_weather=true&hourly=temperature_2m,weathercode,relativehumidity_2m,cloudcover,apparent_temperature,uv_index,precipitation_probability,pressure_msl,visibility&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max,sunrise,sunset,uv_index_max&timezone=auto&forecast_hours=24&forecast_days=7';
+const WX_PARAMS = 'current_weather=true&hourly=temperature_2m,weathercode,relativehumidity_2m,cloudcover,apparent_temperature,uv_index,precipitation_probability,pressure_msl,visibility&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max,sunrise,sunset,uv_index_max&timezone=auto&forecast_days=7';
 
 let authToken = localStorage.getItem('wx_token') || '';
 let currentUser = null;
@@ -43,6 +43,7 @@ const CACHE_MAX_AGE = 60 * 60 * 1000;
 const F = {
   c2f: c => Math.round(c * 9 / 5 + 32),
   ftemp: (v, u) => u === 'fahrenheit' ? F.c2f(v) + '°F' : Math.round(v) + '°',
+  fdelta: (v, u) => u === 'fahrenheit' ? Math.round(v * 9 / 5) + '°F' : Math.round(v) + '°',
   time: s => (s || '').split('T')[1]?.slice(0, 5) || '',
   day: s => {
     const d = new Date(s + 'T12:00:00'), t = new Date();
@@ -58,16 +59,14 @@ const F = {
 // ═══════════════════════════════════════════════════════════
 const DESC = c => {
   if (c === 0) return '晴';
-  if (c === 1) return '少云';
-  if (c <= 3) return '多云';
-  if (c <= 48) return '雾';
-  if (c <= 57) return '毛毛雨';
-  if (c <= 67) return '雨';
-  if (c <= 77) return '雪';
-  if (c <= 82) return '阵雨';
-  if (c <= 86) return '阵雪';
-  if (c <= 99) return '雷暴';
-  return '未知';
+  return ({
+    1: '少云', 2: '多云', 3: '阴', 45: '雾', 48: '雾凇',
+    51: '小毛毛雨', 53: '毛毛雨', 55: '浓毛毛雨', 56: '冻毛毛雨', 57: '冻毛毛雨',
+    61: '小雨', 63: '中雨', 65: '大雨', 66: '冻雨', 67: '强冻雨',
+    71: '小雪', 73: '中雪', 75: '大雪', 77: '雪粒',
+    80: '小阵雨', 81: '阵雨', 82: '强阵雨', 85: '小阵雪', 86: '阵雪',
+    95: '雷暴', 96: '雷暴伴冰雹', 99: '强雷暴伴冰雹'
+  })[c] || '未知';
 };
 
 const WX = {
@@ -77,6 +76,44 @@ const WX = {
   isFog: c => c >= 45 && c <= 48,
   isClear: c => c <= 1,
 };
+
+// QX/T 180—2013 4.1.1: fixed absolute scale, with a long cold-color arc.
+const STD_SCALE = [
+  [-30, '#80419d'], [-25, '#6968d3'], [-20, '#0694f0'], [-15, '#00c0ea'],
+  [-10, '#00e4c5'], [-5, '#6cf987'], [0, '#efff2d'], [5, '#fde700'],
+  [10, '#ffcf00'], [15, '#ffb500'], [20, '#ff9a00'], [25, '#ff7e00'],
+  [30, '#ff6100'], [35, '#ff4100'], [40, '#fe130c']
+];
+const hexRgb = hex => hex.slice(1).match(/../g).map(part => parseInt(part, 16));
+const rgbHex = rgb => '#' + rgb.map(value => Math.round(Math.max(0, Math.min(255, value))).toString(16).padStart(2, '0')).join('');
+function tempColor(temp) {
+  if (temp <= STD_SCALE[0][0]) return STD_SCALE[0][1];
+  if (temp >= STD_SCALE.at(-1)[0]) return STD_SCALE.at(-1)[1];
+  for (let i = 0; i < STD_SCALE.length - 1; i++) {
+    const [t0, c0] = STD_SCALE[i], [t1, c1] = STD_SCALE[i + 1];
+    if (temp >= t0 && temp <= t1) {
+      const factor = (temp - t0) / (t1 - t0);
+      const a = hexRgb(c0), b = hexRgb(c1);
+      return rgbHex(a.map((channel, index) => channel + (b[index] - channel) * factor));
+    }
+  }
+  return STD_SCALE[0][1];
+}
+
+function temperatureFingerprint(hours, unit, scale) {
+  if (!Array.isArray(hours) || hours.length !== 24) return '';
+  const values = hours.map(Number);
+  if (values.some(value => !Number.isFinite(value))) return '';
+  const lo = Math.min(...values), hi = Math.max(...values);
+  const scaleLo = Number.isFinite(scale?.lo) ? scale.lo : lo;
+  const scaleHi = Number.isFinite(scale?.hi) ? scale.hi : hi;
+  const span = Math.max(scaleHi - scaleLo, 1);
+  const medianValues = [...values].sort((a, b) => a - b);
+  const median = (medianValues[11] + medianValues[12]) / 2;
+  const bars = values.map(value => `<i class="temperature-fingerprint-bar" style="height:${Math.max(3, ((value - scaleLo) / span) * 48).toFixed(1)}px;background:${tempColor(value)}" aria-hidden="true"></i>`).join('');
+  return `<span class="temperature-fingerprint" aria-label="24 小时温度指纹"><span class="temperature-fingerprint-bars">${bars}</span><span class="temperature-fingerprint-axis" aria-hidden="true"><span>0</span><span>6</span><span>12</span><span>18</span><span>23</span></span></span>` +
+    `<span class="temperature-fingerprint-meta"><b>${F.ftemp(lo, unit)}</b> ~ <b>${F.ftemp(hi, unit)}</b><small>中位 ${F.ftemp(median, unit)} · 温差 ${F.fdelta(hi - lo, unit)}</small></span>`;
+}
 
 // ═══════════════════════════════════════════════════════════
 //  API 请求
@@ -376,6 +413,8 @@ function renderWeather(loc, wx) {
   const cur = wx.current_weather;
   const h = wx.hourly;
   const d = wx.daily;
+  const hourlyValues = Array.isArray(h?.temperature_2m) ? h.temperature_2m.map(Number).filter(Number.isFinite) : [];
+  const fingerprintScale = hourlyValues.length ? { lo: Math.min(...hourlyValues), hi: Math.max(...hourlyValues) } : null;
   const name = resolveCity(loc);
   const isDay = cur.is_day === 1;
   setWeatherScene(cur.weathercode, isDay);
@@ -426,12 +465,14 @@ function renderWeather(loc, wx) {
       const hi = Math.round(d.temperature_2m_max[i]);
       const precip = d.precipitation_probability_max?.[i] || 0;
 
+      const fingerprint = temperatureFingerprint(h.temperature_2m?.slice(i * 24, i * 24 + 24), state.unit, fingerprintScale);
       const dayDiv = document.createElement('div');
       dayDiv.className = 'day-row';
       dayDiv.innerHTML = `
         <span class="day-name">${F.day(d.time[i])}</span>
         <span class="day-icon-wrap">${weatherIcon(d.weathercode[i], true)}</span>
         <span class="day-desc-text">${DESC(d.weathercode[i])}</span>
+        ${fingerprint || '<span class="temperature-fingerprint-fallback">温度指纹暂无</span>'}
         <span class="day-temps-right">
           <span class="day-temp-hi">${F.ftemp(hi, state.unit)}</span>
           <span class="day-temp-sep">/</span>
@@ -572,7 +613,9 @@ class TempChart {
     if (idx < 0 || idx >= tmp.length) { this.tip.classList.add('hidden'); return; }
     this.tip.classList.remove('hidden');
     this.tip.textContent = F.time(t[idx]) + '  ' + F.ftemp(tmp[idx], this.unit);
-    this.tip.style.left = (40 + idx / (tmp.length - 1) * (r.width - 56) - this.tip.offsetWidth / 2) + 'px';
+    const desiredLeft = 40 + idx / (tmp.length - 1) * (r.width - 56) - this.tip.offsetWidth / 2;
+    const maxLeft = Math.max(0, r.width - this.tip.offsetWidth);
+    this.tip.style.left = Math.max(0, Math.min(desiredLeft, maxLeft)) + 'px';
     this.tip.style.top = (r.height * 0.1) + 'px';
   }
 
@@ -614,8 +657,8 @@ class TempChart {
       ctx.lineTo(pad.l + pw, y);
       ctx.stroke();
 
-      ctx.fillStyle = isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)';
-      ctx.font = '10px system-ui, sans-serif';
+      ctx.fillStyle = cs.getPropertyValue('--ink-secondary').trim() || (isDark ? '#c3cbd8' : '#3f4a5c');
+      ctx.font = '12px system-ui, sans-serif';
       ctx.textAlign = 'right';
       ctx.fillText(F.ftemp(Math.round(val), this.unit), pad.l - 6, y + 4);
     }
@@ -623,8 +666,8 @@ class TempChart {
     // 时间标签
     const step = Math.max(1, Math.floor(temps.length / 6));
     ctx.textAlign = 'center';
-    ctx.fillStyle = isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)';
-    ctx.font = '10px system-ui, sans-serif';
+    ctx.fillStyle = cs.getPropertyValue('--ink-secondary').trim() || (isDark ? '#c3cbd8' : '#3f4a5c');
+    ctx.font = '12px system-ui, sans-serif';
     for (let i = 0; i < temps.length; i += step) {
       ctx.fillText(F.time(time[i]), xf(i), pad.t + ph + 15);
     }
@@ -785,7 +828,7 @@ function initSearch() {
   function showSearchMessage(message) {
     res.innerHTML = '';
     const li = document.createElement('li');
-    li.className = 'search-item';
+    li.className = 'search-item search-message';
     li.textContent = message;
     res.appendChild(li);
     res.classList.remove('hidden');
