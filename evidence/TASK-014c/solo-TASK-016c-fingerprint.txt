@@ -1,0 +1,5 @@
+AssertionError [ERR_ASSERTION]: backend: concurrent alternate path was not started
+
+0 !== 1
+
+    at main (E:\weather\weather-project\evidence\TASK-016c\fingerprint.cjs:141:12)

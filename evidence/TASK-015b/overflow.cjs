@@ -64,7 +64,7 @@ const server = http.createServer((req, res) => {
           ? '<style>html,body{width:100%!important;max-width:100%!important}.app{width:100%!important;max-width:720px!important}</style>'
           : '<style>html,body{width:100%!important;max-width:100%!important}</style>';
       content = Buffer.from(String(content).replace(
-      '<script type="module" src="js/main.js?v=11"></script>',
+      /<script\b[^>]*type=["']module["'][^>]*><\/script>/,
       evidenceStyle + bootstrap + `<script>
         setTimeout(() => {
           const chips = [...document.querySelectorAll('.stat-chip')];
@@ -76,7 +76,7 @@ const server = http.createServer((req, res) => {
             metricCount: chips.length
           });
         }, 3000);
-      </script><script type="module" src="js/main.js?v=11"></script>`
+      </script>$&`
     ));
     }
     res.writeHead(200, { 'Content-Type': (mime[path.extname(file)] || 'application/octet-stream') + '; charset=utf-8' });

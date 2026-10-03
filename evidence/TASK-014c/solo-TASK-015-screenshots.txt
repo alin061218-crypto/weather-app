@@ -1,0 +1,12 @@
+AssertionError [ERR_ASSERTION]: expected eight visible metric cells
+
+10 !== 8
+
+    at main (E:\weather\weather-project\evidence\TASK-015\screenshots.cjs:72:12) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 10,
+  expected: 8,
+  operator: 'strictEqual',
+  diff: 'simple'
+}

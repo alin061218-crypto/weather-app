@@ -43,7 +43,7 @@ async function run(mode) {
     if (!file.startsWith(frontend + path.sep)) return res.writeHead(403).end();
     fs.readFile(file, (error, content) => {
       if (error) return res.writeHead(404).end();
-      if (pathname === '/') content = Buffer.from(String(content).replace('<script type="module" src="js/main.js?v=13"></script>', bootstrap + '<script type="module" src="js/main.js?v=13"></script>'));
+      if (pathname === '/') content = Buffer.from(String(content).replace(/<script\b[^>]*type=["']module["'][^>]*><\/script>/, bootstrap + '$&'));
       if (pathname === '/js/main.js') content = Buffer.from(mode === 'before' ? oldMain : fs.readFileSync(file));
       res.writeHead(200, { 'Content-Type': path.extname(file) === '.html' ? 'text/html' : path.extname(file) === '.js' ? 'text/javascript' : 'text/css' }); res.end(content);
     });

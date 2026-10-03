@@ -103,7 +103,7 @@ const server = http.createServer((req, res) => {
   fs.readFile(file, (error, content) => {
     if (error) { res.writeHead(404).end(); return; }
     if (pathname === '/') {
-      content = Buffer.from(String(content).replace('<script type="module" src="js/main.js?v=10"></script>', `${bootstrap}<script type="module" src="js/main.js?v=10"></script>${check}`));
+      content = Buffer.from(String(content).replace(/<script\b[^>]*type=["']module["'][^>]*><\/script>/, `${bootstrap}$&${check}`));
     }
     res.writeHead(200, { 'Content-Type': (mime[path.extname(file)] || 'application/octet-stream') + '; charset=utf-8' });
     res.end(content);

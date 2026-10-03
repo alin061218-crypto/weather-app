@@ -89,11 +89,7 @@ const server = http.createServer((req, res) => {
     if (error) { res.writeHead(404).end(); return; }
     if (baselineOverrides.has(relative)) content = Buffer.from(baselineOverrides.get(relative));
     if (pathname === '/') {
-      const html = String(content).replace('js/main.js?v=13', 'js/main.js?v=14');
-      content = Buffer.from(html.replace(
-        '<script type="module" src="js/main.js?v=14"></script>',
-        bootstrap + '<script type="module" src="js/main.js?v=14"></script>'
-      ));
+      content = Buffer.from(String(content).replace(/<script\b[^>]*type=["']module["'][^>]*><\/script>/, bootstrap + '$&'));
     }
     const type = path.extname(file) === '.html' ? 'text/html' : path.extname(file) === '.js' ? 'text/javascript' : path.extname(file) === '.css' ? 'text/css' : 'application/octet-stream';
     res.writeHead(200, { 'Content-Type': type + '; charset=utf-8' });

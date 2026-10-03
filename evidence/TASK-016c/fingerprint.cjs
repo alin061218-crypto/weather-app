@@ -68,8 +68,8 @@ const server = http.createServer((req, res) => {
   fs.readFile(file, (error, content) => {
     if (error) return res.writeHead(404).end();
     if (pathname === '/') content = Buffer.from(String(content).replace(
-      '<script type="module" src="js/main.js?v=13"></script>',
-      bootstrap + '<script type="module" src="js/main.js?v=13"></script>'
+      /<script\b[^>]*type=["']module["'][^>]*><\/script>/,
+      bootstrap + '$&'
     ));
     const ext = path.extname(file);
     const type = ext === '.html' ? 'text/html' : ext === '.js' ? 'text/javascript' : ext === '.css' ? 'text/css' : 'application/octet-stream';

@@ -1,0 +1,4 @@
+{"name":"compact-375","width":375,"innerWidth":375,"metricCount":7,"fingerprintBars":[24,24,24,24,24,24,24],"chartTop":664,"dailyTop":931,"chartWidth":343,"contentWidth":343,"statOverflow":[],"scrollWidth":375,"clientWidth":375}
+{"name":"medium-768","width":768,"innerWidth":768,"metricCount":7,"fingerprintBars":[24,24,24,24,24,24,24],"chartTop":585,"dailyTop":852,"chartWidth":719.984375,"contentWidth":720,"statOverflow":[],"scrollWidth":768,"clientWidth":768}
+{"name":"expanded-1280","width":1280,"innerWidth":1280,"metricCount":7,"fingerprintBars":[24,24,24,24,24,24,24],"chartTop":542,"dailyTop":901,"chartWidth":1120,"contentWidth":1120,"statOverflow":[],"scrollWidth":1280,"clientWidth":1280}
+PASS: innerWidth, layout order, full-width chart, seven rows, and 24 bars verified at 375 / 768 / 1280px

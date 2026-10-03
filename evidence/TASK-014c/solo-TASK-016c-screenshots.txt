@@ -1,0 +1,6 @@
+AssertionError [ERR_ASSERTION]: compact-375: concurrent alternate path was not started
+
+0 !== 1
+
+    at capture (E:\weather\weather-project\evidence\TASK-016c\screenshots.cjs:175:12)
+    at async main (E:\weather\weather-project\evidence\TASK-016c\screenshots.cjs:206:133)

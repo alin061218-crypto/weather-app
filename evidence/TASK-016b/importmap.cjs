@@ -18,6 +18,7 @@ assert.equal(checkAssetVersions(html), files.length);
 const malformed = JSON.parse(JSON.stringify(imports));
 delete malformed['app/config'];
 assert.throws(() => checkAssetVersions(html.replace(/(<script type="importmap">)[\s\S]*?(<\/script>)/, '$1' + JSON.stringify({ imports: malformed }) + '$2')), /coverage|version/);
+// Deliberate malformed hash used as a negative test for the version guard.
 assert.throws(() => checkAssetVersions(html.replace(imports['app/config'], '/js/config.js?v=00000000')), /version/i);
 const template = fs.readFileSync(path.join(root, 'frontend/index.html'), 'utf8');
 assert.ok(!template.includes('?v='), 'hashes must be injected, never maintained in the template');

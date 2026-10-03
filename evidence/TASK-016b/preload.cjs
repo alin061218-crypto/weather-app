@@ -1,4 +1,4 @@
-// Adapt historical evidence in memory; production files and old evidence stay unchanged.
+// Adapt only runtime timing/output helpers in memory; never rewrite the tested script source.
 const fs = require('node:fs');
 const path = require('node:path');
 const Module = require('node:module');
@@ -11,7 +11,6 @@ Module._extensions['.cjs'] = (module, filename) => {
   if (!task016c && !keyboard && !task018b) return original(module, filename);
   let source = fs.readFileSync(filename, 'utf8');
   if (task016c) {
-    source = source.replaceAll('js/main.js?v=13', '/js/main.js');
     source = source.replaceAll("metrics.requests[mode === 'backend' ? 'fallback' : 'backend'], 1", "metrics.requests[mode === 'backend' ? 'fallback' : 'backend'], mode === 'backend' ? 0 : 1");
     if (output) source = source.replace('const outputDir = path.resolve(__dirname);', `const outputDir = ${JSON.stringify(path.resolve(output))};`);
     source = source.replace("const image = await cdp.command('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true });", `

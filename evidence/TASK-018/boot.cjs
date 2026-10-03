@@ -46,7 +46,7 @@ class Cdp {
 }
 
 (async () => {
-  const server = http.createServer((req, res) => { const pathname = new URL(req.url, 'http://localhost').pathname; const file = path.resolve(frontend, pathname === '/' ? 'index.html' : '.' + pathname); if (!file.startsWith(frontend + path.sep)) return res.writeHead(403).end(); fs.readFile(file, (error, content) => { if (error) return res.writeHead(404).end(); if (pathname === '/') content = Buffer.from(String(content).replace('<script type="module" src="js/main.js?v=13"></script>', bootstrap + '<script type="module" src="js/main.js?v=13"></script>')); res.writeHead(200, { 'Content-Type': path.extname(file) === '.html' ? 'text/html' : path.extname(file) === '.js' ? 'text/javascript' : 'text/css' }); res.end(content); }); });
+  const server = http.createServer((req, res) => { const pathname = new URL(req.url, 'http://localhost').pathname; const file = path.resolve(frontend, pathname === '/' ? 'index.html' : '.' + pathname); if (!file.startsWith(frontend + path.sep)) return res.writeHead(403).end(); fs.readFile(file, (error, content) => { if (error) return res.writeHead(404).end(); if (pathname === '/') content = Buffer.from(String(content).replace(/<script\b[^>]*type=["']module["'][^>]*><\/script>/, bootstrap + '$&')); res.writeHead(200, { 'Content-Type': path.extname(file) === '.html' ? 'text/html' : path.extname(file) === '.js' ? 'text/javascript' : 'text/css' }); res.end(content); }); });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const serverUrl = `http://127.0.0.1:${server.address().port}`;
   const debugPort = await freePort();

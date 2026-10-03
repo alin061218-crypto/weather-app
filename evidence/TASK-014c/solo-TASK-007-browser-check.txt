@@ -1,0 +1,26 @@
+{
+  "error": "Failed to construct 'URL': Invalid URL",
+  "errors": [],
+  "fetches": [
+    "http://127.0.0.1:23184/data/cities.json",
+    "http://localhost:3001/api/location",
+    "http://localhost:3001/api/weather?lat=39.904&lon=116.407",
+    "http://localhost:3001/api/me",
+    "http://127.0.0.1:23184/data/advice-rules.json",
+    "http://localhost:3001/api/air?lat=39.904&lon=116.407",
+    "http://localhost:3001/api/favorites",
+    "http://localhost:3001/api/weather?lat=29.069&lon=119.658",
+    "http://localhost:3001/api/air?lat=29.069&lon=119.658",
+    "http://localhost:3001/api/history"
+  ],
+  "resultHtml": "<ul id=\"search-results\" class=\"search-drop\"><li><button type=\"button\" class=\"search-item\"><span class=\"si-name\">义乌</span><span class=\"si-meta\">浙江，中国</span></button></li></ul>"
+}
+AssertionError [ERR_ASSERTION]: ifError got unwanted exception: "Failed to construct 'URL': Invalid URL"
+    at run (E:\weather\weather-project\evidence\TASK-007\browser-check.cjs:129:10) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: "Failed to construct 'URL': Invalid URL",
+  expected: null,
+  operator: 'ifError',
+  diff: 'simple'
+}

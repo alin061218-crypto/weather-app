@@ -49,7 +49,7 @@ const server = http.createServer((req, res) => {
             ? '<style>html,body{width:1280px!important;max-width:1280px!important}</style>'
             : mode === 'verify'
               ? '<style>html,body{width:1280px!important;max-width:1280px!important}</style><script>setTimeout(()=>document.title="METRICS:"+JSON.stringify({stats:document.querySelector(".stats-scroll")?.getBoundingClientRect().toJSON(), metricCount:document.querySelectorAll(".stat-chip").length, body:document.body.getBoundingClientRect().toJSON()}),3000)</script>' : '';
-      content = Buffer.from(String(content).replace('<script type="module" src="js/main.js?v=10"></script>', evidenceStyle + bootstrap + '<script type="module" src="js/main.js?v=10"></script>'));
+      content = Buffer.from(String(content).replace(/<script\b[^>]*type=["']module["'][^>]*><\/script>/, evidenceStyle + bootstrap + '$&'));
     }
     res.writeHead(200, { 'Content-Type': (mime[path.extname(file)] || 'application/octet-stream') + '; charset=utf-8' }); res.end(content);
   });

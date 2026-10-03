@@ -1,0 +1,6 @@
+compact-375 metrics: {"viewport":{"innerWidth":492,"outerWidth":522,"devicePixelRatio":1,"scrollWidth":492,"clientWidth":492,"rectWidth":375},"stats":{"scrollWidth":343,"clientWidth":343},"chips":[{"scrollWidth":69,"clientWidth":69},{"scrollWidth":68,"clientWidth":68},{"scrollWidth":68,"clientWidth":68},{"scrollWidth":68,"clientWidth":68},{"scrollWidth":68,"clientWidth":68},{"scrollWidth":68,"clientWidth":68},{"scrollWidth":68,"clientWidth":68},{"scrollWidth":68,"clientWidth":68},{"scrollWidth":68,"clientWidth":68},{"scrollWidth":68,"clientWidth":68}],"widest":[],"metricCount":10}
+AssertionError [ERR_ASSERTION]: compact-375: expected eight metric cells
+
+10 !== 8
+
+    at main (E:\weather\weather-project\evidence\TASK-015b\overflow.cjs:115:14)

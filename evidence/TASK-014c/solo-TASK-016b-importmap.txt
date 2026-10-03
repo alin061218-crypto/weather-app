@@ -1,0 +1,16 @@
+app/account -> /js/account.js?v=f8eb036c
+app/air -> /js/air.js?v=a8f0a939
+app/api -> /js/api.js?v=a129314e
+app/atmosphere -> /js/atmosphere.js?v=248723d6
+app/chat -> /js/chat.js?v=fbce4534
+app/cities -> /js/cities.js?v=14b9f18a
+app/config -> /js/config.js?v=c841c53c
+app/feedback -> /js/feedback.js?v=f78c2a78
+app/icons -> /js/icons.js?v=14e0a948
+app/life -> /js/life.js?v=14689102
+app/main -> /js/main.js?v=5e5652e4
+app/render -> /js/render.js?v=97a12fd3
+app/search -> /js/search.js?v=5d03e84f
+app/ui -> /js/ui.js?v=3708a102
+app/visuals -> /js/visuals.js?v=c2d3457a
+PASS: 15 app importmap entries = 15 JS modules; existing three vendor entry retained; all SHA-1[:8] hashes, automatic child invalidation, and guard rejection checks passed

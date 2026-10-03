@@ -9,8 +9,12 @@ async function read(path) {
 (async () => {
   const html = await read('/index.html');
   const cities = await read('/data/cities.json');
-  const js = await read('/js/main.js?v=13');
-  const css = await read('/css/style.css?v=14');
+  const page = String(html.body);
+  const jsPath = page.match(/<script\b[^>]*type=["']module["'][^>]*src=["']([^"']*main\.js[^"']*)["']/i)?.[1];
+  const cssPath = page.match(/<link\b[^>]*href=["']([^"']*style\.css[^"']*)["']/i)?.[1];
+  assert.ok(jsPath && cssPath, 'index.html must expose JS/CSS URLs');
+  const js = await read(jsPath);
+  const css = await read(cssPath);
   const three = await read('/vendor/three.module.js');
   const cache = value => value || '';
   assert.equal(html.response.status, 200);
