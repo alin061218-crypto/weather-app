@@ -8,10 +8,10 @@ All measurements below were run on the same Windows machine against the same loc
 
 | Version | Weather view visible | City | `document.body.scrollWidth` | `innerWidth` |
 |---|---:|---|---:|---:|
-| Before (HEAD, serial location -> weather -> fallback) | 6468 ms | Beijing | 735 | 750 |
-| After (default city + concurrent requests) | 443 ms | Beijing | 735 | 750 |
+| Before (parent commit, serial location -> weather -> fallback) | 6424 ms | Beijing | 735 | 750 |
+| After (default city + concurrent requests) | 415 ms | Beijing | 735 | 750 |
 
-Improvement: 6025 ms. The harness delays the backend weather response by 6 seconds and returns the direct Open-Meteo response after 300 ms; the updated path uses the direct winner.
+Improvement: 6009 ms. The harness delays the backend weather response by 6 seconds and returns the direct Open-Meteo response after 300 ms; the updated path uses the direct winner.
 
 ## Location cache
 
