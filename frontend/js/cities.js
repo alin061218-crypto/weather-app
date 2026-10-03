@@ -109,6 +109,30 @@ export function resolveCity(loc) {
   return cn || loc.city || '未知';
 }
 
+// Keep names and administrative regions from the same record. IP geolocation may
+// provide an English city and a stale province while coordinates resolve locally.
+export function normalizeLocation(loc) {
+  const city = loc.city || loc.name || '当前位置';
+  const clean = name => String(name || '').replace(/[市县区]$/, '');
+  const region = loc.admin1 || loc.region || '';
+  const matches = (cityCache || []).filter(row => clean(row.name) === clean(city));
+  const named = matches.find(row => clean(row.admin1) === clean(region))
+    || (matches.length === 1 ? matches[0] : null);
+  let record = named;
+  const resolved = resolveCity({ ...loc, city });
+  if (!record && resolved !== city) {
+    record = (cityCache || []).find(row => row.name === resolved);
+  }
+  return { ...loc, city: named ? city : resolved,
+    region: record?.admin1 || region, country: loc.country || (record ? '中国' : '') };
+}
+
+export function regionLabel(region) {
+  if (['河北', '山西', '辽宁', '吉林', '黑龙江', '江苏', '浙江', '安徽', '福建', '江西', '山东',
+    '河南', '湖北', '湖南', '广东', '海南', '四川', '贵州', '云南', '陕西', '甘肃', '青海', '台湾'].includes(region)) return region + '省';
+  return region;
+}
+
 export function toPrefectureCity(name) {
   if (!name) return name;
   let cleaned = name;

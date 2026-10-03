@@ -1,0 +1,601 @@
+[
+  {
+    "id": "life-1",
+    "category": "穿衣",
+    "level": "保暖",
+    "conditions": {
+      "temperature": {
+        "max": 9
+      }
+    },
+    "weight": 1,
+    "text": "偏冷，建议厚外套并注意保暖。",
+    "tags": [
+      "厚外套"
+    ],
+    "priority": 10
+  },
+  {
+    "id": "life-2",
+    "category": "穿衣",
+    "level": "适中",
+    "conditions": {
+      "temperature": {
+        "min": 10,
+        "max": 27
+      }
+    },
+    "weight": 1,
+    "text": "按体感选择长袖或薄外套。",
+    "tags": [
+      "薄外套"
+    ],
+    "priority": 10
+  },
+  {
+    "id": "life-3",
+    "category": "穿衣",
+    "level": "轻薄",
+    "conditions": {
+      "temperature": {
+        "min": 28
+      }
+    },
+    "weight": 1,
+    "text": "炎热天气，选择轻薄透气衣物。",
+    "tags": [
+      "短袖"
+    ],
+    "priority": 10
+  },
+  {
+    "id": "life-4",
+    "category": "穿衣",
+    "level": "防滑",
+    "conditions": {
+      "freezing": true
+    },
+    "weight": 1,
+    "text": "冻雨天气，注意路面结冰，穿防滑鞋。",
+    "tags": [
+      "防滑鞋"
+    ],
+    "priority": 100
+  },
+  {
+    "id": "life-5",
+    "category": "活动",
+    "level": "室内",
+    "conditions": {
+      "storm": true
+    },
+    "weight": 1,
+    "text": "雷暴天气，请选择室内活动。",
+    "tags": [
+      "室内活动"
+    ],
+    "priority": 100
+  },
+  {
+    "id": "life-6",
+    "category": "活动",
+    "level": "室内",
+    "conditions": {
+      "freezing": true
+    },
+    "weight": 1,
+    "text": "冻雨易造成路面结冰，减少外出。",
+    "tags": [
+      "防滑"
+    ],
+    "priority": 100
+  },
+  {
+    "id": "life-7",
+    "category": "活动",
+    "level": "减少户外",
+    "conditions": {
+      "us_aqi": {
+        "min": 101
+      }
+    },
+    "weight": 1,
+    "text": "空气质量欠佳，减少长时间户外活动。",
+    "tags": [
+      "室内活动"
+    ],
+    "priority": 90
+  },
+  {
+    "id": "life-8",
+    "category": "活动",
+    "level": "看天气",
+    "conditions": {},
+    "weight": 1,
+    "text": "外出前留意降雨、温度和空气质量。",
+    "tags": [
+      "出行参考"
+    ],
+    "priority": 0
+  },
+  {
+    "id": "life-9",
+    "category": "紫外线",
+    "level": "低",
+    "conditions": {
+      "uv": {
+        "max": 2.99
+      }
+    },
+    "weight": 1,
+    "text": "今日最高 UV 较低，长时间外出仍需基础防晒。",
+    "tags": [
+      "基础防晒"
+    ],
+    "priority": 10
+  },
+  {
+    "id": "life-10",
+    "category": "紫外线",
+    "level": "中等",
+    "conditions": {
+      "uv": {
+        "min": 3,
+        "max": 5.99
+      }
+    },
+    "weight": 1,
+    "text": "今日最高 UV 中等，外出涂防晒并戴帽。",
+    "tags": [
+      "防晒",
+      "遮阳帽"
+    ],
+    "priority": 10
+  },
+  {
+    "id": "life-11",
+    "category": "紫外线",
+    "level": "高",
+    "conditions": {
+      "uv": {
+        "min": 6,
+        "max": 7.99
+      }
+    },
+    "weight": 1,
+    "text": "今日最高 UV 较高，午间减少日晒。",
+    "tags": [
+      "避开午间"
+    ],
+    "priority": 10
+  },
+  {
+    "id": "life-12",
+    "category": "紫外线",
+    "level": "很高",
+    "conditions": {
+      "uv": {
+        "min": 8,
+        "max": 10.99
+      }
+    },
+    "weight": 1,
+    "text": "今日最高 UV 很高，尽量在阴凉处活动。",
+    "tags": [
+      "遮阳",
+      "防晒"
+    ],
+    "priority": 10
+  },
+  {
+    "id": "life-13",
+    "category": "紫外线",
+    "level": "极高",
+    "conditions": {
+      "uv": {
+        "min": 11
+      }
+    },
+    "weight": 1,
+    "text": "今日最高 UV 极高，避免午间长时间暴露。",
+    "tags": [
+      "减少日晒"
+    ],
+    "priority": 10
+  },
+  {
+    "id": "life-14",
+    "category": "洗车",
+    "level": "不宜",
+    "conditions": {
+      "wet": true
+    },
+    "weight": 1,
+    "text": "有雨雪，建议推迟洗车。",
+    "tags": [
+      "推迟洗车"
+    ],
+    "priority": 90
+  },
+  {
+    "id": "life-15",
+    "category": "洗车",
+    "level": "不宜",
+    "conditions": {
+      "freezing": true
+    },
+    "weight": 1,
+    "text": "冻雨天气，避免洗车后结冰。",
+    "tags": [
+      "防结冰"
+    ],
+    "priority": 100
+  },
+  {
+    "id": "life-16",
+    "category": "洗车",
+    "level": "不宜",
+    "conditions": {
+      "precipitation": {
+        "min": 40
+      }
+    },
+    "weight": 1,
+    "text": "今日降水概率较高，建议推迟洗车。",
+    "tags": [
+      "留意降雨"
+    ],
+    "priority": 80
+  },
+  {
+    "id": "life-17",
+    "category": "洗车",
+    "level": "适宜",
+    "conditions": {
+      "precipitation": {
+        "max": 39
+      },
+      "wind": {
+        "max": 25
+      }
+    },
+    "weight": 1,
+    "text": "今日降水概率较低，可安排洗车。",
+    "tags": [
+      "洗车"
+    ],
+    "priority": 10
+  },
+  {
+    "id": "life-18",
+    "category": "洗车",
+    "level": "谨慎",
+    "conditions": {
+      "wind": {
+        "min": 26
+      }
+    },
+    "weight": 1,
+    "text": "风较大，建议等风势减弱后洗车。",
+    "tags": [
+      "防风沙"
+    ],
+    "priority": 70
+  },
+  {
+    "id": "life-19",
+    "category": "晾晒",
+    "level": "不宜",
+    "conditions": {
+      "wet": true
+    },
+    "weight": 1,
+    "text": "有雨雪，建议室内通风晾干。",
+    "tags": [
+      "室内晾干"
+    ],
+    "priority": 90
+  },
+  {
+    "id": "life-20",
+    "category": "晾晒",
+    "level": "不宜",
+    "conditions": {
+      "freezing": true
+    },
+    "weight": 1,
+    "text": "冻雨天气，衣物宜在室内晾干。",
+    "tags": [
+      "室内晾干"
+    ],
+    "priority": 100
+  },
+  {
+    "id": "life-21",
+    "category": "晾晒",
+    "level": "不宜",
+    "conditions": {
+      "precipitation": {
+        "min": 40
+      }
+    },
+    "weight": 1,
+    "text": "降水概率较高，建议室内晾晒。",
+    "tags": [
+      "室内晾晒"
+    ],
+    "priority": 80
+  },
+  {
+    "id": "life-22",
+    "category": "晾晒",
+    "level": "较慢",
+    "conditions": {
+      "humidity": {
+        "min": 80
+      }
+    },
+    "weight": 1,
+    "text": "湿度较高，衣物干得慢，注意通风。",
+    "tags": [
+      "通风"
+    ],
+    "priority": 60
+  },
+  {
+    "id": "life-23",
+    "category": "晾晒",
+    "level": "适宜",
+    "conditions": {
+      "humidity": {
+        "max": 79
+      },
+      "precipitation": {
+        "max": 39
+      },
+      "wind": {
+        "max": 25
+      }
+    },
+    "weight": 1,
+    "text": "湿度与降雨条件较适合晾晒。",
+    "tags": [
+      "及时收衣"
+    ],
+    "priority": 10
+  },
+  {
+    "id": "life-24",
+    "category": "晾晒",
+    "level": "防风",
+    "conditions": {
+      "wind": {
+        "min": 26
+      }
+    },
+    "weight": 1,
+    "text": "风较大，室外晾晒请固定衣物。",
+    "tags": [
+      "固定衣物"
+    ],
+    "priority": 70
+  },
+  {
+    "id": "life-25",
+    "category": "运动",
+    "level": "室内",
+    "conditions": {
+      "storm": true
+    },
+    "weight": 1,
+    "text": "雷暴天气，改为室内运动。",
+    "tags": [
+      "室内健身"
+    ],
+    "priority": 100
+  },
+  {
+    "id": "life-26",
+    "category": "运动",
+    "level": "室内",
+    "conditions": {
+      "freezing": true
+    },
+    "weight": 1,
+    "text": "冻雨可能结冰，避免户外跑步。",
+    "tags": [
+      "室内健身"
+    ],
+    "priority": 100
+  },
+  {
+    "id": "life-27",
+    "category": "运动",
+    "level": "减少户外",
+    "conditions": {
+      "us_aqi": {
+        "min": 101
+      }
+    },
+    "weight": 1,
+    "text": "US AQI 超过100，敏感人群减少户外运动；污染加重时改为室内运动。",
+    "tags": [
+      "留意空气"
+    ],
+    "priority": 90
+  },
+  {
+    "id": "life-28",
+    "category": "运动",
+    "level": "室内",
+    "conditions": {
+      "wet": true
+    },
+    "weight": 1,
+    "text": "有雨雪，选择室内运动以防滑倒。",
+    "tags": [
+      "室内健身"
+    ],
+    "priority": 80
+  },
+  {
+    "id": "life-29",
+    "category": "运动",
+    "level": "避开高温",
+    "conditions": {
+      "temperature": {
+        "min": 35
+      }
+    },
+    "weight": 1,
+    "text": "高温天气，减少强度并补水。",
+    "tags": [
+      "补水"
+    ],
+    "priority": 70
+  },
+  {
+    "id": "life-30",
+    "category": "运动",
+    "level": "防风",
+    "conditions": {
+      "wind": {
+        "min": 26
+      }
+    },
+    "weight": 1,
+    "text": "风较大，优先选择室内运动。",
+    "tags": [
+      "室内运动"
+    ],
+    "priority": 70
+  },
+  {
+    "id": "life-31",
+    "category": "运动",
+    "level": "适宜",
+    "conditions": {
+      "temperature": {
+        "min": 5,
+        "max": 34.99
+      },
+      "us_aqi": {
+        "max": 100
+      },
+      "wind": {
+        "max": 25
+      }
+    },
+    "weight": 1,
+    "text": "温度与空气条件适合运动，充分热身。",
+    "tags": [
+      "热身"
+    ],
+    "priority": 10
+  },
+  {
+    "id": "life-32",
+    "category": "运动",
+    "level": "空气待确认",
+    "conditions": {
+      "temperature": {
+        "min": 5,
+        "max": 34.99
+      }
+    },
+    "weight": 1,
+    "text": "温度适中；运动前请确认空气质量，缺失数据时避免长时间剧烈运动。",
+    "tags": [
+      "确认空气"
+    ],
+    "priority": 0
+  },
+  {
+    "id": "life-33",
+    "category": "感冒",
+    "level": "保暖提示",
+    "conditions": {
+      "temperature": {
+        "max": 9
+      }
+    },
+    "weight": 1,
+    "text": "气温偏低，注意保暖；气象提示不能预测是否会感冒。",
+    "tags": [
+      "注意保暖"
+    ],
+    "priority": 30
+  },
+  {
+    "id": "life-34",
+    "category": "感冒",
+    "level": "温差提示",
+    "conditions": {
+      "range": {
+        "min": 10
+      }
+    },
+    "weight": 1,
+    "text": "昼夜温差较大，及时增减衣物；这不是医学风险预测。",
+    "tags": [
+      "增减衣物"
+    ],
+    "priority": 40
+  },
+  {
+    "id": "life-35",
+    "category": "感冒",
+    "level": "日常提示",
+    "conditions": {},
+    "weight": 1,
+    "text": "保持通风与规律作息；仅提供气象参考，不作健康诊断。",
+    "tags": [
+      "通风"
+    ],
+    "priority": 0
+  },
+  {
+    "id": "life-36",
+    "category": "过敏",
+    "level": "花粉未知",
+    "conditions": {
+      "wind": {
+        "min": 26
+      }
+    },
+    "weight": 1,
+    "text": "风较大，敏感人群可做好防护；未接入花粉数据，不能判断过敏风险。",
+    "tags": [
+      "敏感人群防护"
+    ],
+    "priority": 20
+  },
+  {
+    "id": "life-37",
+    "category": "过敏",
+    "level": "空气提示",
+    "conditions": {
+      "us_aqi": {
+        "min": 101
+      }
+    },
+    "weight": 1,
+    "text": "空气质量欠佳，敏感人群减少户外暴露；未接入花粉数据。",
+    "tags": [
+      "减少暴露"
+    ],
+    "priority": 30
+  },
+  {
+    "id": "life-38",
+    "category": "过敏",
+    "level": "花粉未知",
+    "conditions": {},
+    "weight": 1,
+    "text": "未接入花粉监测；请结合个人过敏史和当地花粉信息安排出行。",
+    "tags": [
+      "查看花粉信息"
+    ],
+    "priority": 0
+  }
+]

@@ -19,7 +19,19 @@ export function generateReply(question, city, wx, advice) {
   const humidity = h.relativehumidity_2m?.[0];
   const precip = h.precipitation_probability?.[0] || 0;
 
+  // Combined intent must precede today's clothing/outdoor branches.
+  if (q.includes('明天') && (q.includes('穿') || q.includes('衣服'))) {
+    const today = cur.time?.slice(0, 10) || d?.time?.[0];
+    const index = d?.time?.findIndex(day => day > today) ?? -1;
+    const hi = d?.temperature_2m_max?.[index], lo = d?.temperature_2m_min?.[index], nextCode = d?.weathercode?.[index];
+    if (!Number.isFinite(hi) || !Number.isFinite(lo) || !Number.isFinite(nextCode)) return '暂无明天的穿衣预报，请稍后再试。';
+    const cloth = advice.getClothing((hi + lo) / 2, nextCode, 0);
+    return `${city}明天（${d.time[index]}）${DESC(nextCode)}，${F.ftemp(lo, state.unit)}～${F.ftemp(hi, state.unit)}。\n\n建议：${cloth.text}\n推荐搭配：${cloth.tags.join('、')}\n按明日最低温与温差增减衣物；暂无明日风速。`;
+  }
+
   if (q.includes('出门') || (q.includes('适合') && q.includes('出去'))) {
+    if (WX.isFreezing(code)) return `${city}当前${desc}，注意路面结冰，建议减少外出并穿防滑鞋。`;
+    if (wx.air?.current?.us_aqi > 100) return `${city}当前空气质量欠佳（US AQI ${wx.air.current.us_aqi}），减少长时间户外活动。`;
     if (WX.isStorm(code)) return `${city}当前有雷暴，绝对不建议出门！温度 ${temp}°C，风速 ${wind} km/h。建议待在室内，远离门窗。`;
     if (WX.isRain(code)) return `${city}正在下雨，温度 ${temp}°C。如果要出门，记得带伞、穿防水鞋。降雨概率 ${precip}%。`;
     if (WX.isSnow(code)) return `${city}正在下雪，温度 ${temp}°C。出门注意防滑保暖。如果风不大雪不重，冬日出行也别有趣味。`;
@@ -31,6 +43,7 @@ export function generateReply(question, city, wx, advice) {
   }
 
   if (q.includes('伞') || q.includes('雨伞') || q.includes('带伞')) {
+    if (WX.isFreezing(code)) return `${city}当前${desc}，重点是注意路面结冰，减少外出并穿防滑鞋。`;
     if (WX.isRain(code) || precip > 30) return `${city}当前${desc}，降雨概率 ${precip}%，建议带伞。未来几天最高降雨概率 ${Math.max(...(d.precipitation_probability_max || [0]))}%。`;
     if (WX.isStorm(code)) return `${city}有雷暴，必须带伞！而且最好穿防水鞋和衣服。`;
     return `${city}当前${desc}，降雨概率仅 ${precip}%，不太需要带伞。`;
@@ -52,7 +65,7 @@ export function generateReply(question, city, wx, advice) {
   }
 
   if (q.includes('运动') || q.includes('跑步') || q.includes('锻炼') || q.includes('健身')) {
-    const act = advice.getActivity(temp, code, wind, cur.is_day === 1);
+    const act = advice.getActivity(temp, code, wind, cur.is_day === 1, wx.air?.current?.us_aqi);
     return `${city}温度 ${temp}°C，${desc}。\n\n${act.text}\n推荐：${act.tags.join('、')}`;
   }
 

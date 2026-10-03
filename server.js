@@ -174,6 +174,18 @@ db.exec(`
     data TEXT NOT NULL,
     time INTEGER NOT NULL
   );
+  CREATE TABLE IF NOT EXISTS feedback (
+    id TEXT PRIMARY KEY,
+    rating INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
+    comment TEXT NOT NULL DEFAULT '',
+    susAnswers TEXT,
+    susScore REAL,
+    questionnaireVersion TEXT NOT NULL,
+    scenario TEXT NOT NULL DEFAULT '',
+    adviceAccuracy INTEGER,
+    adviceVersion TEXT NOT NULL,
+    createdAt TEXT NOT NULL
+  );
   CREATE INDEX IF NOT EXISTS idx_history_city ON history(city);
   CREATE INDEX IF NOT EXISTS idx_history_time ON history(time);
   CREATE INDEX IF NOT EXISTS idx_history_user ON history(userId);
@@ -229,6 +241,10 @@ const stmt = {
 const deleteHistoryRows = db.transaction(rows => {
     for (const row of rows) stmt.histDeleteById.run(row.id);
 });
+
+const feedbackInsert = db.prepare(`INSERT INTO feedback
+    (id, rating, comment, susAnswers, susScore, questionnaireVersion, scenario, adviceAccuracy, adviceVersion, createdAt)
+    VALUES (@id, @rating, @comment, @susAnswers, @susScore, @questionnaireVersion, @scenario, @adviceAccuracy, @adviceVersion, @createdAt)`);
 
 // ===== 中间件 =====
 app.use(helmet({
@@ -382,6 +398,59 @@ app.get('/api/weather', async (req, res) => {
         clearTimeout(timeout);
         res.off('close', cancel);
     }
+});
+
+// Independent AQI cache namespace: never collide with forecast cache entries.
+app.get('/api/air', async (req, res) => {
+    const { lat, lon } = req.query;
+    const latNum = Number(lat), lonNum = Number(lon);
+    if (typeof lat !== 'string' || !lat.trim() || typeof lon !== 'string' || !lon.trim()
+        || !Number.isFinite(latNum) || !Number.isFinite(lonNum)
+        || latNum < -90 || latNum > 90 || lonNum < -180 || lonNum > 180) {
+        return res.status(400).json({ error: '经纬度格式错误' });
+    }
+    const key = `air:${latNum.toFixed(2)},${lonNum.toFixed(2)}`;
+    const controller = new AbortController();
+    const cancel = () => { if (!res.writableEnded) controller.abort(); };
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    res.on('close', cancel);
+    try {
+        const cached = stmt.cacheGet.get(key);
+        if (cached && Date.now() - cached.time < HALF_HOUR_MS) return res.json(JSON.parse(cached.data));
+        const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${latNum}&longitude=${lonNum}&current=pm10,pm2_5,us_aqi&timezone=auto`;
+        const response = await fetch(url, { signal: controller.signal });
+        if (!response.ok) throw new Error(`Air API returned ${response.status}`);
+        const data = await response.json();
+        if (!Number.isFinite(data.current?.us_aqi) || data.current.us_aqi < 0) throw new Error('Invalid AQI');
+        stmt.cacheSet.run(key, JSON.stringify(data), Date.now());
+        res.json(data);
+    } catch {
+        if (!res.destroyed) res.status(502).json({ error: '空气质量暂不可用' });
+    } finally {
+        clearTimeout(timeout);
+        res.off('close', cancel);
+    }
+});
+
+// Anonymous usability feedback; incomplete SUS responses never receive a score.
+app.post('/api/feedback', rateLimit({ windowMs: 60000, limit: 20,
+    standardHeaders: 'draft-8', legacyHeaders: false,
+    message: { error: '反馈提交过于频繁，请稍后再试' } }), (req, res) => {
+    const body = req.body || {};
+    const { rating, comment = '', sus = null, scenario = '', adviceAccuracy = null } = body;
+    const likert = value => Number.isInteger(value) && value >= 1 && value <= 5;
+    if (!likert(rating) || typeof comment !== 'string' || comment.length > 2000
+        || typeof scenario !== 'string' || scenario.length > 120
+        || (adviceAccuracy !== null && !likert(adviceAccuracy))
+        || (sus !== null && (!Array.isArray(sus) || sus.length !== 10 || !sus.every(likert)))) {
+        return res.status(400).json({ error: '评分须为1–5；SUS须完整填写10题；意见不超过2000字' });
+    }
+    const susScore = sus === null ? null : sus.reduce((sum, value, index) => sum + (index % 2 === 0 ? value - 1 : 5 - value), 0) * 2.5;
+    const id = crypto.randomUUID();
+    feedbackInsert.run({ id, rating, comment: comment.trim(), susAnswers: sus === null ? null : JSON.stringify(sus),
+        susScore, questionnaireVersion: 'sus-zh-v1', scenario: scenario.trim(), adviceAccuracy,
+        adviceVersion: 'task014-v1', createdAt: new Date().toISOString() });
+    res.json({ ok: true, id, susScore });
 });
 
 // IP 定位代理

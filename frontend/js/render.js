@@ -2,8 +2,10 @@ import { F, DESC, WX, state } from 'app/config';
 import { $, Q, QA, esc, toggle, switchTab } from 'app/ui';
 import { icon, weatherIcon } from 'app/icons';
 import { temperatureFingerprint, TempChart, setWeatherScene } from 'app/visuals';
-import { cityCache, COUNTY, CITY_GUIDE, getCityGuide, resolveCity } from 'app/cities';
-import { addFavButton } from 'app/account';
+import { cityCache, COUNTY, CITY_GUIDE, getCityGuide, normalizeLocation, regionLabel } from 'app/cities';
+import { addFavButton, weatherUpdatedAt } from 'app/account';
+import { aqiLevel, loadAirQuality } from 'app/air';
+import { getLifeIndices, loadLifeRules } from 'app/life';
 
 // ═══════════════════════════════════════════════════════════
 //  新的建议函数（去掉 emoji，纯文字+SVG 风格）
@@ -19,6 +21,7 @@ export function getClothing(t, code, w) {
   else if (t >= 0) { r.text = '寒冷天气，厚外套加毛衣围巾'; r.tags = ['棉服', '毛衣', '围巾', '手套']; }
   else if (t >= -10) { r.text = '非常冷，羽绒服全副武装'; r.tags = ['羽绒服', '毛衣', '围巾', '手套']; }
   else { r.text = '极寒天气，最强保暖减少外出'; r.tags = ['厚羽绒服', '多层保暖', '围巾', '手套', '雪地靴']; }
+  if (WX.isFreezing(code)) { r.text += '；注意路面结冰，减少外出'; r.tags.push('防滑鞋'); }
   if (WX.isRain(code)) { r.text += '，记得带伞'; r.tags.push('雨伞'); }
   if (WX.isSnow(code)) { r.tags.push('防滑靴', '厚袜'); }
   if (WX.isStorm(code)) { r.text = '雷暴天气，尽量不要出门'; r.tags.push('雨伞', '雨衣', '远离树木'); }
@@ -27,15 +30,17 @@ export function getClothing(t, code, w) {
   return r;
 }
 
-export function getActivity(t, code, w, daytime) {
+export function getActivity(t, code, w, daytime, usAqi = null) {
   const r = { text: '', tags: [] };
   if (WX.isStorm(code)) { r.text = '雷暴天气，适合待在室内'; r.tags = ['阅读', '电影', '室内健身', '桌游', '烹饪']; }
+  else if (WX.isFreezing(code)) { r.text = '冻雨天气，注意路面结冰，选择室内活动'; r.tags = ['室内健身', '阅读', '防滑']; }
+  else if (Number.isFinite(usAqi) && usAqi > 100) { r.text = '空气质量欠佳，减少长时间户外活动'; r.tags = ['室内健身', '阅读']; }
   else if (WX.isRain(code)) { r.text = '下雨天，室内活动更合适'; r.tags = ['室内健身', '瑜伽', '游泳', '攀岩', '电影', '逛商场']; }
   else if (WX.isSnow(code)) { r.text = '下雪了，可以玩雪但注意保暖'; r.tags = ['滑雪', '堆雪人', '室内健身', '温泉']; }
   else if (WX.isFog(code)) { r.text = '雾天能见度低，建议室内活动'; r.tags = ['室内健身', '瑜伽', '阅读', '电影']; }
   else if (t > 35) { r.text = '高温天气，避开中午时段外出'; r.tags = ['游泳', '水上乐园', '室内健身', '傍晚散步']; }
   else if (t >= 30) { r.text = '较热，适合水上和早晚运动'; r.tags = ['游泳', '骑行', '晨跑', '公园散步']; }
-  else if (t >= 22) { r.text = '天气完美，尽情享受户外运动'; r.tags = ['跑步', '骑行', '徒步', '篮球', '足球', '羽毛球']; }
+  else if (t >= 22) { r.text = '温度适宜，确认空气质量后安排户外活动'; r.tags = ['跑步', '骑行', '徒步', '篮球', '足球', '羽毛球']; }
   else if (t >= 15) { r.text = '不错的天，适合户外运动'; r.tags = ['慢跑', '骑行', '徒步', '摄影']; }
   else if (t >= 5) { r.text = '偏凉，运动前充分热身'; r.tags = ['慢跑', '骑行', '徒步', '摄影']; }
   else { r.text = '较冷，户外运动注意防寒'; r.tags = ['慢跑', '室内健身']; }
@@ -47,18 +52,21 @@ export function getActivity(t, code, w, daytime) {
 // ═══════════════════════════════════════════════════════════
 
 export function renderWeather(loc, wx) {
+  loc = normalizeLocation(loc);
   const cur = wx.current_weather;
   const h = wx.hourly;
   const d = wx.daily;
   const hourlyValues = Array.isArray(h?.temperature_2m) ? h.temperature_2m.map(Number).filter(Number.isFinite) : [];
   const fingerprintScale = hourlyValues.length ? { lo: Math.min(...hourlyValues), hi: Math.max(...hourlyValues) } : null;
-  const name = resolveCity(loc);
+  const name = loc.city;
   const isDay = cur.is_day === 1;
   setWeatherScene(cur.weathercode, isDay);
 
   // 城市和地区
   $('city').textContent = name;
-  $('region').textContent = [loc.region || loc.admin1, loc.country, loc.coordinateSource].filter(Boolean).join('，') || '';
+  $('region').textContent = [regionLabel(loc.region), loc.country, loc.coordinateSource].filter(Boolean).join('，') || '';
+  const updated = weatherUpdatedAt(loc, wx.timezone);
+  $('weather-updated').textContent = updated ? `更新于 ${updated}` : '更新时间暂无';
 
   // 天气图标（SVG 替换 emoji）
   $('weather-icon').innerHTML = weatherIcon(cur.weathercode, isDay);
@@ -88,6 +96,9 @@ export function renderWeather(loc, wx) {
     if (h.pressure_msl?.[0] != null) items.push([icon.stat.pressure(), '气压', Math.round(h.pressure_msl[0]) + ' hPa']);
     if (h.cloudcover?.[0] != null) items.push([icon.stat.cloud(), '云量', h.cloudcover[0] + '%']);
     if (h.visibility?.[0] != null) items.push([icon.stat.visibility(), '能见度', (h.visibility[0] / 1000).toFixed(1) + ' km']);
+    const solarIcon = rising => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2 18h20M6 18a6 6 0 0112 0M12 2v8M9 ${rising ? '5l3-3 3 3' : '7l3 3 3-3'}"/></svg>`;
+    items.push([solarIcon(true), '日出', F.time(d?.sunrise?.[0]) || '暂无']);
+    items.push([solarIcon(false), '日落', F.time(d?.sunset?.[0]) || '暂无']);
 
     statsEl.innerHTML = items.map(([ico, label, value]) =>
       `<div class="stat-chip"><span class="stat-chip-icon">${ico}</span><span class="stat-chip-value">${value}</span><span class="stat-chip-label">${label}</span></div>`
@@ -142,7 +153,15 @@ export function renderWeather(loc, wx) {
   const daytime = isDay;
 
   renderAdvice('clothing-main', 'clothing-tags', getClothing(temp, code, wind));
-  renderAdvice('activity-main', 'activity-tags', getActivity(temp, code, wind, daytime));
+  renderAdvice('activity-main', 'activity-tags', getActivity(temp, code, wind, daytime, wx.air?.current?.us_aqi));
+  renderAirQuality(wx);
+  renderLifeIndices(wx);
+  void loadLifeRules().then(() => { if (state.weather === wx) renderLifeIndices(wx); });
+  loadAirQuality(loc, wx, () => {
+    renderAirQuality(wx);
+    renderLifeIndices(wx);
+    renderAdvice('activity-main', 'activity-tags', getActivity(temp, code, wind, daytime, wx.air?.current?.us_aqi));
+  });
   renderCityGuide(name);
 
   // 3D 背景切换
@@ -156,6 +175,24 @@ export function renderWeather(loc, wx) {
     requestAnimationFrame(() => state.chart.update(h, state.unit));
   }
   if (Number.isFinite(loc.lat) && Number.isFinite(loc.lon)) addFavButton();
+}
+
+export function renderAirQuality(wx) {
+  const current = wx.air?.current;
+  const value = current?.us_aqi;
+  const el = $('air-quality');
+  if (!Number.isFinite(value) || value < 0) {
+    el.textContent = wx.airStatus === 'unavailable' ? '空气质量暂不可用' : '空气质量加载中…';
+    return;
+  }
+  const particles = [['PM2.5', current.pm2_5], ['PM10', current.pm10]]
+    .filter(([, v]) => Number.isFinite(v)).map(([name, v]) => `${name} ${v} μg/m³`);
+  el.textContent = `空气质量 ${Math.round(value)} · ${aqiLevel(value)}（US AQI）${particles.length ? ' · ' + particles.join(' · ') : ''}`;
+}
+
+export function renderLifeIndices(wx) {
+  $('life-indices').innerHTML = getLifeIndices(wx).slice(2).map(item => `<section class="life-index" data-category="${esc(item.category)}">
+    <h3>${esc(item.category)} <span>${esc(item.level)}</span></h3><p>${esc(item.text)}</p></section>`).join('');
 }
 
 export function renderAdvice(mid, tid, adv) {

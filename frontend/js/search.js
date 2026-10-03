@@ -1,7 +1,7 @@
 import { API_BASE, F, DESC, state } from 'app/config';
 import { $, QA, esc, toggle } from 'app/ui';
 import { fetchJSON, geoSearch, getWeather } from 'app/api';
-import { cityCache, loadCities } from 'app/cities';
+import { cityCache, loadCities, normalizeLocation } from 'app/cities';
 import { renderWeather } from 'app/render';
 import { readWeatherCache } from 'app/account';
 
@@ -185,7 +185,7 @@ export async function selectCity(c) {
     localStorage.setItem('wx_recent', JSON.stringify(filtered.slice(0, 5)));
   } catch {}
 
-  const loc = { city: c.name, region: c.admin1 || '', country: c.country || '', lat: c.lat, lon: c.lon, coordinateSource };
+  const loc = normalizeLocation({ city: c.name, region: c.admin1 || '', country: c.country || '', lat: c.lat, lon: c.lon, coordinateSource });
   try {
     const cachedTimestamp = readWeatherCache(c.lat, c.lon)?.ts;
     const wx = await getWeather(c.lat, c.lon);

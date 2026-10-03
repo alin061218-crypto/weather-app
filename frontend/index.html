@@ -18,11 +18,14 @@
     "three": "/vendor/three.module.js",
     "app/account": "/js/account.js",
     "app/api": "/js/api.js",
+    "app/air": "/js/air.js",
     "app/atmosphere": "/js/atmosphere.js",
     "app/chat": "/js/chat.js",
     "app/cities": "/js/cities.js",
     "app/config": "/js/config.js",
+    "app/feedback": "/js/feedback.js",
     "app/icons": "/js/icons.js",
+    "app/life": "/js/life.js",
     "app/main": "/js/main.js",
     "app/render": "/js/render.js",
     "app/search": "/js/search.js",
@@ -33,6 +36,32 @@
 </script>
 
 <link rel="stylesheet" href="/css/style.css">
+<style>
+/* TASK-014 content additions reuse existing design tokens and control styles. */
+.weather-meta { grid-column: 1 / -1; grid-row: 5; color: var(--ink-secondary); font: var(--type-label); margin-top: var(--space-3); }
+.weather-meta p { margin-top: var(--space-1); }
+.life-indices { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+.life-index { min-width: 0; padding: var(--space-4); background: var(--surface-card); border: 1px solid var(--border); border-radius: var(--radius-md); }
+.life-index h3 { font: var(--type-label); color: var(--ink); }
+.life-index h3 span { display: block; color: var(--ink-secondary); margin-top: var(--space-1); }
+.life-index p { font: var(--type-label); color: var(--ink-secondary); margin-top: var(--space-2); }
+.site-info { grid-column: 1 / -1; text-align: center; color: var(--ink-secondary); font: var(--type-label); padding-block: var(--space-4); }
+.site-info a { color: inherit; }
+.support-button { border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface-card); color: var(--ink); min-height: 44px; padding: var(--space-2) var(--space-3); cursor: pointer; font: var(--type-label); }
+.support-button:focus-visible, .content-dialog :is(select, textarea, input, summary):focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+#tab-me { position: relative; }
+.me-support { position: absolute; inset: var(--space-3) 0 auto; display: flex; justify-content: center; gap: var(--space-3); }
+.content-dialog .modal-box { max-width: 640px; max-height: calc(100dvh - 40px); overflow-y: auto; }
+.content-dialog h2 { padding-right: var(--space-8); margin-bottom: var(--space-4); }
+.content-dialog p { font: var(--type-label); color: var(--ink-secondary); margin-block: var(--space-3); }
+.content-dialog label { display: grid; gap: var(--space-2); margin-block: var(--space-4); font: var(--type-label); }
+.content-dialog :is(select, textarea, input) { width: 100%; min-height: 44px; background: var(--surface); color: var(--ink); border: 1px solid var(--border-strong); border-radius: var(--radius-md); padding: var(--space-2); font: inherit; }
+.content-dialog textarea { resize: vertical; }
+.content-dialog summary { cursor: pointer; font: var(--type-label); min-height: 44px; padding-block: var(--space-2); }
+.content-dialog a { color: var(--primary); }
+#feedback-status { min-height: 1.5em; }
+@media (min-width: 600px) { #stats-scroll { grid-template-columns: repeat(5, minmax(0, 1fr)); } .life-indices { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+</style>
 </head>
 <body>
 
@@ -97,6 +126,10 @@
         <div id="weather-icon" class="hero-icon"></div>
         <button id="temperature" type="button" class="hero-temp" aria-label="切换到华氏温度">—°</button>
         <p id="weather-desc" class="hero-desc">—</p>
+        <div class="weather-meta">
+          <p id="weather-updated">更新时间暂无</p>
+          <p id="air-quality" role="status">空气质量加载中…</p>
+        </div>
       </section>
 
       <!-- 关键数据仪表栅格 -->
@@ -137,6 +170,12 @@
         <p class="advice-text" id="activity-main">—</p>
         <div class="advice-chips" id="activity-tags"></div>
       </section>
+      <div id="life-indices" class="life-indices" aria-label="更多生活指数"></div>
+      <footer class="site-info">
+        <p>数据来源：<a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a>（<a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>）</p>
+        <p>空气质量模型：CAMS · AQI 使用美国标准</p>
+        <button type="button" class="support-button" data-open="privacy">隐私说明</button>
+      </footer>
     </main>
 
     <!-- 错误 -->
@@ -201,6 +240,10 @@
 
   <!-- ====== Tab 4: 我的 ====== -->
   <div id="tab-me" class="tab-page">
+    <div class="me-support">
+      <button id="feedback-open" type="button" class="support-button" data-open="feedback" aria-haspopup="dialog" aria-controls="feedback-dialog">意见反馈</button>
+      <button type="button" class="support-button" data-open="privacy" aria-haspopup="dialog" aria-controls="privacy-dialog">隐私说明</button>
+    </div>
     <!-- 未登录 -->
     <div id="me-login-block" class="me-card">
       <div class="me-avatar">
@@ -238,6 +281,40 @@
       <button id="me-logout" class="btn-outline">退出登录</button>
     </div>
   </div>
+
+  <dialog id="feedback-dialog" class="modal-overlay content-dialog hidden" aria-labelledby="feedback-title">
+    <div class="modal-box">
+      <button id="feedback-close" type="button" class="modal-close" aria-label="关闭意见反馈">×</button>
+      <h2 id="feedback-title">意见反馈</h2>
+      <p>无需登录。反馈用于改进体验与匿名可用性研究，请不要填写个人敏感信息。</p>
+      <form id="feedback-form">
+        <label for="feedback-rating">整体满意度（必填）<select id="feedback-rating" name="rating" required><option value="">请选择</option><option value="1">1 · 很不满意</option><option value="2">2 · 不满意</option><option value="3">3 · 一般</option><option value="4">4 · 满意</option><option value="5">5 · 很满意</option></select></label>
+        <label for="feedback-scenario">本次使用场景（选填）<input id="feedback-scenario" name="scenario" maxlength="120" placeholder="如：查找城市、选择出行穿搭"></label>
+        <label for="feedback-accuracy">生活建议满意度（选填）<select id="feedback-accuracy" name="adviceAccuracy"><option value="">请选择</option><option value="1">1 · 很不满意</option><option value="2">2 · 不满意</option><option value="3">3 · 一般</option><option value="4">4 · 满意</option><option value="5">5 · 很满意</option></select></label>
+        <details id="sus-details"><summary>SUS 可用性量表（选填，10题）</summary><p>请根据本次体验回答全部10题：1为非常不同意，5为非常同意。</p><div id="sus-questions"></div></details>
+        <label for="feedback-comment">意见与建议（选填）<textarea id="feedback-comment" name="comment" maxlength="2000" rows="3" placeholder="哪些地方好用？哪些地方需要改进？"></textarea></label>
+        <p>提交即表示同意按隐私说明将这些答案用于匿名汇总与研究。</p>
+        <button id="feedback-submit" type="submit" class="btn-primary">提交反馈</button>
+        <p id="feedback-status" role="status" aria-live="polite"></p>
+      </form>
+    </div>
+  </dialog>
+
+  <dialog id="privacy-dialog" class="modal-overlay content-dialog hidden" aria-labelledby="privacy-title">
+    <article class="modal-box">
+      <button id="privacy-close" type="button" class="modal-close" aria-label="关闭隐私说明">×</button>
+      <h2 id="privacy-title">隐私说明</h2>
+      <p>更新日期：2026-10-03</p>
+      <h3>定位与天气数据</h3>
+      <p>应用会根据 IP 查询大致城市。需要浏览器定位时会请求授权；您可以拒绝授权并手动搜索城市。天气和空气质量查询会将城市经纬度发送至 Open-Meteo；IP 定位使用 ipapi.co。</p>
+      <h3>账号与本地存储</h3>
+      <p>注册后服务器保存用户名、密码的哈希值、收藏城市和搜索历史。浏览器本地保存登录令牌、最近城市、天气缓存、聊天记录和主题设置。出行建议在浏览器内生成。您可以清空搜索历史、取消收藏、退出登录，或在浏览器设置中清除网站数据。</p>
+      <h3>匿名反馈与研究</h3>
+      <p>反馈表仅保存您主动提交的评分、意见、使用场景、生活建议满意度、SUS答案及得分、问卷与建议版本和提交时间，不关联用户名。数据用于产品改进和可用性研究，论文仅展示汇总统计。SUS可留空，未完成量表不计分；请勿在意见中填写姓名、联系方式等个人信息。</p>
+      <h3>数据来源</h3>
+      <p>天气与空气质量由 <a href="https://open-meteo.com/">Open-Meteo</a> 提供，采用 <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>；空气质量模型来自 CAMS。空气质量标注为 US AQI，生活指数是气象参考。</p>
+    </article>
+  </dialog>
 
   <!-- 天气地图弹窗 -->
   <dialog id="map-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-label="天气地图">

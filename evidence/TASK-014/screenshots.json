@@ -1,0 +1,38 @@
+[
+  {
+    "width": 375,
+    "bodyWidth": 375,
+    "stats": 10,
+    "categories": 8,
+    "fingerprint": 168,
+    "chartPoints": "24",
+    "errors": [],
+    "cityRegression": "武昌区 / 湖北省",
+    "aqiRace": "old request canceled; newest 35 kept",
+    "aqiFailure": "weather remains visible"
+  },
+  {
+    "width": 768,
+    "bodyWidth": 768,
+    "stats": 10,
+    "categories": 8,
+    "fingerprint": 168,
+    "chartPoints": "24",
+    "errors": [],
+    "cityRegression": "武昌区 / 湖北省",
+    "aqiRace": "old request canceled; newest 35 kept",
+    "aqiFailure": "weather remains visible"
+  },
+  {
+    "width": 1280,
+    "bodyWidth": 1280,
+    "stats": 10,
+    "categories": 8,
+    "fingerprint": 168,
+    "chartPoints": "24",
+    "errors": [],
+    "cityRegression": "武昌区 / 湖北省",
+    "aqiRace": "old request canceled; newest 35 kept",
+    "aqiFailure": "weather remains visible"
+  }
+]

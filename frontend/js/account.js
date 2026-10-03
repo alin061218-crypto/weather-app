@@ -33,6 +33,16 @@ export function readWeatherCache(lat, lon) {
     && cached.loc.lat.toFixed(2) === Number(lat).toFixed(2) && cached.loc.lon.toFixed(2) === Number(lon).toFixed(2) ? cached : null;
 }
 
+export function weatherUpdatedAt(loc, timezone = 'Asia/Shanghai') {
+  const cached = readLastWeather();
+  if (!sameLocation(cached?.loc, loc) || !Number.isFinite(cached.ts) || cached.ts <= 0) return '';
+  try {
+    return new Intl.DateTimeFormat('zh-CN', { timeZone: timezone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(cached.ts);
+  } catch {
+    return new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(cached.ts);
+  }
+}
+
 // ═══════════════════════════════════════════════════════════
 //  用户认证
 // ═══════════════════════════════════════════════════════════

@@ -1,0 +1,67 @@
+TASK-014 acceptance; 2026-10-03; real production server + SQLite in ignored runtime.tmp; browser weather/AQI fixtures
+
+Service cross-check: curl.exe / -> HTTP 200
+
+3) Real /api/air (Open-Meteo upstream):
+{"latitude":39.90001,"longitude":116.399994,"generationtime_ms":0.38874149322509766,"utc_offset_seconds":28800,"timezone":"Asia/Shanghai","timezone_abbreviation":"GMT+8","elevation":49,"current_units":{"time":"iso8601","interval":"seconds","pm10":"μg/m³","pm2_5":"μg/m³","us_aqi":"USAQI"},"current":{"time":"2026-10-03T19:00","interval":3600,"pm10":4.1,"pm2_5":4.1,"us_aqi":157}}
+HTTP 200
+
+
+3) PASS: live AQI, PM2.5, PM10; separate cache key; repeated read identical; 4 invalid coordinates -> 400
+
+4) PASS: anonymous POST -> 200; SQLite persists original 10 SUS answers, versions, scenario, advice rating; scores 100/50/0; invalid/incomplete answers -> 400
+
+1) PASS: 28 precise WMO descriptions; 3=阴, 56/57=冻毛毛雨, 66/67=冻雨, 77=米雪; freezing is separate and warns about road ice
+
+2) PASS: visible sunrise 06:10 and sunset 17:57 (10 stat chips)
+
+5) PASS: 38 rules / 8 categories; UV uses daily uv_index_max=5.15; us_aqi=75 exposed; high AQI and missing-air cases handled
+
+6) PASS: coordinate Wuchang + stale 福建省 -> 武汉 / 湖北; search 武昌 -> 武昌区 / 湖北省
+
+7) PASS: 更新于 18:55 matches stored cache timestamp; warm cache forecast calls=0
+
+8) PASS: 北京明天（2026-10-04）冻雨，-2°～5°。  建议：寒冷天气，厚外套加毛衣围巾；注意路面结冰，减少外出 推荐搭配：棉服、毛衣、围巾、手套、防滑鞋 按明日最低温与温差增减衣物；暂无明日风速。; Fahrenheit=28°F～41°F; missing tomorrow explicitly unavailable; actual quick button verified
+
+4) PASS: visible feedback/privacy/attribution; native dialogs and focus restoration; 3 browser SUS submissions persisted with score 100
+
+[
+  {
+    "width": 375,
+    "bodyWidth": 375,
+    "stats": 10,
+    "categories": 8,
+    "fingerprint": 168,
+    "chartPoints": "24",
+    "errors": [],
+    "cityRegression": "武昌区 / 湖北省",
+    "aqiRace": "old request canceled; newest 35 kept",
+    "aqiFailure": "weather remains visible"
+  },
+  {
+    "width": 768,
+    "bodyWidth": 768,
+    "stats": 10,
+    "categories": 8,
+    "fingerprint": 168,
+    "chartPoints": "24",
+    "errors": [],
+    "cityRegression": "武昌区 / 湖北省",
+    "aqiRace": "old request canceled; newest 35 kept",
+    "aqiFailure": "weather remains visible"
+  },
+  {
+    "width": 1280,
+    "bodyWidth": 1280,
+    "stats": 10,
+    "categories": 8,
+    "fingerprint": 168,
+    "chartPoints": "24",
+    "errors": [],
+    "cityRegression": "武昌区 / 湖北省",
+    "aqiRace": "old request canceled; newest 35 kept",
+    "aqiFailure": "weather remains visible"
+  }
+]
+
+PASS: all 8 TASK-014 items; three widths; AQI cancellation/stale result/failure; original 168 fingerprint bars and 24 chart points retained

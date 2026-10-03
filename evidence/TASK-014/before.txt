@@ -1,0 +1,62 @@
+TASK-014 baseline 2026-10-03; commit fe1c834; fixture API, production frontend
+{
+  "desc": [
+    [
+      3,
+      "阴"
+    ],
+    [
+      56,
+      "冻毛毛雨"
+    ],
+    [
+      57,
+      "冻毛毛雨"
+    ],
+    [
+      66,
+      "冻雨"
+    ],
+    [
+      67,
+      "强冻雨"
+    ],
+    [
+      77,
+      "雪粒"
+    ]
+  ],
+  "freezingIsRain": true,
+  "hasIsFreezing": "undefined",
+  "resolvedCity": "武汉",
+  "retainedRegion": "福建省",
+  "sunriseSunsetVisible": false,
+  "feedbackEntry": false,
+  "timestamp": false,
+  "lifeSections": 2,
+  "tomorrowReply": "北京温度 35°C，晴。\n\n建议：天气炎热，建议轻薄透气的短袖短裤，注意防晒\n推荐搭配：短袖、短裤、遮阳帽、防晒霜\n"
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Error</title>
+</head>
+<body>
+<pre>Cannot GET /api/air</pre>
+</body>
+</html>
+
+HTTP 404
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Error</title>
+</head>
+<body>
+<pre>Cannot POST /api/feedback</pre>
+</body>
+</html>
+
+HTTP 404

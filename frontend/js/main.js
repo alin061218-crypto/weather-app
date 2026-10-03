@@ -2,11 +2,12 @@ import { Atmosphere } from 'app/atmosphere';
 import { DEFAULT_LOCATION, CACHE_MAX_AGE, state } from 'app/config';
 import { $, toggle, initTabs, initTheme, initUnit } from 'app/ui';
 import { initApi, ipLocation, getWeather } from 'app/api';
-import { loadCities, findCity, toPrefectureCity } from 'app/cities';
+import { loadCities, findCity, toPrefectureCity, normalizeLocation } from 'app/cities';
 import { initAccount, checkAuth, updateMeUI, refreshMePage, readLastWeather, readWeatherCache, sameLocation } from 'app/account';
 import { renderWeather, renderCityGuide, getClothing, getActivity } from 'app/render';
 import { initSearch, selectCity } from 'app/search';
 import { initChat } from 'app/chat';
+import { initFeedback } from 'app/feedback';
 
 // ═══════════════════════════════════════════════════════════
 //  搜索 & 主流程
@@ -16,7 +17,7 @@ export async function discoverLocation(citiesPromise) {
   await citiesPromise;
   if (loc) {
     const cn = toPrefectureCity(loc.city);
-    return { ...loc, city: cn || loc.city };
+    return normalizeLocation({ ...loc, city: cn || loc.city });
   }
   try {
     const pos = await new Promise((resolve, reject) => {
@@ -138,6 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initUnit(renderWeather);
   initMap();
   initChat({ getClothing, getActivity });
+  initFeedback();
   init();
   checkAuth();
   updateMeUI();
