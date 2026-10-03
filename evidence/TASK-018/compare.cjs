@@ -10,7 +10,9 @@ const { performance } = require('node:perf_hooks');
 const frontend = path.resolve(__dirname, '../../frontend');
 const edge = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe';
 assert.ok(fs.existsSync(edge), `Edge not found: ${edge}`);
-const oldMain = execFileSync('git', ['show', 'HEAD:frontend/js/main.js'], { cwd: path.resolve(__dirname, '../..'), encoding: 'utf8' });
+// This evidence script is committed with the fix, so its parent commit is the
+// reproducible pre-fix baseline.
+const oldMain = execFileSync('git', ['show', 'HEAD^:frontend/js/main.js'], { cwd: path.resolve(__dirname, '../..'), encoding: 'utf8' });
 const weather = { current_weather: { temperature: 22, weathercode: 0, is_day: 1, windspeed: 8 }, hourly: { time: ['2026-10-03T00:00'], temperature_2m: [22], apparent_temperature: [22], relativehumidity_2m: [60], cloudcover: [25], uv_index: [2], precipitation_probability: [10], pressure_msl: [1013], visibility: [10000] }, daily: { time: ['2026-10-03'], temperature_2m_max: [24], temperature_2m_min: [14], weathercode: [0], precipitation_probability_max: [8] } };
 const bootstrap = `<script>
 Object.defineProperty(navigator, 'geolocation', { configurable: true, value: { getCurrentPosition(_, reject) { reject(new Error('GPS disabled')); } } });
