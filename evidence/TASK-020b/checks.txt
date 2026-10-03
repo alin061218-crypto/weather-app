@@ -1,0 +1,55 @@
+PowerShell 7.6.5 / Node v24.16.0 / Windows
+
+Select-String -Path server.js -Pattern "process\.on\('SIG(INT|TERM)'"
+server.js:1101:process.on('SIGINT', () => shutdown('SIGINT'));
+server.js:1102:process.on('SIGTERM', () => shutdown('SIGTERM'));
+count=2
+
+Select-String -Path server.js -Pattern 'wal_checkpoint'
+server.js:1069:            const result = db.pragma('wal_checkpoint(TRUNCATE)');
+count=1
+
+Select-String -Path server.js -Pattern 'const server = app\.listen'
+server.js:1034:const server = app.listen(PORT, () => {
+count=1
+
+TASK-020 startup warnings retained:
+server.js:145:    console.warn(`⚠️ 数据库位于临时目录：${resolvedDbPath}`);
+server.js:152:        console.warn(`⚠️ WAL 文件异常大：${walFile} (${walBytes} B)，上次可能未正常关闭。`);
+count=2
+
+node --env-file=.env evidence/TASK-020b/backup-regression.cjs
+source rows before: {"users":0,"favorites":0,"history":0,"cache":7,"feedback":0}
+
+> weather-backend@1.0.0 backup:db
+> node --env-file=.env scripts/backup-db.js
+
+PASS backup snapshot: E:\weather\weather-project\backups\weather-20261003-204054.db
+size=139264 B
+users=0 favorites=0 history=0 feedback=0
+retention kept=10 removed=1
+snapshot rows verified: {"users":0,"favorites":0,"history":0,"cache":7,"feedback":0}
+PASS backup:db in original repository; all five table counts match source
+exit=0
+
+npm run check:versions
+> weather-backend@1.0.0 check:versions
+> node server.js --check-asset-versions
+PASS: 15 index asset versions match SHA-1 content hashes
+exit=0
+
+node --check server.js
+(no output)
+exit=0
+
+git diff --check
+(no output)
+exit=0
+
+Test-Path evidence/TASK-020b/probe.tmp
+False
+Linux/QEMU download processes remaining: 0
+
+PASS TASK-020 warning code unchanged; deployment document snapshot matches original
+server test processes=0
+PASS git diff --cached --check (exit=0; includes all evidence files)

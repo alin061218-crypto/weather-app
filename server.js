@@ -1031,7 +1031,7 @@ app.use((err, req, res, next) => {
 });
 
 // ===== 启动服务器 =====
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
     console.log(`天气后端服务已启动: http://localhost:${PORT} (SQLite)`);
     console.log(`API 文档:`);
     console.log(`  POST /api/register  - 注册`);
@@ -1043,3 +1043,60 @@ app.listen(PORT, () => {
     console.log(`  GET/POST/DELETE /api/history - 查询历史`);
     console.log(`  GET  /admin         - 数据后台管理`);
 });
+
+// ===== 优雅关闭：先排空 HTTP 请求，再把 WAL 合并进主库 =====
+let shuttingDown = false;
+function shutdown(signal) {
+    if (shuttingDown) {
+        console.error(`再次收到 ${signal}，立即退出。`);
+        process.exit(1);
+    }
+    shuttingDown = true;
+    console.log(`收到 ${signal}，正在关闭…`);
+
+    let finalized = false;
+    let exitCode = 0;
+    function reportError(step, error) {
+        exitCode = 1;
+        console.error(`关闭失败（${step}）：`, error?.stack || error);
+    }
+    function finalize(error) {
+        if (finalized) return;
+        finalized = true;
+        clearTimeout(timeout);
+        if (error) reportError('server.close', error);
+        try {
+            const result = db.pragma('wal_checkpoint(TRUNCATE)');
+            // SQLite 的 busy 结果不会抛错，必须检查，避免误报 WAL 已合并。
+            if (result.some(row => row.busy !== 0)) throw new Error('WAL checkpoint 被其他数据库连接阻塞');
+        } catch (error) {
+            reportError('WAL checkpoint', error);
+        }
+        try {
+            db.close();
+        } catch (error) {
+            reportError('db.close', error);
+        }
+        if (exitCode === 0) console.log('已优雅关闭（WAL 已合并）');
+        else console.error('关闭结束（存在错误，请检查 WAL），退出码 1。');
+        process.exit(exitCode);
+    }
+
+    const timeout = setTimeout(() => {
+        console.warn('关闭等待已达 5s，终止剩余连接并继续合并 WAL。');
+        try {
+            server.closeAllConnections();
+        } catch (error) {
+            reportError('server.closeAllConnections', error);
+        }
+        finalize();
+    }, 5000);
+    try {
+        server.close(finalize);
+    } catch (error) {
+        finalize(error);
+    }
+}
+
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGTERM', () => shutdown('SIGTERM'));

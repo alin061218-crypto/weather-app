@@ -1,0 +1,2 @@
+{"platform":"win32","sent":"SIGTERM","handlerRan":false,"childAlive":false,"code":null,"signal":"SIGTERM"}
+Windows platform fact verified; server SIGTERM delivery NOT verified; deferred to TASK-010b.

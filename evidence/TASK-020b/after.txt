@@ -1,0 +1,280 @@
+platform=win32 node=v24.16.0
+{
+  "case": "PASS direct-shutdown",
+  "before": {
+    "weather.db": 4096,
+    "weather.db-wal": null
+  },
+  "during": {
+    "weather.db": 4096,
+    "weather.db-wal": 288432
+  },
+  "after": {
+    "weather.db": 90112,
+    "weather.db-wal": null
+  },
+  "exit": {
+    "code": 0,
+    "signal": null
+  },
+  "sent": {
+    "method": "direct shutdown('test') (no signal)"
+  },
+  "standaloneRows": {
+    "users": 1,
+    "favorites": 3,
+    "history": 3,
+    "cache": 0,
+    "feedback": 3
+  },
+  "trace": [
+    {
+      "event": "server.close"
+    },
+    {
+      "event": "wal_checkpoint(TRUNCATE)"
+    },
+    {
+      "event": "checkpoint.result",
+      "result": [
+        {
+          "busy": 0,
+          "log": 0,
+          "checkpointed": 0
+        }
+      ]
+    },
+    {
+      "event": "db.close"
+    },
+    {
+      "event": "db.closed",
+      "open": false
+    }
+  ],
+  "stdout": "天气后端服务已启动: http://localhost:58939 (SQLite)\nAPI 文档:\n  POST /api/register  - 注册\n  POST /api/login     - 登录\n  GET  /api/weather   - 获取天气(代理)\n  GET  /api/location  - IP定位(代理)\n  GET  /api/search    - 城市搜索(代理)\n  GET/POST/DELETE /api/favorites - 收藏管理\n  GET/POST/DELETE /api/history - 查询历史\n  GET  /admin         - 数据后台管理\n收到 test，正在关闭…\n已优雅关闭（WAL 已合并）\n",
+  "stderr": ""
+}
+{
+  "case": "PASS SIGINT-Ctrl-C",
+  "before": {
+    "weather.db": 4096,
+    "weather.db-wal": null
+  },
+  "during": {
+    "weather.db": 4096,
+    "weather.db-wal": 288432
+  },
+  "after": {
+    "weather.db": 90112,
+    "weather.db-wal": null
+  },
+  "exit": {
+    "code": 0,
+    "signal": null
+  },
+  "sent": {
+    "secondExitMs": null,
+    "count": 1,
+    "method": "GenerateConsoleCtrlEvent(CTRL_C_EVENT)"
+  },
+  "standaloneRows": {
+    "users": 1,
+    "favorites": 3,
+    "history": 3,
+    "cache": 0,
+    "feedback": 3
+  },
+  "trace": [
+    {
+      "event": "server.close"
+    },
+    {
+      "event": "wal_checkpoint(TRUNCATE)"
+    },
+    {
+      "event": "checkpoint.result",
+      "result": [
+        {
+          "busy": 0,
+          "log": 0,
+          "checkpointed": 0
+        }
+      ]
+    },
+    {
+      "event": "db.close"
+    },
+    {
+      "event": "db.closed",
+      "open": false
+    }
+  ],
+  "stdout": "天气后端服务已启动: http://localhost:58952 (SQLite)\nAPI 文档:\n  POST /api/register  - 注册\n  POST /api/login     - 登录\n  GET  /api/weather   - 获取天气(代理)\n  GET  /api/location  - IP定位(代理)\n  GET  /api/search    - 城市搜索(代理)\n  GET/POST/DELETE /api/favorites - 收藏管理\n  GET/POST/DELETE /api/history - 查询历史\n  GET  /admin         - 数据后台管理\n收到 SIGINT，正在关闭…\n已优雅关闭（WAL 已合并）\n",
+  "stderr": ""
+}
+{
+  "case": "PASS in-flight request drains; new connections refused",
+  "trace": [
+    {
+      "event": "server.close"
+    },
+    {
+      "event": "wal_checkpoint(TRUNCATE)"
+    },
+    {
+      "event": "checkpoint.result",
+      "result": [
+        {
+          "busy": 0,
+          "log": 0,
+          "checkpointed": 0
+        }
+      ]
+    },
+    {
+      "event": "db.close"
+    },
+    {
+      "event": "db.closed",
+      "open": false
+    }
+  ],
+  "stdout": "天气后端服务已启动: http://localhost:58965 (SQLite)\nAPI 文档:\n  POST /api/register  - 注册\n  POST /api/login     - 登录\n  GET  /api/weather   - 获取天气(代理)\n  GET  /api/location  - IP定位(代理)\n  GET  /api/search    - 城市搜索(代理)\n  GET/POST/DELETE /api/favorites - 收藏管理\n  GET/POST/DELETE /api/history - 查询历史\n  GET  /admin         - 数据后台管理\n收到 test，正在关闭…\n已优雅关闭（WAL 已合并）\n",
+  "stderr": ""
+}
+{
+  "case": "PASS hard timeout proceeds to checkpoint and exit",
+  "elapsedMs": 5030,
+  "after": {
+    "weather.db": 69632,
+    "weather.db-wal": null
+  },
+  "trace": [
+    {
+      "event": "server.close"
+    },
+    {
+      "event": "wal_checkpoint(TRUNCATE)"
+    },
+    {
+      "event": "checkpoint.result",
+      "result": [
+        {
+          "busy": 0,
+          "log": 0,
+          "checkpointed": 0
+        }
+      ]
+    },
+    {
+      "event": "db.close"
+    },
+    {
+      "event": "db.closed",
+      "open": false
+    }
+  ],
+  "stdout": "天气后端服务已启动: http://localhost:58968 (SQLite)\nAPI 文档:\n  POST /api/register  - 注册\n  POST /api/login     - 登录\n  GET  /api/weather   - 获取天气(代理)\n  GET  /api/location  - IP定位(代理)\n  GET  /api/search    - 城市搜索(代理)\n  GET/POST/DELETE /api/favorites - 收藏管理\n  GET/POST/DELETE /api/history - 查询历史\n  GET  /admin         - 数据后台管理\n收到 test，正在关闭…\n已优雅关闭（WAL 已合并）\n",
+  "stderr": "关闭等待已达 5s，终止剩余连接并继续合并 WAL。\n"
+}
+{
+  "case": "PASS repeated SIGINT exits within 1s",
+  "exitCode": 1,
+  "secondExitMs": 16,
+  "count": 2,
+  "method": "GenerateConsoleCtrlEvent(CTRL_C_EVENT)",
+  "stdout": "天气后端服务已启动: http://localhost:58974 (SQLite)\nAPI 文档:\n  POST /api/register  - 注册\n  POST /api/login     - 登录\n  GET  /api/weather   - 获取天气(代理)\n  GET  /api/location  - IP定位(代理)\n  GET  /api/search    - 城市搜索(代理)\n  GET/POST/DELETE /api/favorites - 收藏管理\n  GET/POST/DELETE /api/history - 查询历史\n  GET  /admin         - 数据后台管理\n收到 SIGINT，正在关闭…\n",
+  "stderr": "再次收到 SIGINT，立即退出。\n"
+}
+{
+  "case": "PASS server.close failure logs error and exits 1",
+  "trace": [
+    {
+      "event": "server.close"
+    },
+    {
+      "event": "wal_checkpoint(TRUNCATE)"
+    },
+    {
+      "event": "checkpoint.result",
+      "result": [
+        {
+          "busy": 0,
+          "log": 0,
+          "checkpointed": 0
+        }
+      ]
+    },
+    {
+      "event": "db.close"
+    },
+    {
+      "event": "db.closed",
+      "open": false
+    }
+  ],
+  "stdout": "天气后端服务已启动: http://localhost:58981 (SQLite)\nAPI 文档:\n  POST /api/register  - 注册\n  POST /api/login     - 登录\n  GET  /api/weather   - 获取天气(代理)\n  GET  /api/location  - IP定位(代理)\n  GET  /api/search    - 城市搜索(代理)\n  GET/POST/DELETE /api/favorites - 收藏管理\n  GET/POST/DELETE /api/history - 查询历史\n  GET  /admin         - 数据后台管理\n收到 test，正在关闭…\n",
+  "stderr": "关闭失败（server.close）： Error: injected server.close failure\n    at Server.close (E:\\weather\\weather-project\\evidence\\TASK-020b\\observe.cjs:12:41)\n    at Object.shutdown (E:\\weather\\weather-project\\server.js:1095:16)\n    at process.<anonymous> (E:\\weather\\weather-project\\evidence\\TASK-020b\\call-shutdown.cjs:11:57)\n    at process.emit (node:events:509:28)\n    at emit (node:internal/child_process:972:14)\n    at process.processTicksAndRejections (node:internal/process/task_queues:91:21)\n关闭结束（存在错误，请检查 WAL），退出码 1。\n"
+}
+{
+  "case": "PASS checkpoint failure logs error and exits 1",
+  "trace": [
+    {
+      "event": "server.close"
+    },
+    {
+      "event": "wal_checkpoint(TRUNCATE)"
+    },
+    {
+      "event": "db.close"
+    },
+    {
+      "event": "db.closed",
+      "open": false
+    }
+  ],
+  "stdout": "天气后端服务已启动: http://localhost:58982 (SQLite)\nAPI 文档:\n  POST /api/register  - 注册\n  POST /api/login     - 登录\n  GET  /api/weather   - 获取天气(代理)\n  GET  /api/location  - IP定位(代理)\n  GET  /api/search    - 城市搜索(代理)\n  GET/POST/DELETE /api/favorites - 收藏管理\n  GET/POST/DELETE /api/history - 查询历史\n  GET  /admin         - 数据后台管理\n收到 test，正在关闭…\n",
+  "stderr": "关闭失败（WAL checkpoint）： Error: injected checkpoint failure\n    at Database.pragma (E:\\weather\\weather-project\\evidence\\TASK-020b\\observe.cjs:19:39)\n    at Server.finalize (E:\\weather\\weather-project\\server.js:1069:31)\n    at Object.onceWrapper (node:events:630:28)\n    at Server.emit (node:events:509:28)\n    at emitCloseNT (node:net:2487:8)\n    at process.processTicksAndRejections (node:internal/process/task_queues:89:21)\n关闭结束（存在错误，请检查 WAL），退出码 1。\n"
+}
+{
+  "case": "PASS db.close failure logs error and exits 1",
+  "trace": [
+    {
+      "event": "server.close"
+    },
+    {
+      "event": "wal_checkpoint(TRUNCATE)"
+    },
+    {
+      "event": "checkpoint.result",
+      "result": [
+        {
+          "busy": 0,
+          "log": 0,
+          "checkpointed": 0
+        }
+      ]
+    },
+    {
+      "event": "db.close"
+    }
+  ],
+  "stdout": "天气后端服务已启动: http://localhost:58983 (SQLite)\nAPI 文档:\n  POST /api/register  - 注册\n  POST /api/login     - 登录\n  GET  /api/weather   - 获取天气(代理)\n  GET  /api/location  - IP定位(代理)\n  GET  /api/search    - 城市搜索(代理)\n  GET/POST/DELETE /api/favorites - 收藏管理\n  GET/POST/DELETE /api/history - 查询历史\n  GET  /admin         - 数据后台管理\n收到 test，正在关闭…\n",
+  "stderr": "关闭失败（db.close）： Error: injected db.close failure\n    at Database.close (E:\\weather\\weather-project\\evidence\\TASK-020b\\observe.cjs:27:37)\n    at Server.finalize (E:\\weather\\weather-project\\server.js:1076:16)\n    at Object.onceWrapper (node:events:630:28)\n    at Server.emit (node:events:509:28)\n    at emitCloseNT (node:net:2487:8)\n    at process.processTicksAndRejections (node:internal/process/task_queues:89:21)\n关闭结束（存在错误，请检查 WAL），退出码 1。\n"
+}
+{
+  "case": "PASS npm run backup:db (unchanged script; isolated project)",
+  "snapshotRows": {
+    "users": 1,
+    "favorites": 3,
+    "history": 3,
+    "cache": 0,
+    "feedback": 3
+  },
+  "output": "\n> weather-backend@1.0.0 backup:db\n> node --env-file=.env scripts/backup-db.js\n\nPASS backup snapshot: E:\\weather\\weather-project\\evidence\\TASK-020b\\run-g9STGl.tmp\\backup-project\\backups\\weather-20261003-203830.db\nsize=90112 B\nusers=1 favorites=3 history=3 feedback=3\nretention kept=1 removed=0\n"
+}
+SIGTERM 的信号投递为平台行为：Windows 无真实信号（实测处理器不触发）。
+本机已验证关闭流程本身；SIGTERM 投递将在 TASK-010b 选定 Linux 部署目标后实测。
+PASS TASK-020b Windows acceptance (SIGTERM delivery NOT verified)
+isolated artifacts: E:\weather\weather-project\evidence\TASK-020b\run-g9STGl.tmp

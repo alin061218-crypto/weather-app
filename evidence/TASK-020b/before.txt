@@ -1,0 +1,8 @@
+Baseline source commit: 6a1e0264da02b74d5c9eed047c9795a76e0bdfe5
+SIGINT/SIGTERM handlers=0
+wal_checkpoint=0
+const server = app.listen=0
+temp-directory warning=1
+large-WAL warning=1
+Previously measured TASK-020 Ctrl+C result (evidence/TASK-020/migration.md): weather.db=4096 B, weather.db-wal=819912 B; WAL not merged.
+This historical baseline is quoted from TASK-020, not rerun against production data.
