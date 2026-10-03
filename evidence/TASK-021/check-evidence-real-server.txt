@@ -1,0 +1,17 @@
+exit: 1
+
+> weather-backend@1.0.0 check:evidence
+> node scripts/check-evidence.cjs
+
+PASS: no hard-coded asset version strings in evidence scripts (00000000 negative fixture excluded)
+PASS: TASK-016c-fingerprint
+PASS: TASK-016c-fingerprint-via-fallback
+PASS: TASK-016c-screenshots
+PASS: TASK-015-screenshots
+PASS: TASK-015b-overflow
+PASS: TASK-015c-screenshots
+PASS: TASK-016a-screenshots
+PASS: TASK-016b-importmap
+FAIL: TASK-018-headers
+PASS: TASK-007-browser-check
+FAIL: 1 solo evidence script(s)

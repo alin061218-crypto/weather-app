@@ -1,0 +1,25 @@
+{
+  "server": "Default repository guard; no application server is running, so TASK-018 explicitly skips.",
+  "commands": [
+    {
+      "label": "light-night",
+      "exit": 0,
+      "output": "{\n  \"theme\": \"light\",\n  \"weather\": \"clear-night\",\n  \"sceneBg\": \"#f6f4f0\",\n  \"sceneLuminance\": 0.9058546805752562,\n  \"chart\": {\n    \"css\": \"rgb(235, 231, 225)\",\n    \"rgb\": [\n      235,\n      231,\n      225,\n      1\n    ],\n    \"luminance\": 0.8025023820814297\n  },\n  \"stats\": {\n    \"css\": \"oklab(0.940997 0.00124186 0.00735652 / 0.55)\",\n    \"rgb\": [\n      242.156862745098,\n      239.05882352941177,\n      234.50980392156862,\n      1\n    ],\n    \"luminance\": 0.8664232946685602\n  },\n  \"moonColor\": \"#c4ccd6\",\n  \"moonLuminance\": 0.5977653326431338,\n  \"atmosphereOpacity\": \"0.35\"\n}\nPASS\tlight clear-night scene background is light\tluminance=0.906\nPASS\tchart background matches scene\tdelta=0.103\nPASS\tstats background matches scene\tdelta=0.039\nPASS\tlight clear-night moon material is bright\t#c4ccd6 luminance=0.598\nPASS\tglobal light atmosphere policy is explicit\topacity=0.35\nPASS\tCDP page has no runtime errors\t[]\n"
+    },
+    {
+      "label": "check-versions",
+      "exit": 0,
+      "output": "\n> weather-backend@1.0.0 check:versions\n> node server.js --check-asset-versions\n\nPASS: 15 index asset versions match SHA-1 content hashes\n"
+    },
+    {
+      "label": "check-evidence",
+      "exit": 0,
+      "output": "\n> weather-backend@1.0.0 check:evidence\n> node scripts/check-evidence.cjs\n\nPASS: no hard-coded asset version strings in evidence scripts (00000000 negative fixture excluded)\nPASS: TASK-016c-fingerprint\nPASS: TASK-016c-fingerprint-via-fallback\nPASS: TASK-016c-screenshots\nPASS: TASK-015-screenshots\nPASS: TASK-015b-overflow\nPASS: TASK-015c-screenshots\nPASS: TASK-016a-screenshots\nPASS: TASK-016b-importmap\nSKIP: TASK-018-headers\nPASS: TASK-007-browser-check\nPASS: 10 evidence scripts passed or were explicitly skipped when run solo\n"
+    },
+    {
+      "label": "diff-check",
+      "exit": 0,
+      "output": "warning: in the working copy of 'evidence/TASK-016b/rendered-index.html', CRLF will be replaced by LF the next time Git touches it\n"
+    }
+  ]
+}

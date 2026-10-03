@@ -1,0 +1,200 @@
+[
+  {
+    "before": {
+      "version": "before",
+      "viewport": [
+        375,
+        812
+      ],
+      "hero": {
+        "left": 16,
+        "right": 359,
+        "top": 76,
+        "bottom": 454.9375
+      },
+      "text": {
+        "left": 111.5,
+        "right": 263.5,
+        "top": 84,
+        "bottom": 452.421875
+      },
+      "count": 10000,
+      "center": 1487,
+      "upperCenter": 741,
+      "lowerCenter": 746,
+      "textCount": 148,
+      "maxCenterRatio": 0.26,
+      "lifecycleCount": 0,
+      "lifecycleCenter": 0,
+      "lifecycleText": 0,
+      "centerRatio": 0.1487,
+      "textRatio": 0.0148,
+      "lifecycleCenterRatio": null,
+      "lifecycleTextRatio": null
+    },
+    "after": {
+      "version": "after",
+      "viewport": [
+        375,
+        812
+      ],
+      "hero": {
+        "left": 16,
+        "right": 359,
+        "top": 76,
+        "bottom": 454.9375
+      },
+      "text": {
+        "left": 111.5,
+        "right": 263.5,
+        "top": 84,
+        "bottom": 452.421875
+      },
+      "count": 6500,
+      "center": 1599,
+      "upperCenter": 286,
+      "lowerCenter": 1313,
+      "textCount": 1,
+      "maxCenterRatio": 0.24615384615384617,
+      "lifecycleCount": 63700,
+      "lifecycleCenter": 15680,
+      "lifecycleText": 377,
+      "centerRatio": 0.246,
+      "textRatio": 0.00015384615384615385,
+      "lifecycleCenterRatio": 0.24615384615384617,
+      "lifecycleTextRatio": 0.005918367346938775
+    }
+  },
+  {
+    "before": {
+      "version": "before",
+      "viewport": [
+        768,
+        1024
+      ],
+      "hero": {
+        "left": 24,
+        "right": 743.984375,
+        "top": 76,
+        "bottom": 371.203125
+      },
+      "text": {
+        "left": 0,
+        "right": 184.671875,
+        "top": 84,
+        "bottom": 368.6875
+      },
+      "count": 10000,
+      "center": 1487,
+      "upperCenter": 741,
+      "lowerCenter": 746,
+      "textCount": 102,
+      "maxCenterRatio": 0.26,
+      "lifecycleCount": 0,
+      "lifecycleCenter": 0,
+      "lifecycleText": 0,
+      "centerRatio": 0.1487,
+      "textRatio": 0.0102,
+      "lifecycleCenterRatio": null,
+      "lifecycleTextRatio": null
+    },
+    "after": {
+      "version": "after",
+      "viewport": [
+        768,
+        1024
+      ],
+      "hero": {
+        "left": 24,
+        "right": 743.984375,
+        "top": 76,
+        "bottom": 371.203125
+      },
+      "text": {
+        "left": 0,
+        "right": 184.671875,
+        "top": 84,
+        "bottom": 368.6875
+      },
+      "count": 6500,
+      "center": 1538,
+      "upperCenter": 239,
+      "lowerCenter": 1299,
+      "textCount": 1,
+      "maxCenterRatio": 0.24615384615384617,
+      "lifecycleCount": 63700,
+      "lifecycleCenter": 14994,
+      "lifecycleText": 128,
+      "centerRatio": 0.23661538461538462,
+      "textRatio": 0.00015384615384615385,
+      "lifecycleCenterRatio": 0.2353846153846154,
+      "lifecycleTextRatio": 0.002009419152276295
+    }
+  },
+  {
+    "before": {
+      "version": "before",
+      "viewport": [
+        1280,
+        900
+      ],
+      "hero": {
+        "left": 124,
+        "right": 1244,
+        "top": 76,
+        "bottom": 379.203125
+      },
+      "text": {
+        "left": 100,
+        "right": 284.671875,
+        "top": 92,
+        "bottom": 376.6875
+      },
+      "count": 10000,
+      "center": 1487,
+      "upperCenter": 741,
+      "lowerCenter": 746,
+      "textCount": 200,
+      "maxCenterRatio": 0.26,
+      "lifecycleCount": 0,
+      "lifecycleCenter": 0,
+      "lifecycleText": 0,
+      "centerRatio": 0.1487,
+      "textRatio": 0.02,
+      "lifecycleCenterRatio": null,
+      "lifecycleTextRatio": null
+    },
+    "after": {
+      "version": "after",
+      "viewport": [
+        1280,
+        900
+      ],
+      "hero": {
+        "left": 124,
+        "right": 1244,
+        "top": 76,
+        "bottom": 379.203125
+      },
+      "text": {
+        "left": 100,
+        "right": 284.671875,
+        "top": 92,
+        "bottom": 376.6875
+      },
+      "count": 6500,
+      "center": 581,
+      "upperCenter": 65,
+      "lowerCenter": 516,
+      "textCount": 0,
+      "maxCenterRatio": 0.16923076923076924,
+      "lifecycleCount": 63700,
+      "lifecycleCenter": 5194,
+      "lifecycleText": 48,
+      "centerRatio": 0.08938461538461538,
+      "textRatio": 0,
+      "lifecycleCenterRatio": 0.08153846153846153,
+      "lifecycleTextRatio": 0.0007535321821036106
+    }
+  }
+]

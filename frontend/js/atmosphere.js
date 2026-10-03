@@ -179,20 +179,32 @@ class RainScene {
   }
 
   _build() {
-    const N = this.storm ? 110 : this.level === 'drizzle' ? 60 : this.level === 'heavy' ? 130 : 100, Y_SPAN = 9;
-    const length = this.storm ? 0.18 : this.level === 'drizzle' ? 0.05 : this.level === 'heavy' ? 0.14 : 0.10;
-    const geo = new THREE.CylinderGeometry(0.012, 0.012, length, 4);
-    const mat = new THREE.MeshBasicMaterial({ color: this.lightTheme ? '#667386' : (this.storm ? '#7a86a0' : '#9cb4d0'), transparent: true, opacity: this.lightTheme ? 0.13 : (this.storm ? 0.22 : 0.22), depthWrite: false });
-    this.instanced = new THREE.InstancedMesh(geo, mat, N); this.data = [];
-    const dummy = new THREE.Object3D();
-    for (let i = 0; i < N; i++) {
-      const centerClear = Math.random() < 0.40;
-      const x = centerClear ? (Math.random() < 0.5 ? -1.5 - Math.random() * 3.5 : 1.5 + Math.random() * 3.5) : (Math.random() - 0.5) * 10;
-      const y = (Math.random() - 0.5) * Y_SPAN, z = (Math.random() - 0.5) * 4;
-      dummy.position.set(x, y, z); dummy.updateMatrix(); this.instanced.setMatrixAt(i, dummy.matrix);
-      this.data.push({ y, sp: this.storm ? (0.30 + Math.random() * 0.20) : this.level === 'drizzle' ? (0.05 + Math.random() * 0.05) : this.level === 'heavy' ? (0.22 + Math.random() * 0.16) : (0.10 + Math.random() * 0.12), x });
+    const grades = {
+      drizzle: { count: 45, speed: [0.9, 1.4], length: 0.05 },
+      rain: { count: 65, speed: [1.6, 2.4], length: 0.13 },
+      heavy: { count: 95, speed: [2.4, 3.4], length: 0.18 },
+      storm: { count: 90, speed: [3.0, 4.2], length: 0.22 }
+    };
+    this.grade = grades[this.storm ? 'storm' : this.level] || grades.rain;
+    this.layers = [
+      { name: 'near', count: Math.round(this.grade.count * 0.25), z: [0.7, 2.0], size: 1.35, opacity: 1.00 },
+      { name: 'middle', count: Math.round(this.grade.count * 0.45), z: [-0.7, 0.7], size: 1.00, opacity: 0.75 },
+      { name: 'far', z: [-2.0, -0.7], size: 0.70, opacity: 0.45 }
+    ];
+    this.layers[2].count = this.grade.count - this.layers[0].count - this.layers[1].count;
+    this.data = []; this.dummy = new THREE.Object3D();
+    for (const layer of this.layers) {
+      const geo = new THREE.CylinderGeometry(0.012, 0.012, this.grade.length, 4);
+      const mat = new THREE.MeshBasicMaterial({ color: this.lightTheme ? '#667386' : (this.storm ? '#7a86a0' : '#9cb4d0'), transparent: true, opacity: (this.lightTheme ? 0.13 : 0.22) * layer.opacity, depthWrite: false });
+      layer.mesh = new THREE.InstancedMesh(geo, mat, layer.count);
+      layer.mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+      layer.mesh.visible = false; layer.data = [];
+      this.group.add(layer.mesh);
     }
-    this.group.add(this.instanced);
+    // renderWeather sets the scene before it fills and reveals the hero text.
+    const hero = document.querySelector('.weather-hero');
+    if (hero && !hero.getClientRects().length) this.rainFrame = requestAnimationFrame(() => this._seedRain());
+    else this._seedRain();
     const cn = this.storm ? 3 : 2;
     for (let i = 0; i < cn; i++) {
       const grp = new THREE.Group();
@@ -210,6 +222,54 @@ class RainScene {
     this.scene.add(this.group);
   }
 
+  _seedRain() {
+    const hero = document.querySelector('.weather-hero');
+    let text = null;
+    if (hero) {
+      for (const el of hero.querySelectorAll('.hero-region, .hero-city, .hero-temp, .hero-desc, .weather-meta p')) {
+        const range = document.createRange(); range.selectNodeContents(el);
+        const r = range.getBoundingClientRect();
+        if (!r.width || !r.height) continue;
+        text = text ? { left: Math.min(text.left, r.left), right: Math.max(text.right, r.right), top: Math.min(text.top, r.top), bottom: Math.max(text.bottom, r.bottom) }
+          : { left: r.left, right: r.right, top: r.top, bottom: r.bottom };
+      }
+    }
+    const canvas = document.querySelector('#atmosphere canvas');
+    const W = canvas?.clientWidth || innerWidth, H = canvas?.clientHeight || innerHeight;
+    if (text) { text.left -= 24; text.right += 24; text.top -= 24; text.bottom += 24; }
+    this.textMask = text;
+    let centerCount = 0;
+    const centerLimit = Math.floor(this.grade.count * 0.25);
+    for (const layer of this.layers) {
+      this.dummy.scale.setScalar(layer.size);
+      for (let i = 0; i < layer.count; i++) {
+        const z = layer.z[0] + Math.random() * (layer.z[1] - layer.z[0]);
+        // Match Atmosphere's 50-degree camera at z=5 to the actual text bounds.
+        const pxPerUnit = H / (2 * Math.tan(THREE.MathUtils.degToRad(25)) * (5 - z));
+        let x, y, reject;
+        do {
+          x = (Math.random() - 0.5) * 10; y = (Math.random() - 0.5) * 9;
+          reject = Math.abs(x) < 1.2 ? (y > 0 ? 0.97 : 0.80) : 0;
+          const px = W / 2 + x * pxPerUnit, py = H / 2 - y * pxPerUnit;
+          // Keep depth layers in view; retain a few offscreen lanes for narrow screens.
+          if (px < 0 || px > W) reject = Math.max(reject, 0.97);
+          if (Math.abs(x) < 1.2 && centerCount >= centerLimit) reject = 1;
+          if (text && px >= text.left && px <= text.right) {
+            // Also reject most lanes that would cross the text later in a fall.
+            reject = Math.max(reject, py >= text.top && py <= text.bottom ? 0.999 : 0.98);
+          }
+        } while (Math.random() < reject);
+        if (Math.abs(x) < 1.2) centerCount++;
+        const sp = this.grade.speed[0] + Math.random() * (this.grade.speed[1] - this.grade.speed[0]);
+        const d = { x, y, z, sp };
+        this.data.push(d); layer.data.push(d);
+        this.dummy.position.set(x, y, z); this.dummy.updateMatrix();
+        layer.mesh.setMatrixAt(i, this.dummy.matrix);
+      }
+      layer.mesh.instanceMatrix.needsUpdate = true; layer.mesh.visible = true;
+    }
+  }
+
   _addDust(N, color, opacity, size) {
     const arr = new Float32Array(N * 3);
     for (let i = 0; i < N; i++) { arr[i * 3] = (Math.random() - 0.5) * 12; arr[i * 3 + 1] = (Math.random() - 0.5) * 8; arr[i * 3 + 2] = (Math.random() - 0.5) * 5 - 0.5; }
@@ -221,16 +281,21 @@ class RainScene {
 
   update(dt, time, ptr) {
     if (this.reducedMotion) return;
-    const dummy = new THREE.Object3D(), Y_SPAN = 9;
-    for (let i = 0; i < this.data.length; i++) {
-      const d = this.data[i];
-      d.y -= d.sp * dt;
-      if (d.y < -Y_SPAN / 2) { d.y = Y_SPAN / 2; d.x = (Math.random() - 0.5) * 10; }
-      d.x += 0.08 * dt; if (d.x > 5) d.x = -5;
-      dummy.position.set(d.x, d.y, (Math.random() - 0.5) * 4); dummy.updateMatrix();
-      this.instanced.setMatrixAt(i, dummy.matrix);
+    // Rain speeds are seconds-based even on displays that run above 60 Hz.
+    const rainDt = this.rainTime === undefined ? dt : Math.min(Math.max(time - this.rainTime, 0), 0.05);
+    this.rainTime = time;
+    const dummy = this.dummy, Y_SPAN = 9;
+    for (const layer of this.layers) {
+      dummy.scale.setScalar(layer.size);
+      for (let i = 0; i < layer.data.length; i++) {
+        const d = layer.data[i];
+        d.y -= d.sp * rainDt;
+        if (d.y < -Y_SPAN / 2) d.y += Y_SPAN;
+        dummy.position.set(d.x, d.y, d.z); dummy.updateMatrix();
+        layer.mesh.setMatrixAt(i, dummy.matrix);
+      }
+      layer.mesh.instanceMatrix.needsUpdate = true;
     }
-    this.instanced.instanceMatrix.needsUpdate = true;
     for (const c of this.darkClouds) { c.position.x += c.userData.sp * dt * 60; if (c.position.x > 6) c.position.x = -6; }
     if (this.dust && this.dustData.length) {
       const arr = this.dust.geometry.attributes.position.array;
@@ -244,7 +309,7 @@ class RainScene {
     }
   }
 
-  dispose() { this.group.traverse(c => { if (c.geometry) c.geometry.dispose(); if (c.material) { if (c.material.map) c.material.map.dispose(); c.material.dispose(); } }); this.scene.remove(this.group); }
+  dispose() { cancelAnimationFrame(this.rainFrame); this.group.traverse(c => { if (c.geometry) c.geometry.dispose(); if (c.material) { if (c.material.map) c.material.map.dispose(); c.material.dispose(); } }); this.scene.remove(this.group); }
 }
 
 // ═══════════════════════════════════════════════════

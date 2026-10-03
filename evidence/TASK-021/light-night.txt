@@ -1,0 +1,36 @@
+exit: 0
+{
+  "theme": "light",
+  "weather": "clear-night",
+  "sceneBg": "#f6f4f0",
+  "sceneLuminance": 0.9058546805752562,
+  "chart": {
+    "css": "rgb(235, 231, 225)",
+    "rgb": [
+      235,
+      231,
+      225,
+      1
+    ],
+    "luminance": 0.8025023820814297
+  },
+  "stats": {
+    "css": "oklab(0.940997 0.00124186 0.00735652 / 0.55)",
+    "rgb": [
+      242.156862745098,
+      239.05882352941177,
+      234.50980392156862,
+      1
+    ],
+    "luminance": 0.8664232946685602
+  },
+  "moonColor": "#c4ccd6",
+  "moonLuminance": 0.5977653326431338,
+  "atmosphereOpacity": "0.35"
+}
+PASS	light clear-night scene background is light	luminance=0.906
+PASS	chart background matches scene	delta=0.103
+PASS	stats background matches scene	delta=0.039
+PASS	light clear-night moon material is bright	#c4ccd6 luminance=0.598
+PASS	global light atmosphere policy is explicit	opacity=0.35
+PASS	CDP page has no runtime errors	[]

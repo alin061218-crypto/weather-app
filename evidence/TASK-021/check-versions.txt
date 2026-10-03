@@ -1,0 +1,6 @@
+exit: 0
+
+> weather-backend@1.0.0 check:versions
+> node server.js --check-asset-versions
+
+PASS: 15 index asset versions match SHA-1 content hashes
