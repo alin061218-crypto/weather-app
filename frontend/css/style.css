@@ -321,7 +321,7 @@ body[data-weather] { --ink: var(--scene-ink); --ink-secondary: var(--scene-secon
 .skeleton-city { width: 150px; height: 28px; }
 .skeleton-temp { width: 132px; height: 78px; }
 .skeleton-desc { width: 104px; height: 18px; }
-.skeleton-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); position: relative; }
+.skeleton-stats { display: grid; position: relative; }
 .skeleton-stats::before, .skeleton-stats::after { content: ''; position: absolute; left: 0; right: 0; height: 1px; background: var(--border); pointer-events: none; }
 .skeleton-stats::before { top: 0; }
 .skeleton-stats::after { bottom: 0; }
@@ -423,7 +423,7 @@ body[data-weather] { --ink: var(--scene-ink); --ink-secondary: var(--scene-secon
 
 /* ---- 关键数据仪表栅格 ---- */
 .stats-scroll {
-  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  display: grid;
   width: 100%; min-width: 0;
   background: color-mix(in oklab, var(--surface) 55%, transparent);
   position: relative;
@@ -1026,7 +1026,8 @@ body[data-weather] { --ink: var(--scene-ink); --ink-secondary: var(--scene-secon
   .topbar { display: grid; grid-template-columns: minmax(0, 1fr) 40px 40px; }
   .search-box { width: auto; }
   #weather-card, .stats-scroll { width: min(100%, calc(100vw - 32px)); max-width: calc(100vw - 32px); }
-  .stats-scroll { grid-template-columns: repeat(4, minmax(0, 1fr)); overflow: hidden; }
+  .stats-scroll, .skeleton-stats { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .stats-scroll { overflow: hidden; }
   .stat-chip { overflow: hidden; }
   .stat-chip-value { max-width: 100%; overflow: hidden; font-size: clamp(.72rem, 3.6vw, var(--text-base)); }
   .skeleton-temp { width: 110px; height: 60px; }
@@ -1055,14 +1056,13 @@ body[data-weather] { --ink: var(--scene-ink); --ink-secondary: var(--scene-secon
   .hero-icon { grid-column: 2; grid-row: 1 / span 4; }
   .hero-temp { grid-row: 3; }
   .hero-desc { grid-row: 4; }
-  .stats-scroll { grid-column: 1 / -1; grid-row: 2; grid-template-columns: repeat(8, minmax(0, 1fr)); align-self: start; }
+  .stats-scroll { grid-column: 1 / -1; grid-row: 2; align-self: start; }
   .stat-chip { padding-inline: 4px; }
   .chart-section { grid-column: 1 / -1; grid-row: 3; }
   .daily-section { grid-column: 1 / -1; grid-row: 4; }
   .daily-list { display: flex; flex-direction: column; }
   .advice-section { grid-column: span 1; }
   .skeleton-hero { align-items: flex-start; text-align: left; }
-  .skeleton-stats { grid-template-columns: repeat(8, minmax(0, 1fr)); }
 }
 @media (min-width: 840px) {
   .tab-btn-label { font-size: var(--text-sm); }
@@ -1084,13 +1084,11 @@ body[data-weather] { --ink: var(--scene-ink); --ink-secondary: var(--scene-secon
   .hero-icon { grid-column: 2; grid-row: 1 / span 4; }
   .hero-temp { grid-row: 3; }
   .hero-desc { grid-row: 4; }
-  .stats-scroll { grid-template-columns: repeat(8, minmax(0, 1fr)); }
   .tab-bar { position: fixed; top: 50%; bottom: auto; left: max(16px, calc(50% - (var(--width-data) / 2))); transform: translateY(-50%); width: 72px; flex-direction: column; border-radius: var(--radius-lg); }
   .tab-btn { width: 72px; height: 72px; }
   .tab-btn::before { top: 50%; left: 4px; transform: translateY(-50%) scaleY(0); width: 2px; height: 24px; }
   .tab-btn.active::before { transform: translateY(-50%) scaleY(1); }
   .skeleton-hero { align-items: flex-start; text-align: left; }
-  .skeleton-stats { grid-template-columns: repeat(8, minmax(0, 1fr)); }
 }
 
 @media (min-width: 600px) { .hero-temp { margin-inline: 0; } }
@@ -1169,4 +1167,37 @@ button:disabled, input:disabled {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* TASK-014 content additions reuse existing design tokens and control styles. */
+.weather-meta { grid-column: 1 / -1; grid-row: 5; color: var(--ink-secondary); font: var(--type-label); margin-top: var(--space-3); }
+.weather-meta p { margin-top: var(--space-1); }
+.life-indices { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+.life-index { min-width: 0; padding: var(--space-4); background: var(--surface-card); border: 1px solid var(--border); border-radius: var(--radius-md); }
+.life-index h3 { font: var(--type-label); color: var(--ink); }
+.life-index h3 span { display: block; color: var(--ink-secondary); margin-top: var(--space-1); }
+.life-index p { font: var(--type-label); color: var(--ink-secondary); margin-top: var(--space-2); }
+.site-info { grid-column: 1 / -1; text-align: center; color: var(--ink-secondary); font: var(--type-label); padding-block: var(--space-4); }
+.site-info a { color: inherit; }
+.support-button { border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface-card); color: var(--ink); min-height: 44px; padding: var(--space-2) var(--space-3); cursor: pointer; font: var(--type-label); }
+.support-button:focus-visible, .content-dialog :is(select, textarea, input, summary):focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+#tab-me { position: relative; }
+.me-support { position: absolute; inset: var(--space-3) 0 auto; display: flex; justify-content: center; gap: var(--space-3); }
+.content-dialog .modal-box { max-width: 640px; max-height: calc(100dvh - 40px); overflow-y: auto; }
+.content-dialog h2 { padding-right: var(--space-8); margin-bottom: var(--space-4); }
+.content-dialog p { font: var(--type-label); color: var(--ink-secondary); margin-block: var(--space-3); }
+.content-dialog label { display: grid; gap: var(--space-2); margin-block: var(--space-4); font: var(--type-label); }
+.content-dialog :is(select, textarea, input) { width: 100%; min-height: 44px; background: var(--surface); color: var(--ink); border: 1px solid var(--border-strong); border-radius: var(--radius-md); padding: var(--space-2); font: inherit; }
+.content-dialog textarea { resize: vertical; }
+.content-dialog summary { cursor: pointer; font: var(--type-label); min-height: 44px; padding-block: var(--space-2); }
+.content-dialog a { color: var(--primary); }
+#feedback-status { min-height: 1.5em; }
+
+@media (min-width: 600px) and (max-width: 839px) {
+  .stats-scroll, .skeleton-stats { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .life-indices { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (min-width: 840px) {
+  .stats-scroll, .skeleton-stats { grid-template-columns: repeat(10, minmax(0, 1fr)); }
+  .life-indices { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }

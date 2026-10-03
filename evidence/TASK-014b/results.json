@@ -1,0 +1,193 @@
+[
+  {
+    "name": "compact",
+    "width": 375,
+    "expectedTracks": 5,
+    "loading": {
+      "width": 375,
+      "skeletonColumns": {
+        "raw": "68.5938px 68.5938px 68.6094px 68.5938px 68.5938px",
+        "values": [
+          68.6,
+          68.6,
+          68.6,
+          68.6,
+          68.6
+        ]
+      },
+      "statsColumns": {
+        "raw": "68.5938px 68.5938px 68.6094px 68.5938px 68.5938px",
+        "values": [
+          68.6,
+          68.6,
+          68.6,
+          68.6,
+          68.6
+        ]
+      },
+      "skeletonSpans": 10,
+      "chipCount": 10,
+      "bodyWidth": 375
+    },
+    "loaded": {
+      "width": 375,
+      "skeletonColumns": {
+        "raw": "68.5938px 68.5938px 68.6094px 68.5938px 68.5938px",
+        "values": [
+          68.6,
+          68.6,
+          68.6,
+          68.6,
+          68.6
+        ]
+      },
+      "statsColumns": {
+        "raw": "68.5938px 68.5938px 68.6094px 68.5938px 68.5938px",
+        "values": [
+          68.6,
+          68.6,
+          68.6,
+          68.6,
+          68.6
+        ]
+      },
+      "skeletonSpans": 10,
+      "chipCount": 10,
+      "bodyWidth": 375
+    }
+  },
+  {
+    "name": "tablet",
+    "width": 768,
+    "expectedTracks": 5,
+    "loading": {
+      "width": 768,
+      "skeletonColumns": {
+        "raw": "144px 144px 144px 144px 144px",
+        "values": [
+          144,
+          144,
+          144,
+          144,
+          144
+        ]
+      },
+      "statsColumns": {
+        "raw": "143.984px 144px 144px 144px 143.984px",
+        "values": [
+          144,
+          144,
+          144,
+          144,
+          144
+        ]
+      },
+      "skeletonSpans": 10,
+      "chipCount": 10,
+      "bodyWidth": 768
+    },
+    "loaded": {
+      "width": 768,
+      "skeletonColumns": {
+        "raw": "143.984px 144px 144px 144px 143.984px",
+        "values": [
+          144,
+          144,
+          144,
+          144,
+          144
+        ]
+      },
+      "statsColumns": {
+        "raw": "143.984px 144px 144px 144px 143.984px",
+        "values": [
+          144,
+          144,
+          144,
+          144,
+          144
+        ]
+      },
+      "skeletonSpans": 10,
+      "chipCount": 10,
+      "bodyWidth": 768
+    }
+  },
+  {
+    "name": "desktop",
+    "width": 1120,
+    "expectedTracks": 10,
+    "loading": {
+      "width": 1120,
+      "skeletonColumns": {
+        "raw": "103.188px 103.203px 103.203px 103.203px 103.188px 103.203px 103.203px 103.203px 103.203px 103.188px",
+        "values": [
+          103.2,
+          103.2,
+          103.2,
+          103.2,
+          103.2,
+          103.2,
+          103.2,
+          103.2,
+          103.2,
+          103.2
+        ]
+      },
+      "statsColumns": {
+        "raw": "103.188px 103.203px 103.203px 103.203px 103.188px 103.203px 103.203px 103.203px 103.203px 103.188px",
+        "values": [
+          103.2,
+          103.2,
+          103.2,
+          103.2,
+          103.2,
+          103.2,
+          103.2,
+          103.2,
+          103.2,
+          103.2
+        ]
+      },
+      "skeletonSpans": 10,
+      "chipCount": 10,
+      "bodyWidth": 1120
+    },
+    "loaded": {
+      "width": 1120,
+      "skeletonColumns": {
+        "raw": "103.188px 103.203px 103.203px 103.203px 103.188px 103.203px 103.203px 103.203px 103.203px 103.188px",
+        "values": [
+          103.2,
+          103.2,
+          103.2,
+          103.2,
+          103.2,
+          103.2,
+          103.2,
+          103.2,
+          103.2,
+          103.2
+        ]
+      },
+      "statsColumns": {
+        "raw": "103.188px 103.203px 103.203px 103.203px 103.188px 103.203px 103.203px 103.203px 103.203px 103.188px",
+        "values": [
+          103.2,
+          103.2,
+          103.2,
+          103.2,
+          103.2,
+          103.2,
+          103.2,
+          103.2,
+          103.2,
+          103.2
+        ]
+      },
+      "skeletonSpans": 10,
+      "chipCount": 10,
+      "bodyWidth": 1120
+    }
+  }
+]

@@ -1,0 +1,356 @@
+[
+  {
+    "width": 375,
+    "moved": {
+      "weatherMeta": {
+        "gridColumn": "1 / -1",
+        "gridRow": "5",
+        "color": "rgb(195, 203, 216)",
+        "font": "500 13.008px / 19.512px system-ui, -apple-system, \"PingFang SC\", \"Noto Sans SC\", \"Microsoft YaHei\", sans-serif",
+        "marginTop": "12px"
+      },
+      "weatherMetaP": {
+        "marginTop": "4px"
+      },
+      "lifeIndices": {
+        "gridColumn": "1 / -1",
+        "display": "grid",
+        "gridTemplateColumns": "165.5px 165.5px",
+        "gap": "12px"
+      },
+      "lifeIndex": {
+        "minWidth": "0px",
+        "padding": "16px",
+        "backgroundColor": "rgb(22, 28, 42)",
+        "border": "1px solid rgba(255, 255, 255, 0.06)",
+        "borderRadius": "10px"
+      },
+      "lifeIndexH3": {
+        "font": "500 13.008px / 19.512px system-ui, -apple-system, \"PingFang SC\", \"Noto Sans SC\", \"Microsoft YaHei\", sans-serif",
+        "color": "rgb(238, 243, 250)"
+      },
+      "lifeIndexH3Span": {
+        "display": "block",
+        "color": "rgb(195, 203, 216)",
+        "marginTop": "4px"
+      },
+      "lifeIndexP": {
+        "font": "500 13.008px / 19.512px system-ui, -apple-system, \"PingFang SC\", \"Noto Sans SC\", \"Microsoft YaHei\", sans-serif",
+        "color": "rgb(195, 203, 216)",
+        "marginTop": "8px"
+      },
+      "siteInfo": {
+        "gridColumn": "1 / -1",
+        "textAlign": "center",
+        "color": "rgb(195, 203, 216)",
+        "font": "500 13.008px / 19.512px system-ui, -apple-system, \"PingFang SC\", \"Noto Sans SC\", \"Microsoft YaHei\", sans-serif",
+        "paddingBlock": "16px"
+      },
+      "siteInfoA": {
+        "color": "rgb(195, 203, 216)"
+      },
+      "supportButton": {
+        "border": "1px solid rgba(255, 255, 255, 0.06)",
+        "borderRadius": "10px",
+        "backgroundColor": "rgb(22, 28, 42)",
+        "color": "rgb(238, 243, 250)",
+        "minHeight": "44px",
+        "padding": "8px 12px",
+        "cursor": "pointer",
+        "font": "500 13.008px / 19.512px system-ui, -apple-system, \"PingFang SC\", \"Noto Sans SC\", \"Microsoft YaHei\", sans-serif"
+      },
+      "tabMe": {
+        "position": "relative"
+      },
+      "meSupport": {
+        "position": "absolute",
+        "inset": "12px 0px auto",
+        "display": "flex",
+        "justifyContent": "center",
+        "gap": "12px"
+      },
+      "dialogBox": {
+        "maxWidth": "640px",
+        "maxHeight": "860px",
+        "overflowY": "auto"
+      },
+      "dialogH2": {
+        "paddingRight": "32px",
+        "marginBottom": "16px"
+      },
+      "dialogP": {
+        "font": "500 13.008px / 19.512px system-ui, -apple-system, \"PingFang SC\", \"Noto Sans SC\", \"Microsoft YaHei\", sans-serif",
+        "color": "rgb(195, 203, 216)",
+        "marginBlock": "12px"
+      },
+      "dialogLabel": {
+        "display": "grid",
+        "gap": "8px",
+        "marginBlock": "16px",
+        "font": "500 13.008px / 19.512px system-ui, -apple-system, \"PingFang SC\", \"Noto Sans SC\", \"Microsoft YaHei\", sans-serif"
+      },
+      "dialogControls": {
+        "width": "100%",
+        "minHeight": "44px",
+        "backgroundColor": "rgb(18, 23, 36)",
+        "color": "rgb(238, 243, 250)",
+        "border": "1px solid rgba(255, 255, 255, 0.1)",
+        "borderRadius": "10px",
+        "padding": "8px",
+        "font": "500 13.008px system-ui, -apple-system, \"PingFang SC\", \"Noto Sans SC\", \"Microsoft YaHei\", sans-serif"
+      },
+      "dialogSummary": {
+        "cursor": "pointer",
+        "font": "500 13.008px / 19.512px system-ui, -apple-system, \"PingFang SC\", \"Noto Sans SC\", \"Microsoft YaHei\", sans-serif",
+        "minHeight": "44px",
+        "paddingBlock": "8px"
+      },
+      "dialogA": {
+        "color": "rgb(91, 156, 245)"
+      },
+      "feedbackStatus": {
+        "minHeight": "19.512px"
+      }
+    },
+    "statsColumns": "68.5938px 68.5938px 68.6094px 68.5938px 68.5938px",
+    "skeletonColumns": "repeat(5, minmax(0px, 1fr))",
+    "skeletonSpans": 10,
+    "chipCount": 10
+  },
+  {
+    "width": 768,
+    "moved": {
+      "weatherMeta": {
+        "gridColumn": "1 / -1",
+        "gridRow": "5",
+        "color": "rgb(195, 203, 216)",
+        "font": "500 13.008px / 19.512px system-ui, -apple-system, \"PingFang SC\", \"Noto Sans SC\", \"Microsoft YaHei\", sans-serif",
+        "marginTop": "12px"
+      },
+      "weatherMetaP": {
+        "marginTop": "4px"
+      },
+      "lifeIndices": {
+        "gridColumn": "1 / -1",
+        "display": "grid",
+        "gridTemplateColumns": "231.984px 232px 232px",
+        "gap": "12px"
+      },
+      "lifeIndex": {
+        "minWidth": "0px",
+        "padding": "16px",
+        "backgroundColor": "rgb(22, 28, 42)",
+        "border": "1px solid rgba(255, 255, 255, 0.06)",
+        "borderRadius": "10px"
+      },
+      "lifeIndexH3": {
+        "font": "500 13.008px / 19.512px system-ui, -apple-system, \"PingFang SC\", \"Noto Sans SC\", \"Microsoft YaHei\", sans-serif",
+        "color": "rgb(238, 243, 250)"
+      },
+      "lifeIndexH3Span": {
+        "display": "block",
+        "color": "rgb(195, 203, 216)",
+        "marginTop": "4px"
+      },
+      "lifeIndexP": {
+        "font": "500 13.008px / 19.512px system-ui, -apple-system, \"PingFang SC\", \"Noto Sans SC\", \"Microsoft YaHei\", sans-serif",
+        "color": "rgb(195, 203, 216)",
+        "marginTop": "8px"
+      },
+      "siteInfo": {
+        "gridColumn": "1 / -1",
+        "textAlign": "center",
+        "color": "rgb(195, 203, 216)",
+        "font": "500 13.008px / 19.512px system-ui, -apple-system, \"PingFang SC\", \"Noto Sans SC\", \"Microsoft YaHei\", sans-serif",
+        "paddingBlock": "16px"
+      },
+      "siteInfoA": {
+        "color": "rgb(195, 203, 216)"
+      },
+      "supportButton": {
+        "border": "1px solid rgba(255, 255, 255, 0.06)",
+        "borderRadius": "10px",
+        "backgroundColor": "rgb(22, 28, 42)",
+        "color": "rgb(238, 243, 250)",
+        "minHeight": "44px",
+        "padding": "8px 12px",
+        "cursor": "pointer",
+        "font": "500 13.008px / 19.512px system-ui, -apple-system, \"PingFang SC\", \"Noto Sans SC\", \"Microsoft YaHei\", sans-serif"
+      },
+      "tabMe": {
+        "position": "relative"
+      },
+      "meSupport": {
+        "position": "absolute",
+        "inset": "12px 0px auto",
+        "display": "flex",
+        "justifyContent": "center",
+        "gap": "12px"
+      },
+      "dialogBox": {
+        "maxWidth": "640px",
+        "maxHeight": "860px",
+        "overflowY": "auto"
+      },
+      "dialogH2": {
+        "paddingRight": "32px",
+        "marginBottom": "16px"
+      },
+      "dialogP": {
+        "font": "500 13.008px / 19.512px system-ui, -apple-system, \"PingFang SC\", \"Noto Sans SC\", \"Microsoft YaHei\", sans-serif",
+        "color": "rgb(195, 203, 216)",
+        "marginBlock": "12px"
+      },
+      "dialogLabel": {
+        "display": "grid",
+        "gap": "8px",
+        "marginBlock": "16px",
+        "font": "500 13.008px / 19.512px system-ui, -apple-system, \"PingFang SC\", \"Noto Sans SC\", \"Microsoft YaHei\", sans-serif"
+      },
+      "dialogControls": {
+        "width": "100%",
+        "minHeight": "44px",
+        "backgroundColor": "rgb(18, 23, 36)",
+        "color": "rgb(238, 243, 250)",
+        "border": "1px solid rgba(255, 255, 255, 0.1)",
+        "borderRadius": "10px",
+        "padding": "8px",
+        "font": "500 13.008px system-ui, -apple-system, \"PingFang SC\", \"Noto Sans SC\", \"Microsoft YaHei\", sans-serif"
+      },
+      "dialogSummary": {
+        "cursor": "pointer",
+        "font": "500 13.008px / 19.512px system-ui, -apple-system, \"PingFang SC\", \"Noto Sans SC\", \"Microsoft YaHei\", sans-serif",
+        "minHeight": "44px",
+        "paddingBlock": "8px"
+      },
+      "dialogA": {
+        "color": "rgb(91, 156, 245)"
+      },
+      "feedbackStatus": {
+        "minHeight": "19.512px"
+      }
+    },
+    "statsColumns": "143.984px 144px 144px 144px 143.984px",
+    "skeletonColumns": "repeat(5, minmax(0px, 1fr))",
+    "skeletonSpans": 10,
+    "chipCount": 10
+  },
+  {
+    "width": 1120,
+    "moved": {
+      "weatherMeta": {
+        "gridColumn": "1 / -1",
+        "gridRow": "5",
+        "color": "rgb(195, 203, 216)",
+        "font": "500 13.008px / 19.512px system-ui, -apple-system, \"PingFang SC\", \"Noto Sans SC\", \"Microsoft YaHei\", sans-serif",
+        "marginTop": "12px"
+      },
+      "weatherMetaP": {
+        "marginTop": "4px"
+      },
+      "lifeIndices": {
+        "gridColumn": "1 / -1",
+        "display": "grid",
+        "gridTemplateColumns": "336px 336px 336px",
+        "gap": "12px"
+      },
+      "lifeIndex": {
+        "minWidth": "0px",
+        "padding": "16px",
+        "backgroundColor": "rgb(22, 28, 42)",
+        "border": "1px solid rgba(255, 255, 255, 0.06)",
+        "borderRadius": "10px"
+      },
+      "lifeIndexH3": {
+        "font": "500 13.008px / 19.512px system-ui, -apple-system, \"PingFang SC\", \"Noto Sans SC\", \"Microsoft YaHei\", sans-serif",
+        "color": "rgb(238, 243, 250)"
+      },
+      "lifeIndexH3Span": {
+        "display": "block",
+        "color": "rgb(195, 203, 216)",
+        "marginTop": "4px"
+      },
+      "lifeIndexP": {
+        "font": "500 13.008px / 19.512px system-ui, -apple-system, \"PingFang SC\", \"Noto Sans SC\", \"Microsoft YaHei\", sans-serif",
+        "color": "rgb(195, 203, 216)",
+        "marginTop": "8px"
+      },
+      "siteInfo": {
+        "gridColumn": "1 / -1",
+        "textAlign": "center",
+        "color": "rgb(195, 203, 216)",
+        "font": "500 13.008px / 19.512px system-ui, -apple-system, \"PingFang SC\", \"Noto Sans SC\", \"Microsoft YaHei\", sans-serif",
+        "paddingBlock": "16px"
+      },
+      "siteInfoA": {
+        "color": "rgb(195, 203, 216)"
+      },
+      "supportButton": {
+        "border": "1px solid rgba(255, 255, 255, 0.06)",
+        "borderRadius": "10px",
+        "backgroundColor": "rgb(22, 28, 42)",
+        "color": "rgb(238, 243, 250)",
+        "minHeight": "44px",
+        "padding": "8px 12px",
+        "cursor": "pointer",
+        "font": "500 13.008px / 19.512px system-ui, -apple-system, \"PingFang SC\", \"Noto Sans SC\", \"Microsoft YaHei\", sans-serif"
+      },
+      "tabMe": {
+        "position": "relative"
+      },
+      "meSupport": {
+        "position": "absolute",
+        "inset": "12px 0px auto",
+        "display": "flex",
+        "justifyContent": "center",
+        "gap": "12px"
+      },
+      "dialogBox": {
+        "maxWidth": "640px",
+        "maxHeight": "860px",
+        "overflowY": "auto"
+      },
+      "dialogH2": {
+        "paddingRight": "32px",
+        "marginBottom": "16px"
+      },
+      "dialogP": {
+        "font": "500 13.008px / 19.512px system-ui, -apple-system, \"PingFang SC\", \"Noto Sans SC\", \"Microsoft YaHei\", sans-serif",
+        "color": "rgb(195, 203, 216)",
+        "marginBlock": "12px"
+      },
+      "dialogLabel": {
+        "display": "grid",
+        "gap": "8px",
+        "marginBlock": "16px",
+        "font": "500 13.008px / 19.512px system-ui, -apple-system, \"PingFang SC\", \"Noto Sans SC\", \"Microsoft YaHei\", sans-serif"
+      },
+      "dialogControls": {
+        "width": "100%",
+        "minHeight": "44px",
+        "backgroundColor": "rgb(18, 23, 36)",
+        "color": "rgb(238, 243, 250)",
+        "border": "1px solid rgba(255, 255, 255, 0.1)",
+        "borderRadius": "10px",
+        "padding": "8px",
+        "font": "500 13.008px system-ui, -apple-system, \"PingFang SC\", \"Noto Sans SC\", \"Microsoft YaHei\", sans-serif"
+      },
+      "dialogSummary": {
+        "cursor": "pointer",
+        "font": "500 13.008px / 19.512px system-ui, -apple-system, \"PingFang SC\", \"Noto Sans SC\", \"Microsoft YaHei\", sans-serif",
+        "minHeight": "44px",
+        "paddingBlock": "8px"
+      },
+      "dialogA": {
+        "color": "rgb(91, 156, 245)"
+      },
+      "feedbackStatus": {
+        "minHeight": "19.512px"
+      }
+    },
+    "statsColumns": "103.188px 103.203px 103.203px 103.203px 103.188px 103.203px 103.203px 103.203px 103.203px 103.188px",
+    "skeletonColumns": "repeat(10, minmax(0px, 1fr))",
+    "skeletonSpans": 10,
+    "chipCount": 10
+  }
+]

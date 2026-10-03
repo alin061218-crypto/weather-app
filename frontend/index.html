@@ -36,32 +36,6 @@
 </script>
 
 <link rel="stylesheet" href="/css/style.css">
-<style>
-/* TASK-014 content additions reuse existing design tokens and control styles. */
-.weather-meta { grid-column: 1 / -1; grid-row: 5; color: var(--ink-secondary); font: var(--type-label); margin-top: var(--space-3); }
-.weather-meta p { margin-top: var(--space-1); }
-.life-indices { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
-.life-index { min-width: 0; padding: var(--space-4); background: var(--surface-card); border: 1px solid var(--border); border-radius: var(--radius-md); }
-.life-index h3 { font: var(--type-label); color: var(--ink); }
-.life-index h3 span { display: block; color: var(--ink-secondary); margin-top: var(--space-1); }
-.life-index p { font: var(--type-label); color: var(--ink-secondary); margin-top: var(--space-2); }
-.site-info { grid-column: 1 / -1; text-align: center; color: var(--ink-secondary); font: var(--type-label); padding-block: var(--space-4); }
-.site-info a { color: inherit; }
-.support-button { border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface-card); color: var(--ink); min-height: 44px; padding: var(--space-2) var(--space-3); cursor: pointer; font: var(--type-label); }
-.support-button:focus-visible, .content-dialog :is(select, textarea, input, summary):focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
-#tab-me { position: relative; }
-.me-support { position: absolute; inset: var(--space-3) 0 auto; display: flex; justify-content: center; gap: var(--space-3); }
-.content-dialog .modal-box { max-width: 640px; max-height: calc(100dvh - 40px); overflow-y: auto; }
-.content-dialog h2 { padding-right: var(--space-8); margin-bottom: var(--space-4); }
-.content-dialog p { font: var(--type-label); color: var(--ink-secondary); margin-block: var(--space-3); }
-.content-dialog label { display: grid; gap: var(--space-2); margin-block: var(--space-4); font: var(--type-label); }
-.content-dialog :is(select, textarea, input) { width: 100%; min-height: 44px; background: var(--surface); color: var(--ink); border: 1px solid var(--border-strong); border-radius: var(--radius-md); padding: var(--space-2); font: inherit; }
-.content-dialog textarea { resize: vertical; }
-.content-dialog summary { cursor: pointer; font: var(--type-label); min-height: 44px; padding-block: var(--space-2); }
-.content-dialog a { color: var(--primary); }
-#feedback-status { min-height: 1.5em; }
-@media (min-width: 600px) { #stats-scroll { grid-template-columns: repeat(5, minmax(0, 1fr)); } .life-indices { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-</style>
 </head>
 <body>
 
@@ -107,6 +81,7 @@
       <div class="skeleton-stats" aria-hidden="true">
         <span></span><span></span><span></span><span></span>
         <span></span><span></span><span></span><span></span>
+        <span></span><span></span>
       </div>
       <div class="skeleton-list" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
       <p class="skeleton-status">正在获取天气…</p>
