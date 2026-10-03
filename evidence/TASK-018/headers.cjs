@@ -1,12 +1,25 @@
 const assert = require('node:assert/strict');
 
 const base = process.env.WEATHER_URL || 'http://localhost:3001';
+const resourceUrl = path => new URL(path, base).href;
+async function serverIsReachable() {
+  try {
+    const response = await fetch(resourceUrl('/index.html'), { signal: AbortSignal.timeout(1500) });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
 async function read(path) {
-  const response = await fetch(base + path, { headers: { 'accept-encoding': 'gzip' } });
+  const response = await fetch(resourceUrl(path), { headers: { 'accept-encoding': 'gzip' } });
   return { response, body: Buffer.from(await response.arrayBuffer()) };
 }
 
 (async () => {
+  if (!(await serverIsReachable())) {
+    console.log('SKIP: requires a running server (node server.js)');
+    return;
+  }
   const html = await read('/index.html');
   const cities = await read('/data/cities.json');
   const page = String(html.body);

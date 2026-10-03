@@ -1,0 +1,4 @@
+command: node evidence/TASK-016c/fingerprint.cjs --via-fallback
+exit: 0
+{"mode":"fallback","pointCount":24,"fingerprintCount":7,"fallbackCount":0,"axisStart":"00:00","axisEnd":"23:00","requests":{"backend":1,"fallback":1},"bodyScrollWidth":753,"clientWidth":753,"viewportWidth":768}
+PASS: fallback path has 24 chart points, seven fingerprints, no fallbacks, 00:00–23:00 axis, and no body overflow

@@ -72,8 +72,9 @@ const server = http.createServer((req, res) => {
             viewport: { innerWidth, outerWidth, devicePixelRatio, scrollWidth: document.documentElement.scrollWidth, clientWidth: document.documentElement.clientWidth, rectWidth: document.documentElement.getBoundingClientRect().width },
             stats: { scrollWidth: document.querySelector('.stats-scroll')?.scrollWidth, clientWidth: document.querySelector('.stats-scroll')?.clientWidth },
             chips: chips.map(chip => ({ scrollWidth: chip.scrollWidth, clientWidth: chip.clientWidth })),
-            widest: [...document.querySelectorAll('body *')].map(element => ({ selector: element.className || element.id || element.tagName, width: element.getBoundingClientRect().width, right: element.getBoundingClientRect().right })).filter(item => item.right > document.documentElement.clientWidth + 1).slice(0, 8),
-            metricCount: chips.length
+            widest: [...document.querySelectorAll('body *')].map(element => ({ selector: element.className || element.id || element.tagName, width: element.getBoundingClientRect().width, right: element.getBoundingClientRect().right })).filter(item => item.right > document.documentElement.clientWidth + 1),
+            metricCount: chips.length,
+            skeletonMetricCount: document.querySelectorAll('.skeleton-stats span').length
           });
         }, 3000);
       </script>$&`
@@ -112,7 +113,9 @@ async function main() {
       assert.ok(match, `${name}: layout metrics missing`);
       const metrics = JSON.parse(match[2]);
       console.log(`${name} metrics: ${JSON.stringify(metrics)}`);
-      assert.equal(metrics.metricCount, 8, `${name}: expected eight metric cells`);
+      console.log(`${name} metric counts: stat-chip=${metrics.metricCount}, skeleton-stats span=${metrics.skeletonMetricCount}`);
+      assert.equal(metrics.metricCount, metrics.skeletonMetricCount,
+        `${name}: visible metric cells must match skeleton metric sources`);
       assert.ok(metrics.viewport.scrollWidth <= metrics.viewport.clientWidth + 1,
         `${name}: document overflow ${metrics.viewport.scrollWidth} > ${metrics.viewport.clientWidth}`);
       assert.ok(metrics.stats.scrollWidth <= metrics.stats.clientWidth + 1,

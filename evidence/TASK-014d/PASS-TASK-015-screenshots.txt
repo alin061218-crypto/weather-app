@@ -1,0 +1,5 @@
+command: node evidence/TASK-015/screenshots.cjs
+exit: 0
+metric counts: stat-chip=10, skeleton-stats span=10
+PASS: 1280px DOM has 10 metric cells including 气压 with no horizontal overflow
+PASS: compact.png medium.png expanded.png

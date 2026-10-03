@@ -11,7 +11,7 @@ Module._extensions['.cjs'] = (module, filename) => {
   if (!task016c && !keyboard && !task018b) return original(module, filename);
   let source = fs.readFileSync(filename, 'utf8');
   if (task016c) {
-    source = source.replaceAll("metrics.requests[mode === 'backend' ? 'fallback' : 'backend'], 1", "metrics.requests[mode === 'backend' ? 'fallback' : 'backend'], mode === 'backend' ? 0 : 1");
+    // Runtime output and screenshot capture are adapted here; tested checks stay untouched.
     if (output) source = source.replace('const outputDir = path.resolve(__dirname);', `const outputDir = ${JSON.stringify(path.resolve(output))};`);
     source = source.replace("const image = await cdp.command('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true });", `
     await cdp.evaluate('new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))');

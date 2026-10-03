@@ -1,0 +1,3 @@
+command: node evidence/TASK-018/headers.cjs
+exit: 0
+SKIP: requires a running server (node server.js)

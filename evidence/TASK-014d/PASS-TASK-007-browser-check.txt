@@ -1,0 +1,31 @@
+command: node evidence/TASK-007/browser-check.cjs
+exit: 0
+{
+  "migratedRecent": {
+    "lat": "29.069",
+    "lon": "119.658"
+  },
+  "migratedFavorite": {
+    "lat": "29.069",
+    "lon": "119.658"
+  },
+  "starActiveAfterFirst": true,
+  "first": {
+    "resultText": "义乌浙江，中国",
+    "lat": "29.069",
+    "lon": "119.658"
+  },
+  "second": {
+    "resultText": "义乌浙江，中国",
+    "lat": "29.069",
+    "lon": "119.658"
+  },
+  "fallback": {
+    "resultText": "贵德青海，中国，所属地级市坐标",
+    "lat": "36.28139",
+    "lon": "100.61306"
+  },
+  "region": "青海省，中国，所属地级市坐标",
+  "cityFetches": 1
+}
+PASS: TASK-007 recent/favorite coordinate migration and prefecture fallback verified

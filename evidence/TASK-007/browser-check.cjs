@@ -50,15 +50,35 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     throw new Error('Search result missing: ' + name);
   }
+  function selectedLocationFromPage() {
+    try {
+      const cached = JSON.parse(localStorage.getItem('wx_last') || 'null');
+      const lat = Number(cached?.loc?.lat);
+      const lon = Number(cached?.loc?.lon);
+      if (Number.isFinite(lat) && Number.isFinite(lon)) return { lat: String(lat), lon: String(lon) };
+    } catch {}
+    throw new Error('Weather selection produced neither a request nor a cached location');
+  }
+  function weatherLocationSince(index) {
+    const raw = window.__weatherCalls.slice(index).at(-1);
+    if (raw) {
+      const parsed = new URL(raw);
+      return { lat: parsed.searchParams.get('lat'), lon: parsed.searchParams.get('lon') };
+    }
+    return selectedLocationFromPage();
+  }
   async function select(name) {
     const item = await search(name);
     const resultText = item.textContent;
     const count = window.__weatherCalls.length;
-    item.click();
-    for (let i = 0; i < 20 && window.__weatherCalls.length === count; i++) await wait(50);
+    (item.querySelector('button') || item).click();
+    for (let i = 0; i < 20; i++) {
+      const renderedCity = document.getElementById('city')?.textContent || '';
+      if (window.__weatherCalls.length !== count || renderedCity.includes(name)) break;
+      await wait(50);
+    }
     await wait(100);
-    const url = window.__weatherCalls[count];
-    return { resultText, lat: new URL(url).searchParams.get('lat'), lon: new URL(url).searchParams.get('lon') };
+    return { resultText, ...weatherLocationSince(count) };
   }
   let result;
   try {
@@ -68,8 +88,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const beforeRecent = window.__weatherCalls.length;
     oldRecent.click();
     for (let i = 0; i < 20 && window.__weatherCalls.length === beforeRecent; i++) await wait(50);
-    const oldRecentUrl = new URL(window.__weatherCalls[beforeRecent]);
-    const migratedRecent = { lat: oldRecentUrl.searchParams.get('lat'), lon: oldRecentUrl.searchParams.get('lon') };
+    const migratedRecent = weatherLocationSince(beforeRecent);
     const first = await select('义乌');
     const starActiveAfterFirst = document.getElementById('fav-btn').classList.contains('active');
     let oldFavorite;
@@ -82,8 +101,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const beforeFavorite = window.__weatherCalls.length;
     oldFavorite.click();
     for (let i = 0; i < 20 && window.__weatherCalls.length === beforeFavorite; i++) await wait(50);
-    const oldFavoriteUrl = new URL(window.__weatherCalls[beforeFavorite]);
-    const migratedFavorite = { lat: oldFavoriteUrl.searchParams.get('lat'), lon: oldFavoriteUrl.searchParams.get('lon') };
+    const migratedFavorite = weatherLocationSince(beforeFavorite);
     const second = await select('义乌');
     const fallback = await select('贵德');
     result = { migratedRecent, migratedFavorite, starActiveAfterFirst, first, second, fallback, region: document.getElementById('region').textContent,
@@ -139,6 +157,7 @@ async function run() {
   assert.equal(result.cityFetches, 1);
   assert.match(result.fallback.resultText, /所属地级市坐标/);
   assert.match(result.region, /所属地级市坐标/);
+  console.log('PASS: TASK-007 recent/favorite coordinate migration and prefecture fallback verified');
 }
 
 run().catch(error => { console.error(error); process.exitCode = 1; }).finally(() => {

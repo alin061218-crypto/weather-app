@@ -137,8 +137,7 @@ async function main() {
     assert.equal(metrics.axisStart, '00:00', `${mode}: x axis must start at 00:00`);
     assert.equal(metrics.axisEnd, '23:00', `${mode}: x axis must end at 23:00`);
     assert.equal(metrics.requests[mode], 1, `${mode}: expected request path was not used`);
-    // TASK-018 intentionally races backend and direct weather requests.
-    assert.equal(metrics.requests[mode === 'backend' ? 'fallback' : 'backend'], 1, `${mode}: concurrent alternate path was not started`);
+    // 并发语义（后端优先 + 150ms hedge）由 evidence/TASK-018b/race.cjs 覆盖；本脚本只验证图表与指纹。
     assert.ok(metrics.bodyScrollWidth <= metrics.viewportWidth + 1, `${mode}: body horizontal overflow detected`);
     console.log(JSON.stringify(metrics));
     console.log(`PASS: ${mode} path has 24 chart points, seven fingerprints, no fallbacks, 00:00–23:00 axis, and no body overflow`);

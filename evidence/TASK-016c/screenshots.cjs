@@ -171,8 +171,7 @@ async function capture(name, width, url, serverUrl) {
     assert.equal(metrics.focusOutline, 'solid', `${name}: tab focus outline style missing`);
     if (width >= 840) assert.ok(Math.abs(metrics.navLeft - metrics.appLeft) <= 2, `${name}: vertical nav is not aligned to app edge`);
     assert.equal(metrics.requests[mode], 1, `${name}: expected ${mode} path was not used`);
-    // TASK-018 intentionally races backend and direct weather requests.
-    assert.equal(metrics.requests[mode === 'backend' ? 'fallback' : 'backend'], 1, `${name}: concurrent alternate path was not started`);
+    // 并发语义（后端优先 + 150ms hedge）由 evidence/TASK-018b/race.cjs 覆盖；本脚本只验证图表与指纹。
     console.log(`${name} metrics: ${JSON.stringify(metrics)}`);
     assert.ok(metrics.chartTop < metrics.dailyTop, `${name}: chart must precede daily forecast`);
     assert.ok(Math.abs(metrics.chartWidth - metrics.contentWidth) <= 2, `${name}: chart must span content width`);
