@@ -8,6 +8,6 @@ PASS: 15 index asset versions match SHA-1 content hashes
 PASS: all static ESM imports link successfully with their real named exports
 PASS: all module and server syntax checks
 DESC old merged branch matches = 0
-Solar rendering matches = 2 (2 chips; obsolete main.js references replaced by module responsibilities)
+Solar rendering matches = 4 (responsibility-based check in render.js; expected >= 4)
 Attribution/privacy/feedback lines = 15
 rules = 38 categories = 8

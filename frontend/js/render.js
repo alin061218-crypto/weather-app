@@ -97,8 +97,10 @@ export function renderWeather(loc, wx) {
     if (h.cloudcover?.[0] != null) items.push([icon.stat.cloud(), '云量', h.cloudcover[0] + '%']);
     if (h.visibility?.[0] != null) items.push([icon.stat.visibility(), '能见度', (h.visibility[0] / 1000).toFixed(1) + ' km']);
     const solarIcon = rising => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2 18h20M6 18a6 6 0 0112 0M12 2v8M9 ${rising ? '5l3-3 3 3' : '7l3 3 3-3'}"/></svg>`;
-    items.push([solarIcon(true), '日出', F.time(d?.sunrise?.[0]) || '暂无']);
-    items.push([solarIcon(false), '日落', F.time(d?.sunset?.[0]) || '暂无']);
+    const sunrise = F.time(d?.sunrise?.[0]) || '暂无';
+    const sunset = F.time(d?.sunset?.[0]) || '暂无';
+    items.push([solarIcon(true), '日出', sunrise]);
+    items.push([solarIcon(false), '日落', sunset]);
 
     statsEl.innerHTML = items.map(([ico, label, value]) =>
       `<div class="stat-chip"><span class="stat-chip-icon">${ico}</span><span class="stat-chip-value">${value}</span><span class="stat-chip-label">${label}</span></div>`
