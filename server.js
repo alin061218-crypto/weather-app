@@ -1033,15 +1033,7 @@ app.use((err, req, res, next) => {
 // ===== 启动服务器 =====
 const server = app.listen(PORT, () => {
     console.log(`天气后端服务已启动: http://localhost:${PORT} (SQLite)`);
-    console.log(`API 文档:`);
-    console.log(`  POST /api/register  - 注册`);
-    console.log(`  POST /api/login     - 登录`);
-    console.log(`  GET  /api/weather   - 获取天气(代理)`);
-    console.log(`  GET  /api/location  - IP定位(代理)`);
-    console.log(`  GET  /api/search    - 城市搜索(代理)`);
-    console.log(`  GET/POST/DELETE /api/favorites - 收藏管理`);
-    console.log(`  GET/POST/DELETE /api/history - 查询历史`);
-    console.log(`  GET  /admin         - 数据后台管理`);
+    console.log('API 文档以 docs/api.md 为准（路由清单按 server.js 实际注册同步）');
 });
 
 // ===== 优雅关闭：先排空 HTTP 请求，再把 WAL 合并进主库 =====

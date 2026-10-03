@@ -5,6 +5,7 @@ const { spawnSync } = require('node:child_process');
 const root = path.resolve(__dirname, '..');
 const evidenceRoot = path.join(root, 'evidence');
 const soloOutputDir = path.join(evidenceRoot, 'TASK-014d');
+const staticOnly = process.argv.includes('--static-only');
 const versionPattern = /(main\.js\?v=[0-9a-f]|style\.css\?v=[0-9a-f])/i;
 const versionHits = [];
 
@@ -32,6 +33,11 @@ if (versionHits.length) {
   process.exit(1);
 }
 console.log('PASS: no hard-coded asset version strings in evidence scripts (00000000 negative fixture excluded)');
+
+if (staticOnly) {
+  console.log('PASS: --static-only requested; browser evidence scripts were not started');
+  process.exit(0);
+}
 
 const soloRuns = [
   ['TASK-016c-fingerprint', 'evidence/TASK-016c/fingerprint.cjs'],
