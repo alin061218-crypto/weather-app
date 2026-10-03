@@ -1,0 +1,238 @@
+$ node evidence/TASK-016c/fingerprint.cjs
+{"mode":"backend","pointCount":24,"fingerprintCount":7,"fallbackCount":0,"axisStart":"00:00","axisEnd":"23:00","requests":{"backend":1,"fallback":0},"bodyScrollWidth":753,"clientWidth":753,"viewportWidth":768}
+PASS: backend path has 24 chart points, seven fingerprints, no fallbacks, 00:00–23:00 axis, and no body overflow
+
+$ node evidence/TASK-016c/fingerprint.cjs --via-fallback
+{"mode":"fallback","pointCount":24,"fingerprintCount":7,"fallbackCount":0,"axisStart":"00:00","axisEnd":"23:00","requests":{"backend":1,"fallback":1},"bodyScrollWidth":753,"clientWidth":753,"viewportWidth":768}
+PASS: fallback path has 24 chart points, seven fingerprints, no fallbacks, 00:00–23:00 axis, and no body overflow
+
+$ node evidence/TASK-015e/browser.cjs
+
+$ node evidence/TASK-015e/keyboard.cjs
+[
+  {
+    "width": 375,
+    "innerWidth": 375,
+    "clientWidth": 375,
+    "bodyScrollWidth": 375,
+    "disabled": {
+      "opacity": "0.45",
+      "cursor": "not-allowed",
+      "transform": "none"
+    },
+    "modalFocus": [
+      "BODY",
+      "BODY",
+      "BUTTON",
+      "BODY",
+      "BUTTON"
+    ],
+    "requests": {
+      "weather": 3,
+      "direct": 0,
+      "favoriteWrites": 1
+    },
+    "steps": [
+      "Tab × 1 → #search-input（焦点环 2px solid）",
+      "Tab × 2 → button.search-item（焦点环 2px solid）",
+      "Space 选择南京 → #city=南京，天气和 7 天预报已渲染",
+      "Tab × 7 → #temperature（焦点环 2px solid）",
+      "Space → 72°F；Enter → 22°，localStorage 单位与显示同步",
+      "Tab × 28 → #fav-btn（焦点环 2px solid）",
+      "Enter 收藏南京 → 实际 POST /api/favorites；提交中 opacity=.45 / not-allowed，完成 aria-pressed=true",
+      "Tab × 19 → .tab-btn[data-tab=\"chat\"]（焦点环 2px solid）",
+      "Enter → 出行建议 tab，主流程完成（操作全程无鼠标、无 focus()/click()）",
+      "Tab × 10 → .tab-btn[data-tab=\"home\"]（焦点环 2px solid）",
+      "Tab × 9 → .recent-chip（焦点环 2px solid）",
+      "Enter 最近城市 → 上海天气",
+      "Tab × 4 → .day-row（焦点环 2px solid）",
+      "Space 展开当天详情 → Enter 收起，aria-expanded 与可见性同步",
+      "Tab × 7 → .advice-chip（焦点环 2px solid）",
+      "Tab × 1 → #chat-send（焦点环 2px solid）",
+      "Space 建议标签 → 带入问题并聚焦聊天输入 → Tab + Enter 发送，收到回复",
+      "Tab × 3 → .tab-btn[data-tab=\"guide\"]（焦点环 2px solid）",
+      "Tab × 4 → .guide-tab[data-guide=\"travel\"]（焦点环 2px solid）",
+      "Tab × 1 → .tab-btn[data-tab=\"home\"]（焦点环 2px solid）",
+      "Tab × 8 → #map-btn（焦点环 2px solid）",
+      "Tab × 0 → #map-close（焦点环 2px solid）",
+      "Enter 打开原生 modal → Tab 未进入背景控件 → 在关闭按钮按 Esc 关闭 → 焦点回 #map-btn"
+    ]
+  },
+  {
+    "width": 768,
+    "innerWidth": 768,
+    "clientWidth": 768,
+    "bodyScrollWidth": 768,
+    "disabled": {
+      "opacity": "0.45",
+      "cursor": "not-allowed",
+      "transform": "none"
+    },
+    "modalFocus": [
+      "BODY",
+      "BODY",
+      "BUTTON",
+      "BODY",
+      "BUTTON"
+    ],
+    "requests": {
+      "weather": 3,
+      "direct": 0,
+      "favoriteWrites": 1
+    },
+    "steps": [
+      "Tab × 1 → #search-input（焦点环 2px solid）",
+      "Tab × 2 → button.search-item（焦点环 2px solid）",
+      "Space 选择南京 → #city=南京，天气和 7 天预报已渲染",
+      "Tab × 7 → #temperature（焦点环 2px solid）",
+      "Space → 72°F；Enter → 22°，localStorage 单位与显示同步",
+      "Tab × 28 → #fav-btn（焦点环 2px solid）",
+      "Enter 收藏南京 → 实际 POST /api/favorites；提交中 opacity=.45 / not-allowed，完成 aria-pressed=true",
+      "Tab × 19 → .tab-btn[data-tab=\"chat\"]（焦点环 2px solid）",
+      "Enter → 出行建议 tab，主流程完成（操作全程无鼠标、无 focus()/click()）",
+      "Tab × 10 → .tab-btn[data-tab=\"home\"]（焦点环 2px solid）",
+      "Tab × 9 → .recent-chip（焦点环 2px solid）",
+      "Enter 最近城市 → 上海天气",
+      "Tab × 4 → .day-row（焦点环 2px solid）",
+      "Space 展开当天详情 → Enter 收起，aria-expanded 与可见性同步",
+      "Tab × 7 → .advice-chip（焦点环 2px solid）",
+      "Tab × 1 → #chat-send（焦点环 2px solid）",
+      "Space 建议标签 → 带入问题并聚焦聊天输入 → Tab + Enter 发送，收到回复",
+      "Tab × 3 → .tab-btn[data-tab=\"guide\"]（焦点环 2px solid）",
+      "Tab × 4 → .guide-tab[data-guide=\"travel\"]（焦点环 2px solid）",
+      "Tab × 1 → .tab-btn[data-tab=\"home\"]（焦点环 2px solid）",
+      "Tab × 8 → #map-btn（焦点环 2px solid）",
+      "Tab × 0 → #map-close（焦点环 2px solid）",
+      "Enter 打开原生 modal → Tab 未进入背景控件 → 在关闭按钮按 Esc 关闭 → 焦点回 #map-btn"
+    ]
+  },
+  {
+    "width": 1280,
+    "innerWidth": 1280,
+    "clientWidth": 1280,
+    "bodyScrollWidth": 1280,
+    "disabled": {
+      "opacity": "0.45",
+      "cursor": "not-allowed",
+      "transform": "none"
+    },
+    "modalFocus": [
+      "BODY",
+      "BODY",
+      "BODY",
+      "BUTTON",
+      "BODY"
+    ],
+    "requests": {
+      "weather": 3,
+      "direct": 0,
+      "favoriteWrites": 1
+    },
+    "steps": [
+      "Tab × 1 → #search-input（焦点环 2px solid）",
+      "Tab × 2 → button.search-item（焦点环 2px solid）",
+      "Space 选择南京 → #city=南京，天气和 7 天预报已渲染",
+      "Tab × 7 → #temperature（焦点环 2px solid）",
+      "Space → 72°F；Enter → 22°，localStorage 单位与显示同步",
+      "Tab × 28 → #fav-btn（焦点环 2px solid）",
+      "Enter 收藏南京 → 实际 POST /api/favorites；提交中 opacity=.45 / not-allowed，完成 aria-pressed=true",
+      "Tab × 19 → .tab-btn[data-tab=\"chat\"]（焦点环 2px solid）",
+      "Enter → 出行建议 tab，主流程完成（操作全程无鼠标、无 focus()/click()）",
+      "Tab × 10 → .tab-btn[data-tab=\"home\"]（焦点环 2px solid）",
+      "Tab × 9 → .recent-chip（焦点环 2px solid）",
+      "Enter 最近城市 → 上海天气",
+      "Tab × 4 → .day-row（焦点环 2px solid）",
+      "Space 展开当天详情 → Enter 收起，aria-expanded 与可见性同步",
+      "Tab × 7 → .advice-chip（焦点环 2px solid）",
+      "Tab × 1 → #chat-send（焦点环 2px solid）",
+      "Space 建议标签 → 带入问题并聚焦聊天输入 → Tab + Enter 发送，收到回复",
+      "Tab × 3 → .tab-btn[data-tab=\"guide\"]（焦点环 2px solid）",
+      "Tab × 4 → .guide-tab[data-guide=\"travel\"]（焦点环 2px solid）",
+      "Tab × 1 → .tab-btn[data-tab=\"home\"]（焦点环 2px solid）",
+      "Tab × 8 → #map-btn（焦点环 2px solid）",
+      "Tab × 1 → #map-close（焦点环 2px solid）",
+      "Enter 打开原生 modal → Tab 未进入背景控件 → 在关闭按钮按 Esc 关闭 → 焦点回 #map-btn"
+    ]
+  }
+]
+PASS: keyboard main flow and additional controls at 375 / 768 / 1280px
+
+$ node evidence/TASK-018b/race.cjs
+{
+  "elapsedMs": 597,
+  "visible": true,
+  "requests": {
+    "backendWeather": 1,
+    "backendLocation": 1,
+    "openMeteo": 1,
+    "backendCanceled": 1,
+    "openMeteoCanceled": 0,
+    "ipapi": 1
+  },
+  "bodyScrollWidth": 735,
+  "viewportWidth": 750,
+  "city": "北京"
+}
+PASS: one Open-Meteo request and the slower backend loser was canceled
+
+$ node evidence/TASK-018b/race.cjs --location
+{
+  "elapsedMs": 611,
+  "visible": true,
+  "requests": {
+    "backendWeather": 1,
+    "backendLocation": 1,
+    "openMeteo": 1,
+    "backendCanceled": 1,
+    "openMeteoCanceled": 0,
+    "ipapi": 0
+  },
+  "bodyScrollWidth": 735,
+  "viewportWidth": 750,
+  "city": "北京"
+}
+PASS: one Open-Meteo request, canceled backend loser, and zero direct ipapi.co requests after backend location success
+
+$ node evidence/TASK-018b/latency.cjs
+{
+  "slowBackend": {
+    "mode": "slow-backend",
+    "backendDelay": 6000,
+    "directDelay": 300,
+    "elapsedMs": 641,
+    "visible": true,
+    "requests": {
+      "backendWeather": 1,
+      "openMeteo": 1,
+      "backendCanceled": 1
+    },
+    "bodyScrollWidth": 735,
+    "viewportWidth": 750,
+    "city": "北京"
+  },
+  "common": {
+    "mode": "common",
+    "backendDelay": 80,
+    "directDelay": 300,
+    "elapsedMs": 256,
+    "visible": true,
+    "requests": {
+      "backendWeather": 1,
+      "openMeteo": 0,
+      "backendCanceled": 0
+    },
+    "bodyScrollWidth": 735,
+    "viewportWidth": 750,
+    "city": "北京"
+  }
+}
+PASS: cold-start latency measured for slow-backend and common backend/cache scenes; common direct requests=0
+
+$ node evidence/TASK-016c/screenshots.cjs
+compact-375 metrics: {"innerWidth":375,"metricCount":7,"fingerprintBars":[24,24,24,24,24,24,24],"pointCount":24,"fingerprintCount":7,"fallbackCount":0,"axisStart":"00:00","axisEnd":"23:00","requests":{"backend":1,"fallback":0},"focusVisible":true,"focusOutline":"solid","navLeft":8.5,"appLeft":0,"chartTop":609,"dailyTop":876,"chartWidth":343,"contentWidth":343,"statOverflow":[],"bodyScrollWidth":375,"clientWidth":360,"viewportWidth":375}
+medium-768 metrics: {"innerWidth":768,"metricCount":7,"fingerprintBars":[24,24,24,24,24,24,24],"pointCount":24,"fingerprintCount":7,"fallbackCount":0,"axisStart":"00:00","axisEnd":"23:00","requests":{"backend":1,"fallback":0},"focusVisible":true,"focusOutline":"solid","navLeft":162.5,"appLeft":0,"chartTop":443,"dailyTop":710,"chartWidth":704.984375,"contentWidth":705,"statOverflow":[],"bodyScrollWidth":753,"clientWidth":753,"viewportWidth":768}
+expanded-1280 metrics: {"innerWidth":1280,"metricCount":7,"fingerprintBars":[24,24,24,24,24,24,24],"pointCount":24,"fingerprintCount":7,"fallbackCount":0,"axisStart":"00:00","axisEnd":"23:00","requests":{"backend":1,"fallback":0},"focusVisible":true,"focusOutline":"solid","navLeft":28.5,"appLeft":28.5,"chartTop":483,"dailyTop":842,"chartWidth":1120,"contentWidth":1120,"statOverflow":[],"bodyScrollWidth":1265,"clientWidth":1265,"viewportWidth":1280}
+{"name":"compact-375","width":375,"innerWidth":375,"metricCount":7,"fingerprintBars":[24,24,24,24,24,24,24],"pointCount":24,"fingerprintCount":7,"fallbackCount":0,"axisStart":"00:00","axisEnd":"23:00","requests":{"backend":1,"fallback":0},"focusVisible":true,"focusOutline":"solid","navLeft":8.5,"appLeft":0,"chartTop":609,"dailyTop":876,"chartWidth":343,"contentWidth":343,"statOverflow":[],"bodyScrollWidth":375,"clientWidth":360,"viewportWidth":375}
+{"name":"medium-768","width":768,"innerWidth":768,"metricCount":7,"fingerprintBars":[24,24,24,24,24,24,24],"pointCount":24,"fingerprintCount":7,"fallbackCount":0,"axisStart":"00:00","axisEnd":"23:00","requests":{"backend":1,"fallback":0},"focusVisible":true,"focusOutline":"solid","navLeft":162.5,"appLeft":0,"chartTop":443,"dailyTop":710,"chartWidth":704.984375,"contentWidth":705,"statOverflow":[],"bodyScrollWidth":753,"clientWidth":753,"viewportWidth":768}
+{"name":"expanded-1280","width":1280,"innerWidth":1280,"metricCount":7,"fingerprintBars":[24,24,24,24,24,24,24],"pointCount":24,"fingerprintCount":7,"fallbackCount":0,"axisStart":"00:00","axisEnd":"23:00","requests":{"backend":1,"fallback":0},"focusVisible":true,"focusOutline":"solid","navLeft":28.5,"appLeft":28.5,"chartTop":483,"dailyTop":842,"chartWidth":1120,"contentWidth":1120,"statOverflow":[],"bodyScrollWidth":1265,"clientWidth":1265,"viewportWidth":1280}
+PASS: backend path; innerWidth, 24-point chart, seven fingerprints, 00:00–23:00 axis, full-width layout, and body overflow verified at 375 / 768 / 1280px

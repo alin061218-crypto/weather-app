@@ -1,0 +1,65 @@
+[
+  {
+    "width": 375,
+    "theme": "dark",
+    "nodes": 566,
+    "screenshotSHA1": "51bdfcb32bf95916f19a55c8fac750ae1565af5e",
+    "chartSHA1": "016935d513da0ca3907d88a3103506b2ccc72f1d",
+    "identical": true
+  },
+  {
+    "width": 375,
+    "theme": "light",
+    "nodes": 566,
+    "screenshotSHA1": "b8bb889d06657702e54071c18783909ef5ad9275",
+    "chartSHA1": "016935d513da0ca3907d88a3103506b2ccc72f1d",
+    "identical": true
+  },
+  {
+    "width": 768,
+    "theme": "dark",
+    "nodes": 566,
+    "screenshotSHA1": "429f76ac8a1be87de9469f2d9ba3298bedf1e55e",
+    "chartSHA1": "a8c98fa13fd2ca8ef509b555b90b29ef2b4c2eb6",
+    "identical": true
+  },
+  {
+    "width": 768,
+    "theme": "light",
+    "nodes": 566,
+    "screenshotSHA1": "5578609941874b9f4081ac6561fc78df32b0296f",
+    "chartSHA1": "a8c98fa13fd2ca8ef509b555b90b29ef2b4c2eb6",
+    "identical": true
+  },
+  {
+    "width": 1280,
+    "theme": "dark",
+    "nodes": 566,
+    "screenshotSHA1": "78cdfcfc7a95393c1ba2fa32c0c15337fd836471",
+    "chartSHA1": "341812113e13f39d07f4b3e34653071c0b90c5b5",
+    "identical": true,
+    "behavior": {
+      "replies": [
+        "北京天气很棒！温度 22°C，晴，非常适合出门活动。",
+        "北京当前晴，降雨概率仅 10%，不太需要带伞。",
+        "北京温度 22°C，晴。\n\n建议：体感舒适，T恤衬衫配长裤刚好\n推荐搭配：T恤、衬衫、长裤\n",
+        "北京 未来趋势\n\n今天：晴 14°~24° 8%\n明天：少云 15°~25° 11%\n周一：多云 14°~26° 14%\n周二：阴 15°~24° 17%\n周三：小雨 14°~25° 20%\n",
+        "北京温度 22°C，晴。\n\n天气完美，尽情享受户外运动\n推荐：跑步、骑行、徒步、篮球、足球、羽毛球",
+        "当前：北京\n温度：22°C\n天气：晴\n湿度：60%\n风速：8 km/h\n紫外线：2\n降雨概率：10%\n\n可以问我：今天适合出门吗、需要带伞吗、明天怎么穿、未来几天趋势"
+      ],
+      "guide": "城市指南\n\n义乌 的指南正在补充中\n\n本地指南尚未收录，先看看所属地级市的推荐。",
+      "favoriteWrites": 1,
+      "selectedFavoriteAndHistory": "义乌",
+      "registerLoginLogout": true,
+      "clearedFavoritesAndHistory": true
+    }
+  },
+  {
+    "width": 1280,
+    "theme": "light",
+    "nodes": 566,
+    "screenshotSHA1": "24e911b3596cb13a30605d829499b1b472b854fe",
+    "chartSHA1": "341812113e13f39d07f4b3e34653071c0b90c5b5",
+    "identical": true
+  }
+]

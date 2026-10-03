@@ -31,9 +31,68 @@ const baselineIndex = execFileSync('git', ['show', 'e6e8dc0:frontend/index.html'
 const output = path.join(__dirname, process.argv[2] || 'parity');
 fs.mkdirSync(output, { recursive: true });
 const hash = bytes => crypto.createHash('sha1').update(bytes).digest('hex');
+async function behavior(page, requests) {
+  const replies = [];
+  await page.locator('.tab-btn[data-tab="chat"]').click();
+  for (const question of ['今天适合出门吗', '需要带伞吗', '怎么穿衣服', '未来几天趋势', '运动跑步建议', '湿度多少']) {
+    const count = await page.locator('.chat-bubble.bot').count();
+    await page.locator('#chat-input').fill(question);
+    await page.locator('#chat-send').click();
+    await page.waitForFunction(count => document.querySelectorAll('.chat-bubble.bot').length === count + 1, count);
+    replies.push(await page.locator('.chat-bubble.bot').last().innerText());
+  }
+  await page.locator('.tab-btn[data-tab="home"]').click();
+  await page.locator('#search-input').fill('义乌');
+  await page.locator('button.search-item').first().click();
+  await page.waitForFunction(() => document.querySelector('#city').textContent === '义乌');
+  await page.locator('.tab-btn[data-tab="guide"]').click();
+  const guide = await page.locator('#guide-empty').innerText();
+  assert.ok(guide.includes('义乌') && guide.includes('所属地级市'));
+  await page.locator('.tab-btn[data-tab="home"]').click();
+  await page.locator('#fav-btn').click();
+  await page.waitForFunction(() => document.querySelector('#tab-me').classList.contains('active'));
+  assert.equal(requests.favoriteWrites, 0, 'unauthenticated favorite must open account without writing');
+  const fixtureUser = { id: 1, username: '模块验收' };
+  for (const action of ['register', 'login']) await page.route(`**/api/${action}`, route => route.fulfill({
+    contentType: 'application/json', body: JSON.stringify({ token: 'fixture-' + action, user: fixtureUser })
+  }));
+  await page.locator('#me-toggle').click();
+  await page.locator('#me-user').fill('模块验收');
+  await page.locator('#me-pass').fill('fixture-password');
+  await page.locator('#me-submit').click();
+  await page.waitForFunction(() => !document.querySelector('#me-logged-block').classList.contains('hidden'));
+  assert.equal(await page.evaluate(() => localStorage.getItem('wx_token')), 'fixture-register');
+  await page.locator('.tab-btn[data-tab="home"]').click();
+  await page.locator('#fav-btn').click();
+  await page.waitForFunction(() => document.querySelector('#fav-btn').getAttribute('aria-pressed') === 'true');
+  assert.equal(requests.favoriteWrites, 1, 'favorite handler must write once');
+  await page.locator('.tab-btn[data-tab="me"]').click();
+  await page.locator('#me-fav-list .fav-item-click').first().click();
+  await page.waitForFunction(() => document.querySelector('#tab-home').classList.contains('active'));
+  assert.equal(await page.locator('#city').textContent(), '义乌');
+  await page.locator('.tab-btn[data-tab="me"]').click();
+  await page.locator('#me-hist-list .fav-item-click').first().click();
+  await page.waitForFunction(() => document.querySelector('#tab-home').classList.contains('active'));
+  assert.equal(await page.locator('#city').textContent(), '义乌');
+  await page.locator('.tab-btn[data-tab="me"]').click();
+  await page.locator('#me-fav-list .fav-item-del').first().click();
+  await page.waitForFunction(() => document.querySelectorAll('#me-fav-list .fav-item').length === 0);
+  page.once('dialog', dialog => dialog.accept());
+  await page.locator('#me-clear-hist').click();
+  await page.waitForFunction(() => document.querySelector('#me-hist-empty').textContent === '暂无记录');
+  await page.locator('#me-logout').click();
+  assert.equal(await page.evaluate(() => localStorage.getItem('wx_token')), null);
+  await page.locator('#me-toggle').click();
+  await page.locator('#me-user').fill('模块验收');
+  await page.locator('#me-pass').fill('fixture-password');
+  await page.locator('#me-submit').click();
+  await page.waitForFunction(() => !document.querySelector('#me-logged-block').classList.contains('hidden'));
+  assert.equal(await page.evaluate(() => localStorage.getItem('wx_token')), 'fixture-login');
+  return { replies, guide, favoriteWrites: requests.favoriteWrites, selectedFavoriteAndHistory: '义乌', registerLoginLogout: true, clearedFavoritesAndHistory: true };
+}
 async function capture(runtime, width, theme, baseline) {
   runtime.baseline = baseline;
-  const { page, context, errors } = await pageFor(runtime, width, { loggedIn: false });
+  const { page, context, errors, requests } = await pageFor(runtime, width, { loggedIn: false });
   if (theme === 'light') await page.locator('#theme-btn').click();
   await page.evaluate(() => document.fonts.ready);
   await tabTo(page, '.tab-btn[data-tab="home"]');
@@ -70,6 +129,10 @@ async function capture(runtime, width, theme, baseline) {
   });
   const name = `${baseline ? 'baseline' : 'current'}-${theme}-${width}`;
   const image = await page.screenshot({ path: path.join(output, name + '.png'), fullPage: true, animations: 'disabled' });
+  if (width === 1280 && theme === 'dark') {
+    snapshot.behavior = await behavior(page, requests);
+    assert.deepEqual(errors, [], 'runtime errors in account/search/chat callbacks');
+  }
   await context.close();
   return { snapshot, image };
 }
@@ -90,7 +153,7 @@ async function capture(runtime, width, theme, baseline) {
         throw new Error(`${width}/${theme}: DOM/style/chart snapshots differ; see before.json and after.json`);
       }
       assert.equal(hash(after.image), hash(before.image), `${width}/${theme}: screenshot pixels changed`);
-      results.push({ width, theme, nodes: after.snapshot.styles.length, screenshotSHA1: hash(after.image), chartSHA1: hash(after.snapshot.chart), identical: true });
+      results.push({ width, theme, nodes: after.snapshot.styles.length, screenshotSHA1: hash(after.image), chartSHA1: hash(after.snapshot.chart), identical: true, behavior: after.snapshot.behavior });
       console.log(`PASS: ${width}px ${theme}; ${after.snapshot.styles.length} elements' computed styles, DOM, chart pixels, and complete screenshot identical to baseline`);
     }
     fs.writeFileSync(path.join(output, 'results.json'), JSON.stringify(results, null, 2) + '\n');

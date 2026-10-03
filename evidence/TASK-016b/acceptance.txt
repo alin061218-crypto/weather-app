@@ -1,0 +1,118 @@
+1) JS files = 12 (9 extracted + main + icons + atmosphere)
+
+file             PowerShell-Lines physical-lines exports
+
+account.js          203            224      15
+
+api.js              121            129       6
+
+atmosphere.js       403            444       1
+
+chat.js             101            115       2
+
+cities.js           115            121       8
+
+config.js            61             68       9
+
+icons.js            139            154       3
+
+main.js             130            144       3
+
+render.js           212            236       5
+
+search.js           196            209       4
+
+ui.js                62             71      10
+
+visuals.js          192            212       6
+
+2) Static imports / DAG / actual ESM linking
+
+$ C:\Program Files\nodejs\node.exe evidence/TASK-016b/imports.cjs
+account.js: app/config, app/ui, app/api
+api.js: app/config
+atmosphere.js: three
+chat.js: app/config, app/ui
+cities.js: (leaf)
+config.js: (leaf)
+icons.js: (leaf)
+main.js: app/atmosphere, app/config, app/ui, app/api, app/cities, app/account, app/render, app/search, app/chat
+render.js: app/config, app/ui, app/icons, app/visuals, app/cities, app/account
+search.js: app/config, app/ui, app/api, app/cities, app/render, app/account
+ui.js: app/config
+visuals.js: app/config
+PASS: all static ESM imports link successfully with their real named exports
+PASS: 12 modules form a DAG; no dynamic imports; all imports use bare identifiers and allowed dependency directions
+
+3) Importmap / hashes / child invalidation
+
+$ C:\Program Files\nodejs\node.exe evidence/TASK-016b/importmap.cjs
+app/account -> /js/account.js?v=9b6bb1b4
+app/api -> /js/api.js?v=a129314e
+app/atmosphere -> /js/atmosphere.js?v=7e803f8a
+app/chat -> /js/chat.js?v=be8f4741
+app/cities -> /js/cities.js?v=f6cbf0c4
+app/config -> /js/config.js?v=f354a160
+app/icons -> /js/icons.js?v=14e0a948
+app/main -> /js/main.js?v=0e2d2dc8
+app/render -> /js/render.js?v=91b5fdc1
+app/search -> /js/search.js?v=9caa3a40
+app/ui -> /js/ui.js?v=3708a102
+app/visuals -> /js/visuals.js?v=c2d3457a
+PASS: 12 app importmap entries = 12 JS modules; existing three vendor entry retained; all SHA-1[:8] hashes, automatic child invalidation, and guard rejection checks passed
+
+4) npm run check:versions
+
+$ cmd.exe /d /c npm.cmd run check:versions
+> weather-backend@1.0.0 check:versions
+> node server.js --check-asset-versions
+
+PASS: 12 index asset versions match SHA-1 content hashes
+
+5) Complete historical regressions (in-memory adapter; old files preserved)
+
+PASS: backend path has 24 chart points, seven fingerprints, no fallbacks, 00:00–23:00 axis, and no body overflow
+
+PASS: fallback path has 24 chart points, seven fingerprints, no fallbacks, 00:00–23:00 axis, and no body overflow
+
+PASS: keyboard main flow and additional controls at 375 / 768 / 1280px
+
+PASS: one Open-Meteo request and the slower backend loser was canceled
+
+PASS: one Open-Meteo request, canceled backend loser, and zero direct ipapi.co requests after backend location success
+
+PASS: cold-start latency measured for slow-backend and common backend/cache scenes; common direct requests=0
+
+PASS: backend path; innerWidth, 24-point chart, seven fingerprints, 00:00–23:00 axis, full-width layout, and body overflow verified at 375 / 768 / 1280px
+
+Common cold start = 256ms <= 700ms; slow backend = 641ms; common direct requests = 0
+
+PASS: 375px dark, 566 elements, exact DOM/computed styles/chart/screenshot parity
+
+PASS: 375px light, 566 elements, exact DOM/computed styles/chart/screenshot parity
+
+PASS: 768px dark, 566 elements, exact DOM/computed styles/chart/screenshot parity
+
+PASS: 768px light, 566 elements, exact DOM/computed styles/chart/screenshot parity
+
+PASS: 1280px dark, 566 elements, exact DOM/computed styles/chart/screenshot parity
+
+PASS: 1280px light, 566 elements, exact DOM/computed styles/chart/screenshot parity
+
+PASS: baseline/current chat replies, county guide, account login/register/logout, favorite/history selection and clearing
+
+PASS: real HTTP immutable headers and warm cached main loading the edited child
+
+6) Syntax / whitespace / scope
+
+PASS: node --check for all 12 JS files
+
+$ git diff --check
+warning: in the working copy of 'evidence/TASK-016b/parity.cjs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'evidence/TASK-016b/rendered-index.html', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/js/config.js', LF will be replaced by CRLF the next time Git touches it
+
+$ git diff e6e8dc0 --check
+warning: in the working copy of 'evidence/TASK-016b/parity.cjs', LF will be replaced by CRLF the next time Git touches it
+
+PASS: HTML changes only importmap; server changes only hash injection/guard; original visual assets and sw.js preserved; all writes in allowed scope
