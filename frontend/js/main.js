@@ -1,85 +1,14 @@
-// === 天气 App — 核心逻辑（v8 重设计） ===
-import { Atmosphere } from './atmosphere.js';
-import { icon, weatherIcon } from './icons.js';
+import { Atmosphere } from 'app/atmosphere';
+import { icon, weatherIcon } from 'app/icons';
+import { API_BASE, CACHE_MAX_AGE, DEFAULT_LOCATION, F, DESC, WX, state } from 'app/config';
+import { $, Q, QA, esc, toggle, switchTab, initTabs, initTheme, applyTheme, initUnit } from 'app/ui';
+import { fetchJSON, ipLocation, geoSearch, getWeather, getWeatherParams, initApi } from 'app/api';
 
-const API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
-  ? 'http://localhost:3001' : '';
 
-const $ = id => document.getElementById(id);
-const Q = (sel, el) => (el || document).querySelector(sel);
-const QA = (sel, el) => [...(el || document).querySelectorAll(sel)];
-const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({
-  '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-}[c]));
 
-const API = {
-  ip: 'https://ipapi.co/json/',
-  geo: 'https://geocoding-api.open-meteo.com/v1/search',
-  wx: 'https://api.open-meteo.com/v1/forecast'
-};
-
-// Canonical contract lives in server.js WEATHER_PARAMS and /api/wx-params.
-// Keep this emergency copy synchronized for a backend that is completely unreachable.
-const WX_PARAMS = 'current_weather=true&hourly=temperature_2m,weathercode,relativehumidity_2m,cloudcover,apparent_temperature,uv_index,precipitation_probability,pressure_msl,visibility&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max,sunrise,sunset,uv_index_max&timezone=auto&forecast_days=7';
-let weatherParamsPromise = null;
-
-let authToken = localStorage.getItem('wx_token') || '';
 let currentUser = null;
-let atmosphere = null;
 let favoritesCache = null;
 let favBusy = false;
-
-let state = {
-  city: null,
-  weather: null,
-  unit: localStorage.getItem('wx_unit') || 'celsius',
-  chart: null,
-  currentTab: 'home',
-  theme: localStorage.getItem('wx_theme') || 'dark',
-};
-let weatherGeneration = 0;
-const CACHE_MAX_AGE = 30 * 60 * 1000;
-const DEFAULT_LOCATION = { city: '北京', region: '北京', country: '中国', lat: 39.904, lon: 116.407 };
-
-// ═══════════════════════════════════════════════════════════
-//  工具函数
-// ═══════════════════════════════════════════════════════════
-const F = {
-  c2f: c => Math.round(c * 9 / 5 + 32),
-  ftemp: (v, u) => u === 'fahrenheit' ? F.c2f(v) + '°F' : Math.round(v) + '°',
-  fdelta: (v, u) => u === 'fahrenheit' ? Math.round(v * 9 / 5) + '°F' : Math.round(v) + '°',
-  time: s => (s || '').split('T')[1]?.slice(0, 5) || '',
-  day: s => {
-    const d = new Date(s + 'T12:00:00'), t = new Date();
-    t.setHours(12, 0, 0, 0);
-    const diff = Math.round((d - t) / 864e5);
-    return diff === 0 ? '今天' : diff === 1 ? '明天' : ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][d.getDay()];
-  },
-  debounce: (fn, ms = 300) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; },
-};
-
-// ═══════════════════════════════════════════════════════════
-//  天气代码 → 描述
-// ═══════════════════════════════════════════════════════════
-const DESC = c => {
-  if (c === 0) return '晴';
-  return ({
-    1: '少云', 2: '多云', 3: '阴', 45: '雾', 48: '雾凇',
-    51: '小毛毛雨', 53: '毛毛雨', 55: '浓毛毛雨', 56: '冻毛毛雨', 57: '冻毛毛雨',
-    61: '小雨', 63: '中雨', 65: '大雨', 66: '冻雨', 67: '强冻雨',
-    71: '小雪', 73: '中雪', 75: '大雪', 77: '雪粒',
-    80: '小阵雨', 81: '阵雨', 82: '强阵雨', 85: '小阵雪', 86: '阵雪',
-    95: '雷暴', 96: '雷暴伴冰雹', 99: '强雷暴伴冰雹'
-  })[c] || '未知';
-};
-
-const WX = {
-  isRain: c => (c >= 51 && c <= 67) || (c >= 80 && c <= 82),
-  isSnow: c => (c >= 71 && c <= 77) || (c >= 85 && c <= 86),
-  isStorm: c => c >= 95,
-  isFog: c => c >= 45 && c <= 48,
-  isClear: c => c <= 1,
-};
 
 // QX/T 180—2013 4.1.1: fixed absolute scale, with a long cold-color arc.
 const STD_SCALE = [
@@ -117,126 +46,6 @@ function temperatureFingerprint(hours, unit, scale) {
   const bars = values.map(value => `<i class="temperature-fingerprint-bar" style="height:${Math.max(3, ((value - scaleLo) / span) * 48).toFixed(1)}px;background:${tempColor(value)}" aria-hidden="true"></i>`).join('');
   return `<span class="temperature-fingerprint" aria-label="24 小时温度指纹"><span class="temperature-fingerprint-bars">${bars}</span><span class="temperature-fingerprint-axis" aria-hidden="true"><span>0</span><span>6</span><span>12</span><span>18</span><span>23</span></span></span>` +
     `<span class="temperature-fingerprint-meta"><b>${F.ftemp(lo, unit)}</b> ~ <b>${F.ftemp(hi, unit)}</b><small>中位 ${F.ftemp(median, unit)} · 温差 ${F.fdelta(hi - lo, unit)}</small></span>`;
-}
-
-// ═══════════════════════════════════════════════════════════
-//  API 请求
-// ═══════════════════════════════════════════════════════════
-async function fetchJSON(url, timeout = 5000, opts = {}) {
-  const ctrl = new AbortController();
-  const cancel = () => ctrl.abort(opts.signal.reason);
-  let signal = ctrl.signal;
-  if (opts.signal) {
-    if (typeof AbortSignal.any === 'function') signal = AbortSignal.any([ctrl.signal, opts.signal]);
-    else if (opts.signal.aborted) cancel();
-    else opts.signal.addEventListener('abort', cancel, { once: true });
-  }
-  const t = setTimeout(() => ctrl.abort(), timeout);
-  const headers = { ...(opts.headers || {}) };
-  if (authToken) headers.Authorization = `Bearer ${authToken}`;
-  if (opts.method) headers['Content-Type'] = 'application/json';
-  try {
-    let r;
-    try {
-      r = await fetch(url, { signal, headers, method: opts.method, body: opts.body });
-    } catch (e) {
-      if (opts.signal?.aborted) throw e;
-      return { error: e.name === 'AbortError' ? '网络失败：请求超时' : `网络失败：${e.message || '无法连接'}`, kind: 'network' };
-    }
-    let data;
-    try {
-      data = await r.json();
-    } catch (e) {
-      if (opts.signal?.aborted) throw e;
-      if (!r.ok) return { error: `HTTP ${r.status}：${r.statusText || '请求失败'}`, kind: 'http', status: r.status };
-      return { error: `解析失败：${e.message || '响应不是有效 JSON'}`, kind: 'parse' };
-    }
-    if (!r.ok) return { error: `HTTP ${r.status}：${data?.error || data?.message || r.statusText || '请求失败'}`, kind: 'http', status: r.status };
-    return data;
-  } finally {
-    clearTimeout(t);
-    opts.signal?.removeEventListener('abort', cancel);
-  }
-}
-
-async function ipLocation() {
-  try {
-    const d = await fetchJSON(`${API_BASE}/api/location`, 8000);
-    if (!d || d.error || !d.city || !Number.isFinite(Number(d.lat)) || !Number.isFinite(Number(d.lon))) {
-      throw new Error(d?.error || '后端定位失败');
-    }
-    if (d.country === 'United States' || d.country === 'US') throw new Error('后端定位结果不适用');
-    return { city: d.city, region: d.region || '', country: d.country || '', lat: Number(d.lat), lon: Number(d.lon) };
-  } catch {}
-  try {
-    const d = await fetchJSON(API.ip, 8000);
-    if (!d || d.error || d.country_code !== 'CN' || !d.city || !Number.isFinite(Number(d.latitude)) || !Number.isFinite(Number(d.longitude))) {
-      throw new Error(d?.error || '直连定位失败');
-    }
-    return { city: d.city, region: d.region || '', country: '中国', lat: Number(d.latitude), lon: Number(d.longitude) };
-  } catch {
-    return null;
-  }
-}
-
-async function geoSearch(q) {
-  const d = await fetchJSON(`${API_BASE}/api/search?q=${encodeURIComponent(q)}`, 4000);
-  if (d && Array.isArray(d)) return d.map(r => ({ name: r.name || '', admin1: r.admin1 || '', country: r.country || '', lat: r.lat, lon: r.lon }));
-  const d2 = await fetchJSON(`${API.geo}?name=${encodeURIComponent(q)}&count=5&language=zh&format=json`, 4000);
-  if (d2?.error) throw new Error(d2.error);
-  return d2?.results?.map(r => ({ name: r.name || '', admin1: r.admin1 || '', country: r.country || '', lat: r.latitude, lon: r.longitude })) || [];
-}
-
-async function getWeather(lat, lon) {
-  const cached = readWeatherCache(lat, lon);
-  if (cached) return cached.wx;
-
-  const controller = new AbortController();
-  let startDirect;
-  const ready = new Promise(resolve => { startDirect = resolve; });
-  // Give backend cache hits a head start; failures release the direct fallback immediately.
-  const timer = setTimeout(startDirect, 150);
-  const backend = fetchJSON(`${API_BASE}/api/weather?lat=${lat}&lon=${lon}`, 10000, { signal: controller.signal }).then(d => {
-    if (!d || d.error) throw new Error(d?.error || '后端天气请求失败');
-    return d;
-  }).catch(error => {
-    startDirect();
-    throw error;
-  });
-  const direct = ready.then(() => {
-    if (controller.signal.aborted) throw controller.signal.reason;
-    return getWeatherParams();
-  }).then(params => fetchJSON(
-    `${API.wx}?latitude=${lat}&longitude=${lon}&${params}`, 10000, { signal: controller.signal }
-  )).then(d => {
-    if (!d || d.error) throw new Error(d?.error || '直连天气请求失败');
-    return d;
-  });
-  try {
-    return await Promise.any([backend, direct]);
-  } catch (error) {
-    const messages = error?.errors?.map(e => e?.message).filter(Boolean) || [];
-    throw new Error(messages[0] || '天气数据获取失败');
-  } finally {
-    controller.abort();
-    clearTimeout(timer);
-    startDirect();
-  }
-}
-
-async function getWeatherParams() {
-  if (!weatherParamsPromise) {
-    weatherParamsPromise = (async () => {
-      if (!API_BASE) return WX_PARAMS;
-      try {
-        const response = await fetch(`${API_BASE}/api/wx-params`, { cache: 'no-store', signal: AbortSignal.timeout(2000) });
-        const params = (await response.text()).trim();
-        if (response.ok && params && params.includes('forecast_days=7') && !params.includes('forecast_hours=')) return params;
-      } catch {}
-      return WX_PARAMS;
-    })();
-  }
-  return weatherParamsPromise;
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -453,13 +262,6 @@ function getActivity(t, code, w, daytime) {
 // ═══════════════════════════════════════════════════════════
 //  核心渲染
 // ═══════════════════════════════════════════════════════════
-function toggle(id) {
-  ['loading', 'weather-card', 'error-card'].forEach(x => {
-    const el = $(x);
-    if (el) el.classList.toggle('hidden', el.id !== id);
-  });
-}
-
 function resolveCity(loc) {
   if (loc.city && loc.city !== '当前位置' && !/^[A-Za-z]/.test(loc.city)) return loc.city;
   const cn = findCity(loc.lat, loc.lon);
@@ -577,7 +379,7 @@ function renderWeather(loc, wx) {
   renderCityGuide(name);
 
   // 3D 背景切换
-  if (atmosphere) atmosphere.setWeather(code, daytime);
+  if (state.atmosphere) atmosphere.setWeather(code, daytime);
 
   toggle('weather-card');
 
@@ -825,29 +627,6 @@ class TempChart {
 }
 
 // ═══════════════════════════════════════════════════════════
-//  Tab 切换
-// ═══════════════════════════════════════════════════════════
-function switchTab(tab) {
-  state.currentTab = tab;
-  QA('.tab-page').forEach(p => p.classList.remove('active'));
-  QA('.tab-btn').forEach(b => b.classList.remove('active'));
-  const page = $(`tab-${tab}`);
-  if (page) page.classList.add('active');
-  const btn = Q(`.tab-btn[data-tab="${tab}"]`);
-  if (btn) btn.classList.add('active');
-
-  if (tab === 'me') refreshMePage();
-  if (tab === 'guide' && state.city) renderCityGuide(state.city.city);
-  if (tab === 'home' && state.chart) {
-    requestAnimationFrame(() => state.chart._draw());
-  }
-}
-
-QA('.tab-btn').forEach(btn => {
-  btn.addEventListener('click', () => switchTab(btn.dataset.tab));
-});
-
-// ═══════════════════════════════════════════════════════════
 //  搜索 & 主流程
 // ═══════════════════════════════════════════════════════════
 function readLastWeather() {
@@ -896,7 +675,7 @@ async function discoverLocation(citiesPromise) {
 }
 
 async function init() {
-  const generation = ++weatherGeneration;
+  const generation = ++state.weatherGeneration;
   toggle('loading');
   const last = readLastWeather();
   const hasLastLocation = !!last?.loc;
@@ -915,7 +694,7 @@ async function init() {
   }
 
   const showError = error => {
-    if (generation !== weatherGeneration || displayed) return;
+    if (generation !== state.weatherGeneration || displayed) return;
     $('error-msg').textContent = error?.message || '天气数据获取失败';
     toggle('error-card');
   };
@@ -924,7 +703,7 @@ async function init() {
     try {
       const cachedTimestamp = readWeatherCache(loc.lat, loc.lon)?.ts;
       const wx = await getWeather(loc.lat, loc.lon);
-      if (generation !== weatherGeneration || !sameLocation(loc, activeLocation)) return;
+      if (generation !== state.weatherGeneration || !sameLocation(loc, activeLocation)) return;
       state.city = loc;
       state.weather = wx;
       localStorage.setItem('wx_last', JSON.stringify({ loc, wx, ts: cachedTimestamp ?? Date.now() }));
@@ -940,7 +719,7 @@ async function init() {
 
   if (!hasLastLocation) {
     locationPromise.then(loc => {
-      if (!loc || generation !== weatherGeneration || sameLocation(loc, activeLocation)) return;
+      if (!loc || generation !== state.weatherGeneration || sameLocation(loc, activeLocation)) return;
       activeLocation = loc;
       void loadWeather(loc);
     });
@@ -1056,7 +835,7 @@ function initSearch() {
 }
 
 async function selectCity(c) {
-  const generation = ++weatherGeneration;
+  const generation = ++state.weatherGeneration;
   const inp = $('search-input');
   inp.value = c.name;
   $('search-clear').classList.remove('hidden');
@@ -1076,20 +855,20 @@ async function selectCity(c) {
   try {
     const cachedTimestamp = readWeatherCache(c.lat, c.lon)?.ts;
     const wx = await getWeather(c.lat, c.lon);
-    if (generation !== weatherGeneration) return;
+    if (generation !== state.weatherGeneration) return;
     state.city = loc;
     state.weather = wx;
     localStorage.setItem('wx_last', JSON.stringify({ loc, wx, ts: cachedTimestamp ?? Date.now() }));
     renderWeather(loc, wx);
     toggle('weather-card');
-    if (authToken) {
+    if (state.authToken) {
       fetchJSON(`${API_BASE}/api/history`, 3000, {
         method: 'POST',
         body: JSON.stringify({ city: c.name, lat: c.lat, lon: c.lon, weather: DESC(wx.current_weather?.weathercode || 0) })
       });
     }
   } catch (e) {
-    if (generation !== weatherGeneration) return;
+    if (generation !== state.weatherGeneration) return;
     $('error-msg').textContent = e.message;
     toggle('error-card');
   }
@@ -1099,8 +878,8 @@ async function selectCity(c) {
 //  用户认证
 // ═══════════════════════════════════════════════════════════
 function checkAuth() {
-  authToken = localStorage.getItem('wx_token') || '';
-  if (authToken) {
+  state.authToken = localStorage.getItem('wx_token') || '';
+  if (state.authToken) {
     fetchJSON(`${API_BASE}/api/me`, 3000).then(d => {
       if (d && d.user) { currentUser = d.user; updateMeUI(); loadMeFavorites(); }
       else if (d?.status === 401) logout();
@@ -1122,7 +901,7 @@ function updateMeUI() {
 
 function logout() {
   localStorage.removeItem('wx_token');
-  authToken = '';
+  state.authToken = '';
   currentUser = null;
   favoritesCache = null;
   updateMeUI();
@@ -1151,7 +930,7 @@ $('me-submit').addEventListener('click', async () => {
   const d = await fetchJSON(url, 5000, { method: 'POST', body: JSON.stringify({ username: u, password: p }) });
   if (d && d.token) {
     localStorage.setItem('wx_token', d.token);
-    authToken = d.token;
+    state.authToken = d.token;
     currentUser = d.user;
     updateMeUI();
     $('me-user').value = '';
@@ -1437,54 +1216,22 @@ function initMap() {
 }
 
 // ═══════════════════════════════════════════════════════════
-//  浅色/暗黑主题切换
-// ═══════════════════════════════════════════════════════════
-function initTheme() {
-  const btn = $('theme-btn');
-  applyTheme(state.theme);
-  btn.addEventListener('click', () => {
-    state.theme = state.theme === 'dark' ? 'light' : 'dark';
-    localStorage.setItem('wx_theme', state.theme);
-    applyTheme(state.theme);
-  });
-}
-
-function applyTheme(mode) {
-  document.documentElement.setAttribute('data-theme', mode);
-  const metaTheme = document.querySelector('meta[name="theme-color"]');
-  if (metaTheme) {
-    metaTheme.content = mode === 'dark' ? '#080a0c' : '#fdfdfb';
-  }
-}
-
-// ═══════════════════════════════════════════════════════════
-//  单位切换 (°C / °F)
-// ═══════════════════════════════════════════════════════════
-function initUnit() {
-  // 原生按钮同时支持点击、Enter 与 Space。
-  $('temperature').addEventListener('click', () => {
-    state.unit = state.unit === 'celsius' ? 'fahrenheit' : 'celsius';
-    localStorage.setItem('wx_unit', state.unit);
-    if (state.weather) renderWeather(state.city, state.weather);
-  });
-  $('temperature').title = '点击切换 °C / °F';
-}
-
-// ═══════════════════════════════════════════════════════════
 //  启动
 // ═══════════════════════════════════════════════════════════
+initApi(readWeatherCache);
+initTabs({ refreshMePage, renderCityGuide });
 $('retry-btn').addEventListener('click', init);
 
 document.addEventListener('DOMContentLoaded', () => {
   // Three.js 3D 大气层
   const atmContainer = $('atmosphere');
   if (atmContainer) {
-    atmosphere = new Atmosphere(atmContainer);
+    state.atmosphere = new Atmosphere(atmContainer);
   }
 
   initSearch();
   initTheme();
-  initUnit();
+  initUnit(renderWeather);
   initMap();
   initChat();
   init();
