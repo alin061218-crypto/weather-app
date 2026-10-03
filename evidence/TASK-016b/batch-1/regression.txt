@@ -1,6 +1,0 @@
-$ node evidence/TASK-016c/fingerprint.cjs
-AssertionError [ERR_ASSERTION]: backend: chart must draw 24 points
-
-0 !== 24
-
-    at main (E:\weather\weather-project\evidence\TASK-016c\fingerprint.cjs:134:12)

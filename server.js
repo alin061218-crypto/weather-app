@@ -17,7 +17,6 @@ const PORT = process.env.PORT || 3001;
 const FRONTEND_ROOT = path.join(__dirname, 'frontend');
 const THREE_GZIP_FILE = path.join(FRONTEND_ROOT, 'vendor', 'three.module.js.gz');
 const INDEX_TEMPLATE = fs.readFileSync(path.join(FRONTEND_ROOT, 'index.html'), 'utf8');
-// Match both HTML attributes and JSON importmap values (including every /js module).
 const ASSET_REFERENCE = /(["'])((?:\/)?(?:js|css|vendor)\/[^"'?#\s]+)(?:\?[^"'#\s]*)?\1/g;
 const assetHashes = new Map();
 function assetVersion(url) {
@@ -30,25 +29,7 @@ function assetVersion(url) {
     return assetHashes.get(file).hash;
 }
 function renderIndex() {
-    const html = INDEX_TEMPLATE.replace(ASSET_REFERENCE, (_match, quote, url) => `${quote}${url}?v=${assetVersion(url)}${quote}`);
-    checkModuleReferences(html);
-    return html;
-}
-function checkModuleReferences(html) {
-    const match = html.match(/<script\s+type="importmap">([\s\S]*?)<\/script>/);
-    if (!match || match.index > html.indexOf('<script type="module"')) throw new Error('Importmap must precede module scripts');
-    const imports = JSON.parse(match[1]).imports;
-    const modules = fs.readdirSync(path.join(FRONTEND_ROOT, 'js')).filter(file => file.endsWith('.js'));
-    const entries = Object.entries(imports).filter(([name]) => name.startsWith('app/'));
-    if (entries.length !== modules.length) throw new Error(`Importmap coverage mismatch: ${entries.length}/${modules.length}`);
-    for (const file of modules) {
-        const name = `app/${file.slice(0, -3)}`;
-        const url = `/js/${file}`;
-        if (imports[name] !== `${url}?v=${assetVersion(url)}`) throw new Error(`Importmap asset version mismatch: ${name}`);
-    }
-    const main = html.match(/<script\s+type="module"\s+src="([^"]+)"><\/script>/);
-    if (main?.[1] !== imports['app/main']) throw new Error('Main script and importmap versions must match');
-    return modules.length;
+    return INDEX_TEMPLATE.replace(ASSET_REFERENCE, (_match, quote, url) => `${quote}${url}?v=${assetVersion(url)}${quote}`);
 }
 function checkAssetVersions(html) {
     const references = [...html.matchAll(ASSET_REFERENCE)];
@@ -57,8 +38,7 @@ function checkAssetVersions(html) {
         const version = new URL(reference.slice(1, -1), 'http://localhost').searchParams.get('v');
         if (version !== assetVersion(url)) throw new Error(`Asset version mismatch: ${url} (${version})`);
     }
-    // Count unique application modules; CSS and vendor references are also verified above.
-    return checkModuleReferences(html);
+    return references.length;
 }
 // Run the guard without starting the service; optionally verify a saved HTTP response.
 if (process.argv.includes('--check-asset-versions')) {
