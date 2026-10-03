@@ -1,0 +1,29 @@
+dark clear-day --ink-muted: 7.54:1
+PASS	clear-day maps --ink-muted at AA
+dark clear-night --ink-muted: 9.21:1
+PASS	clear-night maps --ink-muted at AA
+dark cloudy --ink-muted: 7.63:1
+PASS	cloudy maps --ink-muted at AA
+dark overcast --ink-muted: 7.91:1
+PASS	overcast maps --ink-muted at AA
+dark rain --ink-muted: 8.16:1
+PASS	rain maps --ink-muted at AA
+dark snow --ink-muted: 6.49:1
+PASS	snow maps --ink-muted at AA
+dark fog --ink-muted: 7.29:1
+PASS	fog maps --ink-muted at AA
+dark storm --ink-muted: 9.32:1
+PASS	storm maps --ink-muted at AA
+light generic --ink-muted: 5.45:1
+light clear-night --ink-muted: 7.04:1
+PASS	light scenes map --ink-muted at AA
+PASS	body[data-weather] applies --ink-muted from scene mapping
+dark button contrast: 6.83:1
+PASS	dark button meets AA
+dark hover contrast: 8.22:1
+PASS	dark hover meets AA
+light button contrast: 5.06:1
+PASS	light button meets AA
+light hover contrast: 5.06:1
+PASS	light hover meets AA
+PASS	primary button uses --primary-on

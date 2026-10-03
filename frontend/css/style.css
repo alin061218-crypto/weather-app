@@ -3,7 +3,9 @@
 
 /* ---------- 暗黑主题（默认） ---------- */
 :root {
+  /* 数据型内容按 --width-data 排列；表单控件对齐宽度不应超过约 480px。 */
   --width-data: 1208px;
+  --width-form: 400px;
   /* 表面色 — 从深到浅的层次 */
   --bg: #0a0e17;
   --surface: #121724;
@@ -344,8 +346,10 @@ body[data-weather] { --ink: var(--scene-ink); --ink-secondary: var(--scene-secon
   position: relative;
 }
 .weather-hero::before {
-  content: ''; position: absolute; z-index: -1; inset: 0 40% 0 -20%;
+  content: ''; position: absolute; z-index: -1; inset: -40px 30% -40px -20%;
   background: var(--scrim-text); pointer-events: none;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 18%, #000 82%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 18%, #000 82%, transparent 100%);
 }
 .hero-region {
   font-size: var(--text-xs);
@@ -621,14 +625,14 @@ body[data-weather] { --ink: var(--scene-ink); --ink-secondary: var(--scene-secon
 .guide-header h2 { font-size: var(--text-xl); font-weight: 500; color: var(--ink); }
 .guide-header p { font-size: var(--text-sm); color: var(--ink-muted); margin-top: var(--space-1); }
 .guide-tabs {
-  display: flex; gap: 0; margin-bottom: var(--space-4);
+  display: flex; gap: 0; width: 100%; margin-bottom: var(--space-4);
   background: var(--surface-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   padding: 3px;
 }
 .guide-tab {
-  flex: 1; padding: var(--space-2) var(--space-3);
+  flex: 1; min-width: 0; padding: var(--space-2) var(--space-3);
   background: none; border: none;
   color: var(--ink-muted); font-size: var(--text-sm);
   font-weight: 500; cursor: pointer;
@@ -645,6 +649,7 @@ body[data-weather] { --ink: var(--scene-ink); --ink-secondary: var(--scene-secon
   display: flex; flex-direction: column;
   border-top: 1px solid var(--border);
 }
+#guide-content { width: 100%; max-width: var(--width-data); margin-inline: auto; }
 .guide-card {
   display: flex; align-items: baseline; gap: var(--space-3);
   padding: var(--space-3) 0;
@@ -667,13 +672,18 @@ body[data-weather] { --ink: var(--scene-ink); --ink-secondary: var(--scene-secon
 .guide-fallback { color: var(--primary); margin-top: var(--space-2); }
 
 /* ====== 聊天界面 ====== */
+.tab-page#tab-chat {
+  width: 100%; max-width: var(--width-form);
+  margin-inline: auto; padding-top: 0;
+}
+
 .chat-header {
   display: flex; align-items: center; gap: var(--space-3);
   padding: var(--space-4) var(--space-5);
   background: var(--surface-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  margin-top: var(--space-5);
+  margin-top: var(--space-4);
 }
 .chat-header-icon {
   width: 32px; height: 32px; border-radius: var(--radius-full);
@@ -689,7 +699,7 @@ body[data-weather] { --ink: var(--scene-ink); --ink-secondary: var(--scene-secon
 .chat-header span { font-size: var(--text-base); font-weight: 500; color: var(--ink); }
 
 .chat-list {
-  flex: 1; display: flex; flex-direction: column; gap: var(--space-3);
+  flex: 0 1 auto; min-height: 0; display: flex; flex-direction: column; gap: var(--space-3);
   padding: var(--space-4) 0;
   max-height: 50vh; overflow-y: auto;
   scroll-behavior: smooth;
@@ -760,7 +770,7 @@ body[data-weather] { --ink: var(--scene-ink); --ink-secondary: var(--scene-secon
 }
 .chat-input {
   flex: 1; height: 44px;
-  background: var(--surface-card);
+  background: var(--surface-glass);
   border: 1px solid var(--border);
   border-radius: var(--radius-full);
   padding: 0 var(--space-5);
@@ -791,9 +801,12 @@ body[data-weather] { --ink: var(--scene-ink); --ink-secondary: var(--scene-secon
 
 /* ====== 我的页面 ====== */
 .me-card {
-  padding: var(--space-10) var(--space-4);
+  width: 100%; max-width: var(--width-form); margin: auto;
+  padding: var(--space-10) 0;
   display: flex; flex-direction: column; align-items: center;
 }
+/* 登录区是窄表单；登录后的主要内容是收藏/历史列表，保留数据型宽度以便扫描。 */
+#me-logged-block { max-width: var(--width-data); padding-inline: var(--space-4); }
 .me-avatar {
   width: 60px; height: 60px; border-radius: var(--radius-full);
   background: var(--surface-card);
@@ -821,7 +834,7 @@ body[data-weather] { --ink: var(--scene-ink); --ink-secondary: var(--scene-secon
 }
 .me-input {
   width: 100%; height: 46px;
-  background: var(--surface-card);
+  background: var(--surface-glass);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   padding: 0 var(--space-4);
@@ -1027,7 +1040,7 @@ body[data-weather] { --ink: var(--scene-ink); --ink-secondary: var(--scene-secon
   .skeleton-temp { width: 92px; height: 52px; }
 }
 @media (min-width: 600px) and (max-width: 839px) {
-  .app { max-width: 720px; padding-left: var(--space-6); padding-right: var(--space-6); }
+  .app { max-width: var(--width-data); padding-left: var(--space-6); padding-right: var(--space-6); }
   .weather-view { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 1.15fr); gap: var(--space-6); }
   .weather-hero { grid-column: 1 / -1; text-align: left; display: grid; grid-template-columns: minmax(0, 1fr) 100px; align-items: center; column-gap: var(--space-4); }
   .hero-region, .hero-city-row, .hero-icon, .hero-temp, .hero-desc { grid-column: 1; justify-content: flex-start; text-align: left; }
