@@ -1,6 +1,7 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const { spawnSync } = require('node:child_process');
 const dir = path.resolve(__dirname, '../../frontend/js');
 const files = fs.readdirSync(dir).filter(file => file.endsWith('.js')).sort();
 const allowed = {
@@ -32,4 +33,9 @@ function visit(name, chain = []) {
   visiting.delete(name); done.add(name);
 }
 files.forEach(file => visit(file.slice(0, -3)));
+const linked = spawnSync(process.execPath, ['--experimental-vm-modules', path.join(__dirname, 'link.cjs')], {
+  encoding: 'utf8', windowsHide: true, env: { ...process.env, NODE_NO_WARNINGS: '1' }
+});
+assert.equal(linked.status, 0, linked.stderr || 'ESM linking failed');
+process.stdout.write(linked.stdout);
 console.log(`PASS: ${files.length} modules form a DAG; no dynamic imports; all imports use bare identifiers and allowed dependency directions`);

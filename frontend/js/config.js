@@ -1,7 +1,6 @@
 export const API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
   ? 'http://localhost:3001' : '';
 
-
 export const API = {
   ip: 'https://ipapi.co/json/',
   geo: 'https://geocoding-api.open-meteo.com/v1/search',
@@ -12,6 +11,7 @@ export const API = {
 // Keep this emergency copy synchronized for a backend that is completely unreachable.
 export const WX_PARAMS = 'current_weather=true&hourly=temperature_2m,weathercode,relativehumidity_2m,cloudcover,apparent_temperature,uv_index,precipitation_probability,pressure_msl,visibility&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max,sunrise,sunset,uv_index_max&timezone=auto&forecast_days=7';
 
+// Shared session/view state; account and main own authentication and request generations.
 export const state = {
   authToken: localStorage.getItem('wx_token') || '',
   atmosphere: null,

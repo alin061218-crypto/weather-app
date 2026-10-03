@@ -52,8 +52,6 @@ export function setWeatherScene(code, isDay) {
   document.body.dataset.weather = weatherScene(code, isDay);
 }
 
-
-
 // ═══════════════════════════════════════════════════════════
 //  温度趋势图 (Canvas)
 // ═══════════════════════════════════════════════════════════

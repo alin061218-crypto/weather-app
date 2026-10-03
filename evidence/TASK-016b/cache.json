@@ -1,0 +1,11 @@
+{
+  "moduleCount": 12,
+  "indexCacheControl": "no-cache",
+  "moduleCacheControl": "public, max-age=31536000, immutable",
+  "beforeConfig": "/js/config.js?v=22391eb1",
+  "afterConfig": "/js/config.js?v=fb7499e1",
+  "mainUnchanged": true,
+  "mainFromBrowserCache": true,
+  "browserObservedChild": "after",
+  "errors": []
+}

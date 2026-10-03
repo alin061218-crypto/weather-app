@@ -14,7 +14,6 @@ export function toggle(id) {
   });
 }
 
-
 let tabActions;
 
 export function switchTab(tab) {
@@ -35,9 +34,9 @@ export function switchTab(tab) {
 
 export function initTabs(actions) {
   tabActions = actions;
-QA('.tab-btn').forEach(btn => {
-  btn.addEventListener('click', () => switchTab(btn.dataset.tab));
-});
+  QA('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+  });
 }
 
 export function initTheme() {

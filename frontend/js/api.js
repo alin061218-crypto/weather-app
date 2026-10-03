@@ -2,9 +2,11 @@ import { API_BASE, API, WX_PARAMS, state } from 'app/config';
 
 let weatherParamsPromise = null;
 
-let readWeatherCache;
-export function initApi(cacheReader) { readWeatherCache = cacheReader; }
-
+// main supplies the account cache reader, keeping API imports independent of account.
+let readWeatherCache = () => null;
+export function initApi(cacheReader) {
+  readWeatherCache = cacheReader;
+}
 
 // ═══════════════════════════════════════════════════════════
 //  API 请求

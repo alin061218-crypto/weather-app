@@ -1,7 +1,5 @@
 import { API_BASE, CACHE_MAX_AGE, state } from 'app/config';
-
 import { $, QA, esc, switchTab } from 'app/ui';
-
 import { fetchJSON } from 'app/api';
 
 let currentUser = null;
@@ -34,8 +32,6 @@ export function readWeatherCache(lat, lon) {
   return cached?.wx?.current_weather && age >= 0 && age < CACHE_MAX_AGE
     && cached.loc.lat.toFixed(2) === Number(lat).toFixed(2) && cached.loc.lon.toFixed(2) === Number(lon).toFixed(2) ? cached : null;
 }
-
-
 
 // ═══════════════════════════════════════════════════════════
 //  用户认证
@@ -81,40 +77,40 @@ let authMode = 'login';
 let selectCity;
 export function initAccount(onSelectCity) {
   selectCity = onSelectCity;
-$('me-toggle').addEventListener('click', (e) => {
-  e.preventDefault();
-  authMode = authMode === 'login' ? 'register' : 'login';
-  $('me-submit').textContent = authMode === 'login' ? '登 录' : '注 册';
-  $('me-msg').textContent = '';
-});
-
-$('me-submit').addEventListener('click', async () => {
-  const u = $('me-user').value.trim();
-  const p = $('me-pass').value.trim();
-  if (!u || !p) { $('me-msg').textContent = '请填写用户名和密码'; return; }
-  if (p.length < 6) { $('me-msg').textContent = '密码至少 6 位'; return; }
-  const url = `${API_BASE}${authMode === 'login' ? '/api/login' : '/api/register'}`;
-  const d = await fetchJSON(url, 5000, { method: 'POST', body: JSON.stringify({ username: u, password: p }) });
-  if (d && d.token) {
-    localStorage.setItem('wx_token', d.token);
-    state.authToken = d.token;
-    currentUser = d.user;
-    updateMeUI();
-    $('me-user').value = '';
-    $('me-pass').value = '';
+  $('me-toggle').addEventListener('click', (e) => {
+    e.preventDefault();
+    authMode = authMode === 'login' ? 'register' : 'login';
+    $('me-submit').textContent = authMode === 'login' ? '登 录' : '注 册';
     $('me-msg').textContent = '';
-    refreshMePage();
-  } else {
-    $('me-msg').textContent = (d && d.error) || '操作失败';
-  }
-});
+  });
 
-$('me-logout').addEventListener('click', () => { logout(); });
-$('me-clear-hist').addEventListener('click', async () => {
-  if (!confirm('确认清空所有搜索历史？')) return;
-  await fetchJSON(`${API_BASE}/api/history`, 3000, { method: 'DELETE' });
-  loadMeHistory();
-});
+  $('me-submit').addEventListener('click', async () => {
+    const u = $('me-user').value.trim();
+    const p = $('me-pass').value.trim();
+    if (!u || !p) { $('me-msg').textContent = '请填写用户名和密码'; return; }
+    if (p.length < 6) { $('me-msg').textContent = '密码至少 6 位'; return; }
+    const url = `${API_BASE}${authMode === 'login' ? '/api/login' : '/api/register'}`;
+    const d = await fetchJSON(url, 5000, { method: 'POST', body: JSON.stringify({ username: u, password: p }) });
+    if (d && d.token) {
+      localStorage.setItem('wx_token', d.token);
+      state.authToken = d.token;
+      currentUser = d.user;
+      updateMeUI();
+      $('me-user').value = '';
+      $('me-pass').value = '';
+      $('me-msg').textContent = '';
+      refreshMePage();
+    } else {
+      $('me-msg').textContent = (d && d.error) || '操作失败';
+    }
+  });
+
+  $('me-logout').addEventListener('click', () => { logout(); });
+  $('me-clear-hist').addEventListener('click', async () => {
+    if (!confirm('确认清空所有搜索历史？')) return;
+    await fetchJSON(`${API_BASE}/api/history`, 3000, { method: 'DELETE' });
+    loadMeHistory();
+  });
 }
 
 export async function loadMeFavorites() {

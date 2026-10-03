@@ -91,7 +91,6 @@ export function getCityGuide(name) {
   return null;
 }
 
-
 export function findCity(lat, lon) {
   let best = null, bestD = Infinity;
   for (const { name, lat: clat, lon: clon } of cityCache || []) {
@@ -103,7 +102,6 @@ export function findCity(lat, lon) {
   if (raw && COUNTY[raw]) return COUNTY[raw];
   return raw;
 }
-
 
 export function resolveCity(loc) {
   if (loc.city && loc.city !== '当前位置' && !/^[A-Za-z]/.test(loc.city)) return loc.city;
