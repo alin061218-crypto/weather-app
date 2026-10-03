@@ -1,0 +1,147 @@
+[
+  {
+    "width": 375,
+    "innerWidth": 375,
+    "clientWidth": 375,
+    "bodyScrollWidth": 375,
+    "disabled": {
+      "opacity": "0.45",
+      "cursor": "not-allowed",
+      "transform": "none"
+    },
+    "modalFocus": [
+      "BODY",
+      "BODY",
+      "BODY",
+      "BODY",
+      "BODY"
+    ],
+    "requests": {
+      "weather": 3,
+      "direct": 0,
+      "favoriteWrites": 1
+    },
+    "steps": [
+      "Tab × 1 → #search-input（焦点环 2px solid）",
+      "Tab × 2 → button.search-item（焦点环 2px solid）",
+      "Space 选择南京 → #city=南京，天气和 7 天预报已渲染",
+      "Tab × 7 → #temperature（焦点环 2px solid）",
+      "Space → 72°F；Enter → 22°，localStorage 单位与显示同步",
+      "Tab × 31 → #fav-btn（焦点环 2px solid）",
+      "Enter 收藏南京 → 实际 POST /api/favorites；提交中 opacity=.45 / not-allowed，完成 aria-pressed=true",
+      "Tab × 22 → .tab-btn[data-tab=\"chat\"]（焦点环 2px solid）",
+      "Enter → 出行建议 tab，主流程完成（操作全程无鼠标、无 focus()/click()）",
+      "Tab × 10 → .tab-btn[data-tab=\"home\"]（焦点环 2px solid）",
+      "Tab × 9 → .recent-chip（焦点环 2px solid）",
+      "Enter 最近城市 → 上海天气",
+      "Tab × 4 → .day-row（焦点环 2px solid）",
+      "Space 展开当天详情 → Enter 收起，aria-expanded 与可见性同步",
+      "Tab × 7 → .advice-chip（焦点环 2px solid）",
+      "Tab × 1 → #chat-send（焦点环 2px solid）",
+      "Space 建议标签 → 带入问题并聚焦聊天输入 → Tab + Enter 发送，收到回复",
+      "Tab × 3 → .tab-btn[data-tab=\"guide\"]（焦点环 2px solid）",
+      "Tab × 4 → .guide-tab[data-guide=\"travel\"]（焦点环 2px solid）",
+      "Tab × 1 → .tab-btn[data-tab=\"home\"]（焦点环 2px solid）",
+      "Tab × 8 → #map-btn（焦点环 2px solid）",
+      "Tab × 2 → #map-close（焦点环 2px solid）",
+      "Enter 打开原生 modal → Tab 未进入背景控件 → 在关闭按钮按 Esc 关闭 → 焦点回 #map-btn"
+    ]
+  },
+  {
+    "width": 768,
+    "innerWidth": 768,
+    "clientWidth": 768,
+    "bodyScrollWidth": 768,
+    "disabled": {
+      "opacity": "0.45",
+      "cursor": "not-allowed",
+      "transform": "none"
+    },
+    "modalFocus": [
+      "BODY",
+      "BODY",
+      "BODY",
+      "BODY",
+      "BUTTON"
+    ],
+    "requests": {
+      "weather": 3,
+      "direct": 0,
+      "favoriteWrites": 1
+    },
+    "steps": [
+      "Tab × 1 → #search-input（焦点环 2px solid）",
+      "Tab × 2 → button.search-item（焦点环 2px solid）",
+      "Space 选择南京 → #city=南京，天气和 7 天预报已渲染",
+      "Tab × 7 → #temperature（焦点环 2px solid）",
+      "Space → 72°F；Enter → 22°，localStorage 单位与显示同步",
+      "Tab × 31 → #fav-btn（焦点环 2px solid）",
+      "Enter 收藏南京 → 实际 POST /api/favorites；提交中 opacity=.45 / not-allowed，完成 aria-pressed=true",
+      "Tab × 22 → .tab-btn[data-tab=\"chat\"]（焦点环 2px solid）",
+      "Enter → 出行建议 tab，主流程完成（操作全程无鼠标、无 focus()/click()）",
+      "Tab × 10 → .tab-btn[data-tab=\"home\"]（焦点环 2px solid）",
+      "Tab × 9 → .recent-chip（焦点环 2px solid）",
+      "Enter 最近城市 → 上海天气",
+      "Tab × 4 → .day-row（焦点环 2px solid）",
+      "Space 展开当天详情 → Enter 收起，aria-expanded 与可见性同步",
+      "Tab × 7 → .advice-chip（焦点环 2px solid）",
+      "Tab × 1 → #chat-send（焦点环 2px solid）",
+      "Space 建议标签 → 带入问题并聚焦聊天输入 → Tab + Enter 发送，收到回复",
+      "Tab × 3 → .tab-btn[data-tab=\"guide\"]（焦点环 2px solid）",
+      "Tab × 4 → .guide-tab[data-guide=\"travel\"]（焦点环 2px solid）",
+      "Tab × 1 → .tab-btn[data-tab=\"home\"]（焦点环 2px solid）",
+      "Tab × 8 → #map-btn（焦点环 2px solid）",
+      "Tab × 0 → #map-close（焦点环 2px solid）",
+      "Enter 打开原生 modal → Tab 未进入背景控件 → 在关闭按钮按 Esc 关闭 → 焦点回 #map-btn"
+    ]
+  },
+  {
+    "width": 1280,
+    "innerWidth": 1280,
+    "clientWidth": 1280,
+    "bodyScrollWidth": 1280,
+    "disabled": {
+      "opacity": "0.45",
+      "cursor": "not-allowed",
+      "transform": "none"
+    },
+    "modalFocus": [
+      "BODY",
+      "BODY",
+      "BODY",
+      "BODY",
+      "BODY"
+    ],
+    "requests": {
+      "weather": 3,
+      "direct": 0,
+      "favoriteWrites": 1
+    },
+    "steps": [
+      "Tab × 1 → #search-input（焦点环 2px solid）",
+      "Tab × 2 → button.search-item（焦点环 2px solid）",
+      "Space 选择南京 → #city=南京，天气和 7 天预报已渲染",
+      "Tab × 7 → #temperature（焦点环 2px solid）",
+      "Space → 72°F；Enter → 22°，localStorage 单位与显示同步",
+      "Tab × 31 → #fav-btn（焦点环 2px solid）",
+      "Enter 收藏南京 → 实际 POST /api/favorites；提交中 opacity=.45 / not-allowed，完成 aria-pressed=true",
+      "Tab × 22 → .tab-btn[data-tab=\"chat\"]（焦点环 2px solid）",
+      "Enter → 出行建议 tab，主流程完成（操作全程无鼠标、无 focus()/click()）",
+      "Tab × 10 → .tab-btn[data-tab=\"home\"]（焦点环 2px solid）",
+      "Tab × 9 → .recent-chip（焦点环 2px solid）",
+      "Enter 最近城市 → 上海天气",
+      "Tab × 4 → .day-row（焦点环 2px solid）",
+      "Space 展开当天详情 → Enter 收起，aria-expanded 与可见性同步",
+      "Tab × 7 → .advice-chip（焦点环 2px solid）",
+      "Tab × 1 → #chat-send（焦点环 2px solid）",
+      "Space 建议标签 → 带入问题并聚焦聊天输入 → Tab + Enter 发送，收到回复",
+      "Tab × 3 → .tab-btn[data-tab=\"guide\"]（焦点环 2px solid）",
+      "Tab × 4 → .guide-tab[data-guide=\"travel\"]（焦点环 2px solid）",
+      "Tab × 1 → .tab-btn[data-tab=\"home\"]（焦点环 2px solid）",
+      "Tab × 8 → #map-btn（焦点环 2px solid）",
+      "Tab × 2 → #map-close（焦点环 2px solid）",
+      "Enter 打开原生 modal → Tab 未进入背景控件 → 在关闭按钮按 Esc 关闭 → 焦点回 #map-btn"
+    ]
+  }
+]
+PASS: keyboard main flow and additional controls at 375 / 768 / 1280px

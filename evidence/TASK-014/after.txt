@@ -3,7 +3,7 @@ TASK-014 acceptance; 2026-10-03; real production server + SQLite in ignored runt
 Service cross-check: curl.exe / -> HTTP 200
 
 3) Real /api/air (Open-Meteo upstream):
-{"latitude":39.90001,"longitude":116.399994,"generationtime_ms":0.38874149322509766,"utc_offset_seconds":28800,"timezone":"Asia/Shanghai","timezone_abbreviation":"GMT+8","elevation":49,"current_units":{"time":"iso8601","interval":"seconds","pm10":"μg/m³","pm2_5":"μg/m³","us_aqi":"USAQI"},"current":{"time":"2026-10-03T19:00","interval":3600,"pm10":4.1,"pm2_5":4.1,"us_aqi":157}}
+{"latitude":39.90001,"longitude":116.399994,"generationtime_ms":0.6300210952758789,"utc_offset_seconds":28800,"timezone":"Asia/Shanghai","timezone_abbreviation":"GMT+8","elevation":49,"current_units":{"time":"iso8601","interval":"seconds","pm10":"μg/m³","pm2_5":"μg/m³","us_aqi":"USAQI"},"current":{"time":"2026-10-03T19:00","interval":3600,"pm10":4.1,"pm2_5":4.1,"us_aqi":157}}
 HTTP 200
 
 
@@ -19,7 +19,7 @@ HTTP 200
 
 6) PASS: coordinate Wuchang + stale 福建省 -> 武汉 / 湖北; search 武昌 -> 武昌区 / 湖北省
 
-7) PASS: 更新于 18:55 matches stored cache timestamp; warm cache forecast calls=0
+7) PASS: 更新于 18:58 matches stored cache timestamp; warm cache forecast calls=0
 
 8) PASS: 北京明天（2026-10-04）冻雨，-2°～5°。  建议：寒冷天气，厚外套加毛衣围巾；注意路面结冰，减少外出 推荐搭配：棉服、毛衣、围巾、手套、防滑鞋 按明日最低温与温差增减衣物；暂无明日风速。; Fahrenheit=28°F～41°F; missing tomorrow explicitly unavailable; actual quick button verified
 

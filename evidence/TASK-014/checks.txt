@@ -1,0 +1,13 @@
+
+> weather-backend@1.0.0 check:versions
+> node server.js --check-asset-versions
+
+PASS: 15 index asset versions match SHA-1 content hashes
+(node:77440) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+PASS: all static ESM imports link successfully with their real named exports
+PASS: all module and server syntax checks
+DESC old merged branch matches = 0
+Solar rendering matches = 2 (2 chips; obsolete main.js references replaced by module responsibilities)
+Attribution/privacy/feedback lines = 15
+rules = 38 categories = 8

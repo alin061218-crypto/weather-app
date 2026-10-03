@@ -1,0 +1,69 @@
+{
+  "elapsedMs": 618,
+  "visible": true,
+  "requests": {
+    "backendWeather": 1,
+    "backendLocation": 1,
+    "openMeteo": 1,
+    "backendCanceled": 1,
+    "openMeteoCanceled": 0,
+    "ipapi": 1
+  },
+  "bodyScrollWidth": 735,
+  "viewportWidth": 750,
+  "city": "北京"
+}
+PASS: one Open-Meteo request and the slower backend loser was canceled
+{
+  "elapsedMs": 620,
+  "visible": true,
+  "requests": {
+    "backendWeather": 1,
+    "backendLocation": 1,
+    "openMeteo": 1,
+    "backendCanceled": 1,
+    "openMeteoCanceled": 0,
+    "ipapi": 0
+  },
+  "bodyScrollWidth": 735,
+  "viewportWidth": 750,
+  "city": "北京"
+}
+PASS: one Open-Meteo request, canceled backend loser, and zero direct ipapi.co requests after backend location success
+{
+  "slowBackend": {
+    "mode": "slow-backend",
+    "backendDelay": 6000,
+    "directDelay": 300,
+    "elapsedMs": 667,
+    "visible": true,
+    "requests": {
+      "backendWeather": 1,
+      "openMeteo": 1,
+      "backendCanceled": 1
+    },
+    "bodyScrollWidth": 735,
+    "viewportWidth": 750,
+    "city": "北京"
+  },
+  "common": {
+    "mode": "common",
+    "backendDelay": 80,
+    "directDelay": 300,
+    "elapsedMs": 280,
+    "visible": true,
+    "requests": {
+      "backendWeather": 1,
+      "openMeteo": 0,
+      "backendCanceled": 0
+    },
+    "bodyScrollWidth": 735,
+    "viewportWidth": 750,
+    "city": "北京"
+  }
+}
+PASS: cold-start latency measured for slow-backend and common backend/cache scenes; common direct requests=0
+{"mode":"backend","pointCount":24,"fingerprintCount":7,"fallbackCount":0,"axisStart":"00:00","axisEnd":"23:00","requests":{"backend":1,"fallback":0},"bodyScrollWidth":753,"clientWidth":753,"viewportWidth":768}
+PASS: backend path has 24 chart points, seven fingerprints, no fallbacks, 00:00–23:00 axis, and no body overflow
+{"mode":"fallback","pointCount":24,"fingerprintCount":7,"fallbackCount":0,"axisStart":"00:00","axisEnd":"23:00","requests":{"backend":1,"fallback":1},"bodyScrollWidth":753,"clientWidth":753,"viewportWidth":768}
+PASS: fallback path has 24 chart points, seven fingerprints, no fallbacks, 00:00–23:00 axis, and no body overflow
