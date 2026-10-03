@@ -7,3 +7,6 @@ frontend/.claude/
 evidence/**/*.tmp
 server-task018.err.log
 server-task018.out.log
+
+# 中间迭代产物不进仓库（见 docs/03 证据生成纪律第 8 条）
+evidence/**/*.tmp/
