@@ -54,7 +54,8 @@ window.fetch = (input, options) => { const u = new URL(String(input), location.h
   if (u.hostname === 'localhost' && u.port === '3001' && u.pathname === '/api/location') return Promise.resolve(new Response(JSON.stringify({ city:'北京', region:'北京', country:'中国', lat:39.904, lon:116.407 }), { headers:{'Content-Type':'application/json'} }));
   if (u.hostname === 'localhost' && u.port === '3001' && u.pathname === '/api/wx-params') return Promise.resolve(new Response('current_weather=true&hourly=temperature_2m,weathercode,relativehumidity_2m,cloudcover,apparent_temperature,uv_index,precipitation_probability,pressure_msl,visibility&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max,sunrise,sunset,uv_index_max&timezone=auto&forecast_days=7', { headers:{'Content-Type':'text/plain'} }));
   if (u.hostname === 'localhost' && u.port === '3001' && u.pathname === '/api/weather') {
-    if (${JSON.stringify(mode)} === 'backend') { window.__evidenceRequests.backend++; return Promise.resolve(new Response(JSON.stringify(weatherMock), { headers:{'Content-Type':'application/json'} })); }
+    window.__evidenceRequests.backend++;
+    if (${JSON.stringify(mode)} === 'backend') return Promise.resolve(new Response(JSON.stringify(weatherMock), { headers:{'Content-Type':'application/json'} }));
     return Promise.resolve(new Response(JSON.stringify({ error:'backend unavailable' }), { status:503, headers:{'Content-Type':'application/json'} }));
   }
   if (u.hostname === 'api.open-meteo.com' && u.pathname === '/v1/forecast') { window.__evidenceRequests.fallback++; return Promise.resolve(new Response(JSON.stringify(weatherMock), { headers:{'Content-Type':'application/json'} })); }
@@ -170,7 +171,8 @@ async function capture(name, width, url, serverUrl) {
     assert.equal(metrics.focusOutline, 'solid', `${name}: tab focus outline style missing`);
     if (width >= 840) assert.ok(Math.abs(metrics.navLeft - metrics.appLeft) <= 2, `${name}: vertical nav is not aligned to app edge`);
     assert.equal(metrics.requests[mode], 1, `${name}: expected ${mode} path was not used`);
-    assert.equal(metrics.requests[mode === 'backend' ? 'fallback' : 'backend'], 0, `${name}: unexpected alternate path used`);
+    // TASK-018 intentionally races backend and direct weather requests.
+    assert.equal(metrics.requests[mode === 'backend' ? 'fallback' : 'backend'], 1, `${name}: concurrent alternate path was not started`);
     console.log(`${name} metrics: ${JSON.stringify(metrics)}`);
     assert.ok(metrics.chartTop < metrics.dailyTop, `${name}: chart must precede daily forecast`);
     assert.ok(Math.abs(metrics.chartWidth - metrics.contentWidth) <= 2, `${name}: chart must span content width`);

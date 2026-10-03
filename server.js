@@ -14,6 +14,9 @@ const path = require('path');
 const app = express();
 app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3001;
+const FRONTEND_ROOT = path.join(__dirname, 'frontend');
+const THREE_GZIP_FILE = path.join(FRONTEND_ROOT, 'vendor', 'three.module.js.gz');
+const HALF_HOUR_MS = 30 * 60 * 1000;
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_ISSUER = 'weather-app';
 const JWT_AUDIENCE = 'weather-frontend';
@@ -152,6 +155,7 @@ const stmt = {
   // cache
   cacheGet:        db.prepare('SELECT * FROM cache WHERE key = ?'),
   cacheSet:        db.prepare('INSERT OR REPLACE INTO cache (key, data, time) VALUES (?, ?, ?)'),
+  cachePruneLocation: db.prepare("DELETE FROM cache WHERE key LIKE 'ip:%' AND time < ?"),
   cacheClear:      db.prepare('DELETE FROM cache'),
   cacheAll:        db.prepare('SELECT * FROM cache'),
   cacheCount:      db.prepare('SELECT COUNT(*) AS n FROM cache'),
@@ -172,7 +176,37 @@ app.use(helmet({
 }));
 app.use('/api', cors(corsOptions));
 app.use(express.json({ limit: '32kb' }));
-app.use(express.static(path.join(__dirname, 'frontend'), { dotfiles: 'deny' }));
+
+// The large, versioned Three.js module is precompressed at build time so the
+// server does not spend CPU time gzipping it on every request.
+app.get('/vendor/three.module.js', (req, res, next) => {
+    const acceptEncoding = req.get('accept-encoding') || '';
+    if (!/\bgzip\b/i.test(acceptEncoding) || !fs.existsSync(THREE_GZIP_FILE)) return next();
+    res.set({
+        'Cache-Control': 'public, max-age=31536000, immutable',
+        'Content-Encoding': 'gzip',
+        'Content-Type': 'application/javascript; charset=UTF-8',
+        'Vary': 'Accept-Encoding'
+    });
+    res.sendFile(THREE_GZIP_FILE, error => {
+        if (error && !res.headersSent) next(error);
+    });
+});
+
+app.use(express.static(FRONTEND_ROOT, {
+    dotfiles: 'deny',
+    maxAge: '1d',
+    setHeaders(res, filePath) {
+        const relative = path.relative(FRONTEND_ROOT, filePath).replace(/\\/g, '/');
+        if (relative === 'index.html') {
+            res.setHeader('Cache-Control', 'no-cache');
+        } else if (/^(vendor|css|js)\//.test(relative)) {
+            res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        } else if (/^data\//.test(relative)) {
+            res.setHeader('Cache-Control', 'public, max-age=86400');
+        }
+    }
+}));
 
 // ===== JWT 认证中间件 =====
 function authMiddleware(req, res, next) {
@@ -259,7 +293,7 @@ app.get('/api/weather', async (req, res) => {
 
     try {
         const cached = stmt.cacheGet.get(cacheKey);
-        if (cached && Date.now() - cached.time < 600000) {
+        if (cached && Date.now() - cached.time < HALF_HOUR_MS) {
             return res.json(JSON.parse(cached.data));
         }
         const r = await fetch(`${WEATHER_API}?latitude=${latNum}&longitude=${lonNum}&${WEATHER_PARAMS}`, {
@@ -278,20 +312,40 @@ app.get('/api/weather', async (req, res) => {
 app.get('/api/location', async (req, res) => {
     const forwardedFor = req.get('x-forwarded-for');
     const clientIp = forwardedFor?.split(',')[0]?.trim();
+    const cacheKey = `ip:${clientIp || 'default'}`;
+    // Keep expired per-IP entries from accumulating in the shared cache table.
+    stmt.cachePruneLocation.run(Date.now() - HALF_HOUR_MS);
+    const cached = stmt.cacheGet.get(cacheKey);
+    if (cached && Date.now() - cached.time < HALF_HOUR_MS) {
+        try {
+            res.setHeader('Cache-Control', 'private, max-age=1800');
+            return res.json(JSON.parse(cached.data));
+        } catch {
+            // Ignore malformed legacy rows and refresh from the provider.
+        }
+    }
     try {
         const locationUrl = clientIp ? `https://ipapi.co/${encodeURIComponent(clientIp)}/json/` : IP_API;
         const r = await fetch(locationUrl, { signal: AbortSignal.timeout(5000) });
         const d = await r.json();
-        if (d.error) throw new Error(d.reason || 'ipapi error');
-        res.json({ city: d.city, region: d.region, country: d.country_name, lat: d.latitude, lon: d.longitude });
+        if (!r.ok || d.error || !d.city || !Number.isFinite(Number(d.latitude)) || !Number.isFinite(Number(d.longitude))) {
+            throw new Error(d.reason || 'ipapi error');
+        }
+        const location = { city: d.city, region: d.region, country: d.country_name, lat: d.latitude, lon: d.longitude };
+        stmt.cacheSet.run(cacheKey, JSON.stringify(location), Date.now());
+        res.setHeader('Cache-Control', 'private, max-age=1800');
+        res.json(location);
     } catch {
         // ipapi 失败尝试 ip-api.com
         try {
             const fallbackUrl = clientIp ? `https://ip-api.com/json/${encodeURIComponent(clientIp)}` : 'https://ip-api.com/json/';
             const r2 = await fetch(fallbackUrl, { signal: AbortSignal.timeout(5000) });
             const d2 = await r2.json();
-            if (d2.status === 'success') {
-                return res.json({ city: d2.city, region: d2.regionName, country: d2.country, lat: d2.lat, lon: d2.lon });
+            if (r2.ok && d2.status === 'success' && d2.city && Number.isFinite(Number(d2.lat)) && Number.isFinite(Number(d2.lon))) {
+                const location = { city: d2.city, region: d2.regionName, country: d2.country, lat: d2.lat, lon: d2.lon };
+                stmt.cacheSet.run(cacheKey, JSON.stringify(location), Date.now());
+                res.setHeader('Cache-Control', 'private, max-age=1800');
+                return res.json(location);
             }
         } catch {}
         res.status(500).json({ error: '定位失败' });

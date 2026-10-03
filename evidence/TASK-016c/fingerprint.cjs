@@ -49,7 +49,8 @@ window.fetch = (input, options) => {
     return Promise.resolve(new Response('current_weather=true&hourly=temperature_2m,weathercode,relativehumidity_2m,cloudcover,apparent_temperature,uv_index,precipitation_probability,pressure_msl,visibility&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max,sunrise,sunset,uv_index_max&timezone=auto&forecast_days=7', { headers:{'Content-Type':'text/plain'} }));
   }
   if (u.hostname === 'localhost' && u.port === '3001' && u.pathname === '/api/weather') {
-    if (${JSON.stringify(mode)} === 'backend') { window.__evidenceRequests.backend++; return Promise.resolve(new Response(JSON.stringify(weatherMock), { headers:{'Content-Type':'application/json'} })); }
+    window.__evidenceRequests.backend++;
+    if (${JSON.stringify(mode)} === 'backend') return Promise.resolve(new Response(JSON.stringify(weatherMock), { headers:{'Content-Type':'application/json'} }));
     return Promise.resolve(new Response(JSON.stringify({ error:'backend unavailable' }), { status:503, headers:{'Content-Type':'application/json'} }));
   }
   if (u.hostname === 'api.open-meteo.com' && u.pathname === '/v1/forecast') {
@@ -136,7 +137,8 @@ async function main() {
     assert.equal(metrics.axisStart, '00:00', `${mode}: x axis must start at 00:00`);
     assert.equal(metrics.axisEnd, '23:00', `${mode}: x axis must end at 23:00`);
     assert.equal(metrics.requests[mode], 1, `${mode}: expected request path was not used`);
-    assert.equal(metrics.requests[mode === 'backend' ? 'fallback' : 'backend'], 0, `${mode}: unexpected alternate path used`);
+    // TASK-018 intentionally races backend and direct weather requests.
+    assert.equal(metrics.requests[mode === 'backend' ? 'fallback' : 'backend'], 1, `${mode}: concurrent alternate path was not started`);
     assert.ok(metrics.bodyScrollWidth <= metrics.viewportWidth + 1, `${mode}: body horizontal overflow detected`);
     console.log(JSON.stringify(metrics));
     console.log(`PASS: ${mode} path has 24 chart points, seven fingerprints, no fallbacks, 00:00–23:00 axis, and no body overflow`);

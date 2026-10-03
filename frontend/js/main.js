@@ -39,6 +39,7 @@ let state = {
 };
 let weatherGeneration = 0;
 const CACHE_MAX_AGE = 60 * 60 * 1000;
+const DEFAULT_LOCATION = { city: '北京', region: '北京', country: '中国', lat: 39.904, lon: 116.407 };
 
 // ═══════════════════════════════════════════════════════════
 //  工具函数
@@ -147,15 +148,24 @@ async function fetchJSON(url, timeout = 5000, opts = {}) {
 }
 
 async function ipLocation() {
+  const backend = fetchJSON(`${API_BASE}/api/location`, 8000).then(d => {
+    if (!d || d.error || !d.city || !Number.isFinite(Number(d.lat)) || !Number.isFinite(Number(d.lon))) {
+      throw new Error(d?.error || '后端定位失败');
+    }
+    if (d.country === 'United States' || d.country === 'US') throw new Error('后端定位结果不适用');
+    return { city: d.city, region: d.region || '', country: d.country || '', lat: Number(d.lat), lon: Number(d.lon) };
+  });
+  const direct = fetchJSON(API.ip, 8000).then(d => {
+    if (!d || d.error || d.country_code !== 'CN' || !d.city || !Number.isFinite(Number(d.latitude)) || !Number.isFinite(Number(d.longitude))) {
+      throw new Error(d?.error || '直连定位失败');
+    }
+    return { city: d.city, region: d.region || '', country: '中国', lat: Number(d.latitude), lon: Number(d.longitude) };
+  });
   try {
-    const d = await fetchJSON(`${API_BASE}/api/location`, 8000);
-    if (d && d.city && !d.error) return { city: d.city, region: d.region || '', country: d.country || '', lat: d.lat, lon: d.lon };
-  } catch {}
-  try {
-    const d2 = await fetchJSON(API.ip, 8000);
-    if (!d2 || d2.error) return null;
-    return { city: d2.city || '', region: d2.region || '', country: d2.country_name || '', lat: d2.latitude, lon: d2.longitude };
-  } catch { return null; }
+    return await Promise.any([backend, direct]);
+  } catch {
+    return null;
+  }
 }
 
 async function geoSearch(q) {
@@ -167,12 +177,22 @@ async function geoSearch(q) {
 }
 
 async function getWeather(lat, lon) {
-  const d = await fetchJSON(`${API_BASE}/api/weather?lat=${lat}&lon=${lon}`, 10000);
-  if (d && !d.error) return d;
-  const params = await getWeatherParams();
-  const d2 = await fetchJSON(`${API.wx}?latitude=${lat}&longitude=${lon}&${params}`, 10000);
-  if (!d2 || d2.error) throw new Error(d2?.error || d?.error || '天气数据获取失败');
-  return d2;
+  const backend = fetchJSON(`${API_BASE}/api/weather?lat=${lat}&lon=${lon}`, 10000).then(d => {
+    if (!d || d.error) throw new Error(d?.error || '后端天气请求失败');
+    return d;
+  });
+  const direct = getWeatherParams().then(params => fetchJSON(
+    `${API.wx}?latitude=${lat}&longitude=${lon}&${params}`, 10000
+  )).then(d => {
+    if (!d || d.error) throw new Error(d?.error || '直连天气请求失败');
+    return d;
+  });
+  try {
+    return await Promise.any([backend, direct]);
+  } catch (error) {
+    const messages = error?.errors?.map(e => e?.message).filter(Boolean) || [];
+    throw new Error(messages[0] || '天气数据获取失败');
+  }
 }
 
 async function getWeatherParams() {
@@ -180,7 +200,7 @@ async function getWeatherParams() {
     weatherParamsPromise = (async () => {
       if (!API_BASE) return WX_PARAMS;
       try {
-        const response = await fetch(`${API_BASE}/api/wx-params`, { cache: 'no-store' });
+        const response = await fetch(`${API_BASE}/api/wx-params`, { cache: 'no-store', signal: AbortSignal.timeout(2000) });
         const params = (await response.text()).trim();
         if (response.ok && params && params.includes('forecast_days=7') && !params.includes('forecast_hours=')) return params;
       } catch {}
@@ -780,73 +800,94 @@ QA('.tab-btn').forEach(btn => {
 // ═══════════════════════════════════════════════════════════
 //  搜索 & 主流程
 // ═══════════════════════════════════════════════════════════
+function readLastWeather() {
+  try {
+    const cached = JSON.parse(localStorage.getItem('wx_last') || 'null');
+    const lat = Number(cached?.loc?.lat), lon = Number(cached?.loc?.lon);
+    if (!cached?.loc || !Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+    return {
+      ...cached,
+      loc: { ...cached.loc, lat, lon },
+      ts: Number(cached.ts)
+    };
+  } catch {
+    return null;
+  }
+}
+
+function sameLocation(a, b) {
+  return !!a && !!b && Math.abs(Number(a.lat) - Number(b.lat)) < 0.01 && Math.abs(Number(a.lon) - Number(b.lon)) < 0.01;
+}
+
+async function discoverLocation(citiesPromise) {
+  const gps = new Promise((resolve, reject) => {
+    if (!('geolocation' in navigator)) return reject(new Error('浏览器不支持定位'));
+    navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 8000, maximumAge: 300000 });
+  }).then(async pos => {
+    await citiesPromise;
+    const name = findCity(pos.coords.latitude, pos.coords.longitude);
+    return { city: name || '当前位置', region: '', country: '中国', lat: pos.coords.latitude, lon: pos.coords.longitude };
+  });
+  const ip = ipLocation().then(async loc => {
+    await citiesPromise;
+    const cn = toPrefectureCity(loc.city);
+    return { ...loc, city: cn || loc.city };
+  });
+  try {
+    return await Promise.any([gps, ip]);
+  } catch {
+    return null;
+  }
+}
+
 async function init() {
   const generation = ++weatherGeneration;
-  let loc = null;
   toggle('loading');
-  try { await loadCities(); } catch {}
-  if (generation !== weatherGeneration) return;
+  const last = readLastWeather();
+  const hasLastLocation = !!last?.loc;
+  let activeLocation = hasLastLocation ? last.loc : DEFAULT_LOCATION;
+  let displayed = false;
 
-  // 1. GPS
-  if ('geolocation' in navigator) {
-    try {
-      const pos = await new Promise((res, rej) => {
-        navigator.geolocation.getCurrentPosition(res, rej, { timeout: 8000, maximumAge: 300000 });
-      });
-      const name = findCity(pos.coords.latitude, pos.coords.longitude);
-      loc = { city: name || '当前位置', region: '', country: '中国', lat: pos.coords.latitude, lon: pos.coords.longitude };
-    } catch {}
+  // City data and location discovery start together. A saved city skips location entirely.
+  const citiesPromise = loadCities().catch(() => []);
+  const locationPromise = hasLastLocation ? Promise.resolve(null) : discoverLocation(citiesPromise);
+
+  if (last?.wx && Date.now() - last.ts >= 0 && Date.now() - last.ts <= CACHE_MAX_AGE) {
+    state.city = activeLocation;
+    state.weather = last.wx;
+    renderWeather(activeLocation, last.wx);
+    displayed = true;
   }
-  if (generation !== weatherGeneration) return;
 
-  // 2. IP 兜底
-  if (!loc) {
-    try {
-      const d = await fetchJSON(`${API_BASE}/api/location`, 6000);
-      if (d && d.city && !d.error && d.country !== 'United States' && d.country !== 'US') {
-        const cn = toPrefectureCity(d.city);
-        loc = { city: cn || d.city, region: d.region || '', country: d.country || '', lat: d.lat, lon: d.lon };
-      }
-    } catch {}
-    if (generation !== weatherGeneration) return;
-    if (!loc) {
-      try {
-        const d2 = await fetchJSON(API.ip, 6000);
-        if (d2 && !d2.error && d2.country_code === 'CN') {
-          const cn = toPrefectureCity(d2.city);
-          loc = { city: cn || d2.city, region: d2.region || '', country: '中国', lat: d2.latitude, lon: d2.longitude };
-        }
-      } catch {}
-    }
-  }
-  if (generation !== weatherGeneration) return;
-
-  // 3. 北京兜底
-  if (!loc) loc = { city: '北京', region: '', country: '中国', lat: 39.904, lon: 116.407 };
-
-  try {
-    const wx = await getWeather(loc.lat, loc.lon);
-    if (generation !== weatherGeneration) return;
-    state.city = loc;
-    state.weather = wx;
-    localStorage.setItem('wx_last', JSON.stringify({ loc, wx, ts: Date.now() }));
-    renderWeather(loc, wx);
-  } catch (e) {
-    if (generation !== weatherGeneration) return;
-    const raw = localStorage.getItem('wx_last');
-    try {
-      const c = raw && JSON.parse(raw);
-      const age = Date.now() - c?.ts;
-      if (c?.loc && c?.wx && Number.isFinite(c.ts) && age >= 0 && age <= CACHE_MAX_AGE) {
-        state.city = c.loc;
-        state.weather = c.wx;
-        renderWeather(c.loc, c.wx);
-        $('weather-desc').textContent += ' · 显示缓存数据';
-        return;
-      }
-    } catch {}
-    $('error-msg').textContent = e.message;
+  const showError = error => {
+    if (generation !== weatherGeneration || displayed) return;
+    $('error-msg').textContent = error?.message || '天气数据获取失败';
     toggle('error-card');
+  };
+
+  const loadWeather = async loc => {
+    try {
+      const wx = await getWeather(loc.lat, loc.lon);
+      if (generation !== weatherGeneration || !sameLocation(loc, activeLocation)) return;
+      state.city = loc;
+      state.weather = wx;
+      localStorage.setItem('wx_last', JSON.stringify({ loc, wx, ts: Date.now() }));
+      renderWeather(loc, wx);
+      displayed = true;
+    } catch (error) {
+      if (sameLocation(loc, activeLocation)) showError(error);
+    }
+  };
+
+  // Fetch the saved/default city's weather immediately; location is only a background refinement.
+  void loadWeather(activeLocation);
+
+  if (!hasLastLocation) {
+    locationPromise.then(loc => {
+      if (!loc || generation !== weatherGeneration || sameLocation(loc, activeLocation)) return;
+      activeLocation = loc;
+      void loadWeather(loc);
+    });
   }
 }
 
