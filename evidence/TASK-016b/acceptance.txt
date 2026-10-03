@@ -85,7 +85,7 @@ PASS: cold-start latency measured for slow-backend and common backend/cache scen
 
 PASS: backend path; innerWidth, 24-point chart, seven fingerprints, 00:00–23:00 axis, full-width layout, and body overflow verified at 375 / 768 / 1280px
 
-Common cold start = 256ms <= 700ms; slow backend = 641ms; common direct requests = 0
+Common cold start = 248ms <= 700ms; slow backend = 635ms; common direct requests = 0
 
 PASS: 375px dark, 566 elements, exact DOM/computed styles/chart/screenshot parity
 
@@ -108,11 +108,17 @@ PASS: real HTTP immutable headers and warm cached main loading the edited child
 PASS: node --check for all 12 JS files
 
 $ git diff --check
-warning: in the working copy of 'evidence/TASK-016b/parity.cjs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'evidence/TASK-016b/final/keyboard.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'evidence/TASK-016b/final/keyboard.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'evidence/TASK-016b/final/regression.txt', LF will be replaced by CRLF the next time Git touches it
 warning: in the working copy of 'evidence/TASK-016b/rendered-index.html', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'evidence/TASK-016b/results.md', LF will be replaced by CRLF the next time Git touches it
 warning: in the working copy of 'frontend/js/config.js', LF will be replaced by CRLF the next time Git touches it
 
 $ git diff e6e8dc0 --check
-warning: in the working copy of 'evidence/TASK-016b/parity.cjs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'evidence/TASK-016b/final/keyboard.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'evidence/TASK-016b/final/keyboard.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'evidence/TASK-016b/final/regression.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'evidence/TASK-016b/results.md', LF will be replaced by CRLF the next time Git touches it
 
 PASS: HTML changes only importmap; server changes only hash injection/guard; original visual assets and sw.js preserved; all writes in allowed scope

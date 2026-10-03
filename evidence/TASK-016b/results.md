@@ -41,7 +41,7 @@
 2. `imports.cjs`：12 模块为 DAG、无动态 import、仅裸标识符、符合允许依赖方向；还使用 Node 的真实 ESM linker 验证所有命名导出，全部通过。
 3. `importmap.cjs`：12 app 条目覆盖 12 文件；每个哈希等于 SHA-1[:8]；模板及所有 JS 内无手写 ?v=；缺映射/错哈希被拒绝；只改子模块会自动刷新其 URL。服务端响应快照见 `rendered-index.html`。
 4. `npm run check:versions`：`PASS: 12 index asset versions match SHA-1 content hashes`。
-5. 完整回归：后端/兜底均为 24 点、7 行、每行 24 根指纹；375/768/1280 键盘主流程与扩展控件通过；两种竞速测试均取消慢后端，后端定位成功时直连定位 0 次；常见场景 **256ms ≤700ms**，慢后端 **641ms**，常见场景直连天气 0 次。全部日志在 `final/regression.txt`。
+5. 完整回归：后端/兜底均为 24 点、7 行、每行 24 根指纹；375/768/1280 键盘主流程与扩展控件通过；两种竞速测试均取消慢后端，后端定位成功时直连定位 0 次；常见场景 **248ms ≤700ms**，慢后端 **635ms**，常见场景直连天气 0 次。全部日志在 `final/regression.txt`。
 6. 12 个 JS 的 `node --check`、工作区及相对基线的 `git diff --check` 全部通过；HTML 只改 importmap，module script 行字节保持；server.js 在哈希注入区之外的内容不变；sw.js 字节不变；写入均在授权范围。
 
 ## 额外的行为和视觉验证
@@ -66,7 +66,7 @@ node evidence/TASK-016b/cache.cjs
 node evidence/TASK-016b/acceptance.cjs
 ```
 
-016c 原脚本仍用已经移除的 `js/main.js?v=13` 定位 bootstrap，并假设竞速两路必定都发出请求；这与 018b 的 150ms hedge 不符。015e/browser.cjs 是辅助库，其键盘驱动是 keyboard.cjs。`preload.cjs` 只在内存中适配旧 bootstrap、按 018b 校正请求数并重定向证据输出；不会修改历史脚本，也不会修改生产代码。regression.cjs 执行所有指定脚本并实际执行 keyboard.cjs。
+016c 原脚本仍用已经移除的 `js/main.js?v=13` 定位 bootstrap，并假设竞速两路必定都发出请求；这与 018b 的 150ms hedge 不符。015e/browser.cjs 是辅助库，其键盘驱动是 keyboard.cjs。重复验收还发现 018b 的 Page.navigate 返回后可能早于 mock bootstrap 执行，且旧截图驱动可能在导航布局完成前截取。`preload.cjs` 在内存中适配旧 bootstrap、按 018b 校正请求数、等待 bootstrap/文档就绪、等待导航布局并按完整内容范围截图、重定向证据输出；不会修改历史脚本，也不会修改生产代码。latency.cjs 原有从导航开始计时的逻辑保持。regression.cjs 执行所有指定脚本并实际执行 keyboard.cjs。
 
 单独重跑旧指纹脚本需要：
 

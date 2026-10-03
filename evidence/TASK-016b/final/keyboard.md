@@ -25,7 +25,7 @@
 19. Tab × 4 → .guide-tab[data-guide="travel"]（焦点环 2px solid）
 20. Tab × 1 → .tab-btn[data-tab="home"]（焦点环 2px solid）
 21. Tab × 8 → #map-btn（焦点环 2px solid）
-22. Tab × 0 → #map-close（焦点环 2px solid）
+22. Tab × 1 → #map-close（焦点环 2px solid）
 23. Enter 打开原生 modal → Tab 未进入背景控件 → 在关闭按钮按 Esc 关闭 → 焦点回 #map-btn
 
 ## 768px
@@ -51,7 +51,7 @@
 19. Tab × 4 → .guide-tab[data-guide="travel"]（焦点环 2px solid）
 20. Tab × 1 → .tab-btn[data-tab="home"]（焦点环 2px solid）
 21. Tab × 8 → #map-btn（焦点环 2px solid）
-22. Tab × 0 → #map-close（焦点环 2px solid）
+22. Tab × 1 → #map-close（焦点环 2px solid）
 23. Enter 打开原生 modal → Tab 未进入背景控件 → 在关闭按钮按 Esc 关闭 → 焦点回 #map-btn
 
 ## 1280px

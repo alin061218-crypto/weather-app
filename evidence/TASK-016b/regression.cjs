@@ -25,11 +25,15 @@ for (const args of checks) {
   const log = `$ node ${args.join(' ')}\n${result.stdout || ''}${result.stderr || ''}`;
   logs.push(log);
   fs.writeFileSync(path.join(output, 'regression.txt'), logs.join('\n'));
-  process.stdout.write(log);
+  console.log(`$ node ${args.join(' ')}`);
+  if (result.status === 0) {
+    for (const line of (result.stdout || '').split(/\r?\n/).filter(line => line.startsWith('PASS:'))) console.log(line);
+  } else process.stdout.write(`${result.stdout || ''}${result.stderr || ''}`);
   assert.equal(result.status, 0, `${args.join(' ')} failed: ${result.error || result.stderr}`);
   if (args[0].endsWith('latency.cjs')) {
     const latency = JSON.parse(result.stdout.slice(0, result.stdout.indexOf('\nPASS:')));
     assert.ok(latency.common.elapsedMs <= 700, `common cold start exceeds 700ms: ${latency.common.elapsedMs}`);
+    console.log(`common=${latency.common.elapsedMs}ms; slow-backend=${latency.slowBackend.elapsedMs}ms`);
   }
 }
 console.log(`PASS: ${label} complete regression, including keyboard and screenshots at 375 / 768 / 1280px`);

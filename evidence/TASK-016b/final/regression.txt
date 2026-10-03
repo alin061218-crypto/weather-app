@@ -23,9 +23,9 @@ $ node evidence/TASK-015e/keyboard.cjs
     "modalFocus": [
       "BODY",
       "BODY",
-      "BUTTON",
       "BODY",
-      "BUTTON"
+      "BODY",
+      "BODY"
     ],
     "requests": {
       "weather": 3,
@@ -54,7 +54,7 @@ $ node evidence/TASK-015e/keyboard.cjs
       "Tab × 4 → .guide-tab[data-guide=\"travel\"]（焦点环 2px solid）",
       "Tab × 1 → .tab-btn[data-tab=\"home\"]（焦点环 2px solid）",
       "Tab × 8 → #map-btn（焦点环 2px solid）",
-      "Tab × 0 → #map-close（焦点环 2px solid）",
+      "Tab × 1 → #map-close（焦点环 2px solid）",
       "Enter 打开原生 modal → Tab 未进入背景控件 → 在关闭按钮按 Esc 关闭 → 焦点回 #map-btn"
     ]
   },
@@ -71,9 +71,9 @@ $ node evidence/TASK-015e/keyboard.cjs
     "modalFocus": [
       "BODY",
       "BODY",
-      "BUTTON",
       "BODY",
-      "BUTTON"
+      "BUTTON",
+      "BODY"
     ],
     "requests": {
       "weather": 3,
@@ -102,7 +102,7 @@ $ node evidence/TASK-015e/keyboard.cjs
       "Tab × 4 → .guide-tab[data-guide=\"travel\"]（焦点环 2px solid）",
       "Tab × 1 → .tab-btn[data-tab=\"home\"]（焦点环 2px solid）",
       "Tab × 8 → #map-btn（焦点环 2px solid）",
-      "Tab × 0 → #map-close（焦点环 2px solid）",
+      "Tab × 1 → #map-close（焦点环 2px solid）",
       "Enter 打开原生 modal → Tab 未进入背景控件 → 在关闭按钮按 Esc 关闭 → 焦点回 #map-btn"
     ]
   },
@@ -159,7 +159,7 @@ PASS: keyboard main flow and additional controls at 375 / 768 / 1280px
 
 $ node evidence/TASK-018b/race.cjs
 {
-  "elapsedMs": 597,
+  "elapsedMs": 584,
   "visible": true,
   "requests": {
     "backendWeather": 1,
@@ -177,7 +177,7 @@ PASS: one Open-Meteo request and the slower backend loser was canceled
 
 $ node evidence/TASK-018b/race.cjs --location
 {
-  "elapsedMs": 611,
+  "elapsedMs": 582,
   "visible": true,
   "requests": {
     "backendWeather": 1,
@@ -199,7 +199,7 @@ $ node evidence/TASK-018b/latency.cjs
     "mode": "slow-backend",
     "backendDelay": 6000,
     "directDelay": 300,
-    "elapsedMs": 641,
+    "elapsedMs": 635,
     "visible": true,
     "requests": {
       "backendWeather": 1,
@@ -214,7 +214,7 @@ $ node evidence/TASK-018b/latency.cjs
     "mode": "common",
     "backendDelay": 80,
     "directDelay": 300,
-    "elapsedMs": 256,
+    "elapsedMs": 248,
     "visible": true,
     "requests": {
       "backendWeather": 1,
