@@ -1,0 +1,142 @@
+[
+  {
+    "theme": "light",
+    "scene": "clear-day",
+    "width": 1280,
+    "innerWidth": 1280,
+    "clientWidth": 1280,
+    "bodyScrollWidth": 1280,
+    "weather": "clear-day",
+    "screenshot": "light-clear-day.png"
+  },
+  {
+    "theme": "light",
+    "scene": "clear-night",
+    "width": 1280,
+    "innerWidth": 1280,
+    "clientWidth": 1280,
+    "bodyScrollWidth": 1280,
+    "weather": "clear-night",
+    "screenshot": "light-clear-night.png"
+  },
+  {
+    "theme": "light",
+    "scene": "cloudy",
+    "width": 1280,
+    "innerWidth": 1280,
+    "clientWidth": 1280,
+    "bodyScrollWidth": 1280,
+    "weather": "cloudy",
+    "screenshot": "light-cloudy.png"
+  },
+  {
+    "theme": "light",
+    "scene": "rain",
+    "width": 1280,
+    "innerWidth": 1280,
+    "clientWidth": 1280,
+    "bodyScrollWidth": 1280,
+    "weather": "rain",
+    "screenshot": "light-rain.png"
+  },
+  {
+    "theme": "light",
+    "scene": "snow",
+    "width": 1280,
+    "innerWidth": 1280,
+    "clientWidth": 1280,
+    "bodyScrollWidth": 1280,
+    "weather": "snow",
+    "screenshot": "light-snow.png"
+  },
+  {
+    "theme": "light",
+    "scene": "fog",
+    "width": 1280,
+    "innerWidth": 1280,
+    "clientWidth": 1280,
+    "bodyScrollWidth": 1280,
+    "weather": "fog",
+    "screenshot": "light-fog.png"
+  },
+  {
+    "theme": "light",
+    "scene": "storm",
+    "width": 1280,
+    "innerWidth": 1280,
+    "clientWidth": 1280,
+    "bodyScrollWidth": 1280,
+    "weather": "storm",
+    "screenshot": "light-storm.png"
+  },
+  {
+    "theme": "dark",
+    "scene": "clear-day",
+    "width": 1280,
+    "innerWidth": 1280,
+    "clientWidth": 1280,
+    "bodyScrollWidth": 1280,
+    "weather": "clear-day",
+    "screenshot": "dark-clear-day.png"
+  },
+  {
+    "theme": "dark",
+    "scene": "clear-night",
+    "width": 1280,
+    "innerWidth": 1280,
+    "clientWidth": 1280,
+    "bodyScrollWidth": 1280,
+    "weather": "clear-night",
+    "screenshot": "dark-clear-night.png"
+  },
+  {
+    "theme": "dark",
+    "scene": "cloudy",
+    "width": 1280,
+    "innerWidth": 1280,
+    "clientWidth": 1280,
+    "bodyScrollWidth": 1280,
+    "weather": "cloudy",
+    "screenshot": "dark-cloudy.png"
+  },
+  {
+    "theme": "dark",
+    "scene": "rain",
+    "width": 1280,
+    "innerWidth": 1280,
+    "clientWidth": 1280,
+    "bodyScrollWidth": 1280,
+    "weather": "rain",
+    "screenshot": "dark-rain.png"
+  },
+  {
+    "theme": "dark",
+    "scene": "snow",
+    "width": 1280,
+    "innerWidth": 1280,
+    "clientWidth": 1280,
+    "bodyScrollWidth": 1280,
+    "weather": "snow",
+    "screenshot": "dark-snow.png"
+  },
+  {
+    "theme": "dark",
+    "scene": "fog",
+    "width": 1280,
+    "innerWidth": 1280,
+    "clientWidth": 1280,
+    "bodyScrollWidth": 1280,
+    "weather": "fog",
+    "screenshot": "dark-fog.png"
+  },
+  {
+    "theme": "dark",
+    "scene": "storm",
+    "width": 1280,
+    "innerWidth": 1280,
+    "clientWidth": 1280,
+    "bodyScrollWidth": 1280,
+    "weather": "storm",
+    "screenshot": "dark-storm.png"
+  }
+]

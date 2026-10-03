@@ -145,7 +145,6 @@ body[data-weather="snow"] { --scene-bg: #2b3648; --scene-ink: #f2f5f9; --scene-s
 body[data-weather="fog"] { --scene-bg: #262e3a; --scene-ink: #f2f5f9; --scene-secondary: #d1d8e2; --scene-muted: #b4becd; --scrim-text: linear-gradient(100deg, rgba(8,12,20,.56), transparent 74%); }
 body[data-weather="storm"] { --scene-bg: #111827; --scene-ink: #f2f5f9; --scene-secondary: #cfd7e2; --scene-muted: #b1bdcd; --scrim-text: linear-gradient(100deg, rgba(8,12,20,.64), transparent 74%); }
 [data-theme="light"] body[data-weather] { --scene-bg: #f6f4f0; --scene-ink: #1a1d24; --scene-secondary: #3f4a5c; --scene-muted: #596476; }
-[data-theme="light"] body[data-weather="clear-night"] { --scene-bg: #243047; --scene-ink: #f2f5f9; --scene-secondary: #d1d8e2; --scene-muted: #b4becd; }
 
 /* ---------- 全局重置 ---------- */
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -273,6 +272,7 @@ body[data-weather] { --ink: var(--scene-ink); --ink-secondary: var(--scene-secon
   display: flex; align-items: center; justify-content: center;
   transition: background-color var(--duration-normal) var(--ease-out), border-color var(--duration-normal) var(--ease-out), color var(--duration-normal) var(--ease-out), box-shadow var(--duration-normal) var(--ease-out);
 }
+.theme-contrast-icon { font-size: 1.25rem; line-height: 1; font-family: Arial, sans-serif; }
 .tool-btn:hover:not(:disabled) {
   color: var(--ink); border-color: var(--border-strong);
   background: var(--surface-hover);

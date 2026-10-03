@@ -36,15 +36,16 @@ function codeToType(code) {
 class SunScene {
   constructor(scene, isDay) {
     this.scene = scene; this.group = new THREE.Group(); this.isDay = isDay;
+    this.lightTheme = document.documentElement.getAttribute('data-theme') === 'light';
     this.dustData = []; this.starData = [];
     this._build();
   }
 
   _build() {
     if (!this.isDay) {
-      const moon = new THREE.Mesh(new THREE.SphereGeometry(0.35, 32, 32), new THREE.MeshBasicMaterial({ color: '#e8e0d0' }));
+      const moon = new THREE.Mesh(new THREE.SphereGeometry(0.35, 32, 32), new THREE.MeshBasicMaterial({ color: this.lightTheme ? '#c4ccd6' : '#e8e0d0' }));
       moon.position.set(1.8, 1.4, -2); this.group.add(moon);
-      const halo = new THREE.Mesh(new THREE.SphereGeometry(0.55, 32, 32), new THREE.MeshBasicMaterial({ color: '#e8e0d0', transparent: true, opacity: 0.06, depthWrite: false }));
+      const halo = new THREE.Mesh(new THREE.SphereGeometry(0.55, 32, 32), new THREE.MeshBasicMaterial({ color: this.lightTheme ? '#d8dde5' : '#e8e0d0', transparent: true, opacity: 0.06, depthWrite: false }));
       halo.position.copy(moon.position); this.group.add(halo);
       const N = 120, arr = new Float32Array(N * 3);
       for (let i = 0; i < N; i++) {
@@ -52,23 +53,23 @@ class SunScene {
         this.starData.push({ tw: 0.4 + Math.random() * 0.8, ph: Math.random() * Math.PI * 2, sp: 0.8 + Math.random() * 2.5 });
       }
       const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.BufferAttribute(arr, 3));
-      const sm = new THREE.PointsMaterial({ map: glowTex('#ffffff', 'transparent', 16), color: '#ffffff', size: 0.06, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.7 });
+      const sm = new THREE.PointsMaterial({ map: glowTex(this.lightTheme ? '#b8c2cf' : '#ffffff', 'transparent', 16), color: this.lightTheme ? '#b8c2cf' : '#ffffff', size: 0.06, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.7 });
       this.stars = new THREE.Points(sg, sm); this.group.add(this.stars);
     } else {
-      const sun = new THREE.Mesh(new THREE.SphereGeometry(0.45, 32, 32), new THREE.MeshBasicMaterial({ color: '#fff4d6' }));
+      const sun = new THREE.Mesh(new THREE.SphereGeometry(0.45, 32, 32), new THREE.MeshBasicMaterial({ color: this.lightTheme ? '#f0dfae' : '#fff4d6' }));
       sun.position.set(1.5, 1.5, -2); this.group.add(sun);
       for (let s = 0.7; s <= 1.6; s += 0.3) {
-        const h = new THREE.Mesh(new THREE.SphereGeometry(s, 32, 32), new THREE.MeshBasicMaterial({ color: '#fff4d6', transparent: true, opacity: 0.03, depthWrite: false }));
+        const h = new THREE.Mesh(new THREE.SphereGeometry(s, 32, 32), new THREE.MeshBasicMaterial({ color: this.lightTheme ? '#f0dfae' : '#fff4d6', transparent: true, opacity: 0.03, depthWrite: false }));
         h.position.copy(sun.position); this.group.add(h);
       }
-      const rt = glowTex('#fff4d6', 'transparent', 32);
+      const rt = glowTex(this.lightTheme ? '#f0dfae' : '#fff4d6', 'transparent', 32);
       for (let i = 0; i < 8; i++) {
         const a = (i / 8) * Math.PI * 2 + Math.random() * 0.2, len = 1.5 + Math.random() * 2;
         const r = new THREE.Mesh(new THREE.PlaneGeometry(0.05, len), new THREE.MeshBasicMaterial({ map: rt, transparent: true, opacity: 0.2 + Math.random() * 0.15, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide }));
         r.position.set(sun.position.x + Math.cos(a) * len / 2, sun.position.y + Math.sin(a) * len / 2, sun.position.z); r.rotation.z = a; this.group.add(r);
       }
     }
-    this._addDust(60, '#fff4d6', 0.18, 0.06);
+    this._addDust(60, this.lightTheme ? '#d6c79e' : '#fff4d6', 0.18, 0.06);
     this.scene.add(this.group);
   }
 

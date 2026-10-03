@@ -1,0 +1,207 @@
+[
+  {
+    "theme": "light",
+    "scene": "clear-day",
+    "label": "main",
+    "foreground": "#1a1d24",
+    "background": "#f6f4f0",
+    "ratio": 15.35,
+    "threshold": 4.5
+  },
+  {
+    "theme": "light",
+    "scene": "clear-day",
+    "label": "secondary",
+    "foreground": "#3f4a5c",
+    "background": "#f6f4f0",
+    "ratio": 8.15,
+    "threshold": 4.5
+  },
+  {
+    "theme": "light",
+    "scene": "clear-day",
+    "label": "muted",
+    "foreground": "#596476",
+    "background": "#f6f4f0",
+    "ratio": 5.45,
+    "threshold": 4.5
+  },
+  {
+    "theme": "light",
+    "scene": "clear-night",
+    "label": "main",
+    "foreground": "#1a1d24",
+    "background": "#f6f4f0",
+    "ratio": 15.35,
+    "threshold": 4.5
+  },
+  {
+    "theme": "light",
+    "scene": "clear-night",
+    "label": "secondary",
+    "foreground": "#3f4a5c",
+    "background": "#f6f4f0",
+    "ratio": 8.15,
+    "threshold": 4.5
+  },
+  {
+    "theme": "light",
+    "scene": "clear-night",
+    "label": "muted",
+    "foreground": "#596476",
+    "background": "#f6f4f0",
+    "ratio": 5.45,
+    "threshold": 4.5
+  },
+  {
+    "theme": "light",
+    "scene": "cloudy",
+    "label": "main",
+    "foreground": "#1a1d24",
+    "background": "#f6f4f0",
+    "ratio": 15.35,
+    "threshold": 4.5
+  },
+  {
+    "theme": "light",
+    "scene": "cloudy",
+    "label": "secondary",
+    "foreground": "#3f4a5c",
+    "background": "#f6f4f0",
+    "ratio": 8.15,
+    "threshold": 4.5
+  },
+  {
+    "theme": "light",
+    "scene": "cloudy",
+    "label": "muted",
+    "foreground": "#596476",
+    "background": "#f6f4f0",
+    "ratio": 5.45,
+    "threshold": 4.5
+  },
+  {
+    "theme": "light",
+    "scene": "rain",
+    "label": "main",
+    "foreground": "#1a1d24",
+    "background": "#f6f4f0",
+    "ratio": 15.35,
+    "threshold": 4.5
+  },
+  {
+    "theme": "light",
+    "scene": "rain",
+    "label": "secondary",
+    "foreground": "#3f4a5c",
+    "background": "#f6f4f0",
+    "ratio": 8.15,
+    "threshold": 4.5
+  },
+  {
+    "theme": "light",
+    "scene": "rain",
+    "label": "muted",
+    "foreground": "#596476",
+    "background": "#f6f4f0",
+    "ratio": 5.45,
+    "threshold": 4.5
+  },
+  {
+    "theme": "light",
+    "scene": "snow",
+    "label": "main",
+    "foreground": "#1a1d24",
+    "background": "#f6f4f0",
+    "ratio": 15.35,
+    "threshold": 4.5
+  },
+  {
+    "theme": "light",
+    "scene": "snow",
+    "label": "secondary",
+    "foreground": "#3f4a5c",
+    "background": "#f6f4f0",
+    "ratio": 8.15,
+    "threshold": 4.5
+  },
+  {
+    "theme": "light",
+    "scene": "snow",
+    "label": "muted",
+    "foreground": "#596476",
+    "background": "#f6f4f0",
+    "ratio": 5.45,
+    "threshold": 4.5
+  },
+  {
+    "theme": "light",
+    "scene": "fog",
+    "label": "main",
+    "foreground": "#1a1d24",
+    "background": "#f6f4f0",
+    "ratio": 15.35,
+    "threshold": 4.5
+  },
+  {
+    "theme": "light",
+    "scene": "fog",
+    "label": "secondary",
+    "foreground": "#3f4a5c",
+    "background": "#f6f4f0",
+    "ratio": 8.15,
+    "threshold": 4.5
+  },
+  {
+    "theme": "light",
+    "scene": "fog",
+    "label": "muted",
+    "foreground": "#596476",
+    "background": "#f6f4f0",
+    "ratio": 5.45,
+    "threshold": 4.5
+  },
+  {
+    "theme": "light",
+    "scene": "storm",
+    "label": "main",
+    "foreground": "#1a1d24",
+    "background": "#f6f4f0",
+    "ratio": 15.35,
+    "threshold": 4.5
+  },
+  {
+    "theme": "light",
+    "scene": "storm",
+    "label": "secondary",
+    "foreground": "#3f4a5c",
+    "background": "#f6f4f0",
+    "ratio": 8.15,
+    "threshold": 4.5
+  },
+  {
+    "theme": "light",
+    "scene": "storm",
+    "label": "muted",
+    "foreground": "#596476",
+    "background": "#f6f4f0",
+    "ratio": 5.45,
+    "threshold": 4.5
+  },
+  {
+    "theme": "light",
+    "label": "theme button text",
+    "foreground": "#ffffff",
+    "background": "#2c6ccf",
+    "ratio": 5.06,
+    "threshold": 4.5
+  },
+  {
+    "theme": "light",
+    "label": "theme focus ring",
+    "foreground": "#2c6ccf",
+    "background": "#e8e4de",
+    "ratio": 3.99,
+    "threshold": 3
+  }
+]
