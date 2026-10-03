@@ -8,6 +8,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const fs = require('fs');
+const os = require('os');
 const Database = require('better-sqlite3');
 const path = require('path');
 
@@ -133,6 +134,24 @@ if (!/^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/.test(ADMIN_PASSWORD_HASH)) {
 const DB_ROOT = fs.existsSync('/data') ? '/data' : path.join(__dirname, 'data');
 const DB_PATH = process.env.DB_DIR || path.join(DB_ROOT, 'db');
 const DB_FILE = path.join(DB_PATH, 'weather.db');
+
+function isInside(parent, child) {
+    const relative = path.relative(path.resolve(parent), path.resolve(child));
+    return relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative));
+}
+
+const resolvedDbPath = path.resolve(DB_PATH);
+if (isInside(os.tmpdir(), resolvedDbPath)) {
+    console.warn(`⚠️ 数据库位于临时目录：${resolvedDbPath}`);
+    console.warn('   系统可能清理该目录导致数据丢失。请把 DB_DIR 指向稳定路径（见 docs TASK-020）。');
+}
+const walFile = `${DB_FILE}-wal`;
+if (fs.existsSync(walFile)) {
+    const walBytes = fs.statSync(walFile).size;
+    if (walBytes > 5 * 1024 * 1024) {
+        console.warn(`⚠️ WAL 文件异常大：${walFile} (${walBytes} B)，上次可能未正常关闭。`);
+    }
+}
 
 // ===== 初始化数据目录和数据库 =====
 if (!fs.existsSync(DB_PATH)) fs.mkdirSync(DB_PATH, { recursive: true });

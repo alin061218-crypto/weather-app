@@ -4,6 +4,10 @@ data/
 .claude/
 frontend/.claude/
 *.sqlite*
+*.db
+*.db-wal
+*.db-shm
+backups/
 evidence/**/*.tmp
 server-task018.err.log
 server-task018.out.log
