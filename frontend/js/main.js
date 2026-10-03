@@ -38,7 +38,7 @@ let state = {
   theme: localStorage.getItem('wx_theme') || 'dark',
 };
 let weatherGeneration = 0;
-const CACHE_MAX_AGE = 60 * 60 * 1000;
+const CACHE_MAX_AGE = 30 * 60 * 1000;
 const DEFAULT_LOCATION = { city: '北京', region: '北京', country: '中国', lat: 39.904, lon: 116.407 };
 
 // ═══════════════════════════════════════════════════════════
@@ -124,6 +124,13 @@ function temperatureFingerprint(hours, unit, scale) {
 // ═══════════════════════════════════════════════════════════
 async function fetchJSON(url, timeout = 5000, opts = {}) {
   const ctrl = new AbortController();
+  const cancel = () => ctrl.abort(opts.signal.reason);
+  let signal = ctrl.signal;
+  if (opts.signal) {
+    if (typeof AbortSignal.any === 'function') signal = AbortSignal.any([ctrl.signal, opts.signal]);
+    else if (opts.signal.aborted) cancel();
+    else opts.signal.addEventListener('abort', cancel, { once: true });
+  }
   const t = setTimeout(() => ctrl.abort(), timeout);
   const headers = { ...(opts.headers || {}) };
   if (authToken) headers.Authorization = `Bearer ${authToken}`;
@@ -131,38 +138,42 @@ async function fetchJSON(url, timeout = 5000, opts = {}) {
   try {
     let r;
     try {
-      r = await fetch(url, { signal: ctrl.signal, headers, method: opts.method, body: opts.body });
+      r = await fetch(url, { signal, headers, method: opts.method, body: opts.body });
     } catch (e) {
+      if (opts.signal?.aborted) throw e;
       return { error: e.name === 'AbortError' ? '网络失败：请求超时' : `网络失败：${e.message || '无法连接'}`, kind: 'network' };
     }
     let data;
     try {
       data = await r.json();
     } catch (e) {
+      if (opts.signal?.aborted) throw e;
       if (!r.ok) return { error: `HTTP ${r.status}：${r.statusText || '请求失败'}`, kind: 'http', status: r.status };
       return { error: `解析失败：${e.message || '响应不是有效 JSON'}`, kind: 'parse' };
     }
     if (!r.ok) return { error: `HTTP ${r.status}：${data?.error || data?.message || r.statusText || '请求失败'}`, kind: 'http', status: r.status };
     return data;
-  } finally { clearTimeout(t); }
+  } finally {
+    clearTimeout(t);
+    opts.signal?.removeEventListener('abort', cancel);
+  }
 }
 
 async function ipLocation() {
-  const backend = fetchJSON(`${API_BASE}/api/location`, 8000).then(d => {
+  try {
+    const d = await fetchJSON(`${API_BASE}/api/location`, 8000);
     if (!d || d.error || !d.city || !Number.isFinite(Number(d.lat)) || !Number.isFinite(Number(d.lon))) {
       throw new Error(d?.error || '后端定位失败');
     }
     if (d.country === 'United States' || d.country === 'US') throw new Error('后端定位结果不适用');
     return { city: d.city, region: d.region || '', country: d.country || '', lat: Number(d.lat), lon: Number(d.lon) };
-  });
-  const direct = fetchJSON(API.ip, 8000).then(d => {
+  } catch {}
+  try {
+    const d = await fetchJSON(API.ip, 8000);
     if (!d || d.error || d.country_code !== 'CN' || !d.city || !Number.isFinite(Number(d.latitude)) || !Number.isFinite(Number(d.longitude))) {
       throw new Error(d?.error || '直连定位失败');
     }
     return { city: d.city, region: d.region || '', country: '中国', lat: Number(d.latitude), lon: Number(d.longitude) };
-  });
-  try {
-    return await Promise.any([backend, direct]);
   } catch {
     return null;
   }
@@ -177,12 +188,26 @@ async function geoSearch(q) {
 }
 
 async function getWeather(lat, lon) {
-  const backend = fetchJSON(`${API_BASE}/api/weather?lat=${lat}&lon=${lon}`, 10000).then(d => {
+  const cached = readWeatherCache(lat, lon);
+  if (cached) return cached.wx;
+
+  const controller = new AbortController();
+  let startDirect;
+  const ready = new Promise(resolve => { startDirect = resolve; });
+  // Give backend cache hits a head start; failures release the direct fallback immediately.
+  const timer = setTimeout(startDirect, 150);
+  const backend = fetchJSON(`${API_BASE}/api/weather?lat=${lat}&lon=${lon}`, 10000, { signal: controller.signal }).then(d => {
     if (!d || d.error) throw new Error(d?.error || '后端天气请求失败');
     return d;
+  }).catch(error => {
+    startDirect();
+    throw error;
   });
-  const direct = getWeatherParams().then(params => fetchJSON(
-    `${API.wx}?latitude=${lat}&longitude=${lon}&${params}`, 10000
+  const direct = ready.then(() => {
+    if (controller.signal.aborted) throw controller.signal.reason;
+    return getWeatherParams();
+  }).then(params => fetchJSON(
+    `${API.wx}?latitude=${lat}&longitude=${lon}&${params}`, 10000, { signal: controller.signal }
   )).then(d => {
     if (!d || d.error) throw new Error(d?.error || '直连天气请求失败');
     return d;
@@ -192,6 +217,10 @@ async function getWeather(lat, lon) {
   } catch (error) {
     const messages = error?.errors?.map(e => e?.message).filter(Boolean) || [];
     throw new Error(messages[0] || '天气数据获取失败');
+  } finally {
+    controller.abort();
+    clearTimeout(timer);
+    startDirect();
   }
 }
 
@@ -819,22 +848,27 @@ function sameLocation(a, b) {
   return !!a && !!b && Math.abs(Number(a.lat) - Number(b.lat)) < 0.01 && Math.abs(Number(a.lon) - Number(b.lon)) < 0.01;
 }
 
+function readWeatherCache(lat, lon) {
+  const cached = readLastWeather();
+  const age = Date.now() - cached?.ts;
+  return cached?.wx?.current_weather && age >= 0 && age < CACHE_MAX_AGE
+    && cached.loc.lat.toFixed(2) === Number(lat).toFixed(2) && cached.loc.lon.toFixed(2) === Number(lon).toFixed(2) ? cached : null;
+}
+
 async function discoverLocation(citiesPromise) {
-  const gps = new Promise((resolve, reject) => {
-    if (!('geolocation' in navigator)) return reject(new Error('浏览器不支持定位'));
-    navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 8000, maximumAge: 300000 });
-  }).then(async pos => {
-    await citiesPromise;
-    const name = findCity(pos.coords.latitude, pos.coords.longitude);
-    return { city: name || '当前位置', region: '', country: '中国', lat: pos.coords.latitude, lon: pos.coords.longitude };
-  });
-  const ip = ipLocation().then(async loc => {
-    await citiesPromise;
+  const loc = await ipLocation();
+  await citiesPromise;
+  if (loc) {
     const cn = toPrefectureCity(loc.city);
     return { ...loc, city: cn || loc.city };
-  });
+  }
   try {
-    return await Promise.any([gps, ip]);
+    const pos = await new Promise((resolve, reject) => {
+      if (!('geolocation' in navigator)) return reject(new Error('浏览器不支持定位'));
+      navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 8000, maximumAge: 300000 });
+    });
+    const name = findCity(pos.coords.latitude, pos.coords.longitude);
+    return { city: name || '当前位置', region: '', country: '中国', lat: pos.coords.latitude, lon: pos.coords.longitude };
   } catch {
     return null;
   }
@@ -867,11 +901,12 @@ async function init() {
 
   const loadWeather = async loc => {
     try {
+      const cachedTimestamp = readWeatherCache(loc.lat, loc.lon)?.ts;
       const wx = await getWeather(loc.lat, loc.lon);
       if (generation !== weatherGeneration || !sameLocation(loc, activeLocation)) return;
       state.city = loc;
       state.weather = wx;
-      localStorage.setItem('wx_last', JSON.stringify({ loc, wx, ts: Date.now() }));
+      localStorage.setItem('wx_last', JSON.stringify({ loc, wx, ts: cachedTimestamp ?? Date.now() }));
       renderWeather(loc, wx);
       displayed = true;
     } catch (error) {
@@ -1010,10 +1045,12 @@ async function selectCity(c) {
 
   const loc = { city: c.name, region: c.admin1 || '', country: c.country || '', lat: c.lat, lon: c.lon, coordinateSource };
   try {
+    const cachedTimestamp = readWeatherCache(c.lat, c.lon)?.ts;
     const wx = await getWeather(c.lat, c.lon);
     if (generation !== weatherGeneration) return;
     state.city = loc;
     state.weather = wx;
+    localStorage.setItem('wx_last', JSON.stringify({ loc, wx, ts: cachedTimestamp ?? Date.now() }));
     renderWeather(loc, wx);
     toggle('weather-card');
     if (authToken) {

@@ -4,3 +4,5 @@ data/
 .claude/
 *.sqlite*
 evidence/**/*.tmp
+server-task018.err.log
+server-task018.out.log

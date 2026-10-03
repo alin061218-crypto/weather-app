@@ -16,6 +16,39 @@ app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3001;
 const FRONTEND_ROOT = path.join(__dirname, 'frontend');
 const THREE_GZIP_FILE = path.join(FRONTEND_ROOT, 'vendor', 'three.module.js.gz');
+const INDEX_TEMPLATE = fs.readFileSync(path.join(FRONTEND_ROOT, 'index.html'), 'utf8');
+const ASSET_REFERENCE = /(["'])((?:\/)?(?:js|css|vendor)\/[^"'?#\s]+)(?:\?[^"'#\s]*)?\1/g;
+const assetHashes = new Map();
+function assetVersion(url) {
+    const file = path.join(FRONTEND_ROOT, url.replace(/^\//, ''));
+    const stat = fs.statSync(file);
+    const stamp = `${stat.mtimeMs}:${stat.ctimeMs}:${stat.size}`;
+    if (assetHashes.get(file)?.stamp !== stamp) {
+        assetHashes.set(file, { stamp, hash: crypto.createHash('sha1').update(fs.readFileSync(file)).digest('hex').slice(0, 8) });
+    }
+    return assetHashes.get(file).hash;
+}
+function renderIndex() {
+    return INDEX_TEMPLATE.replace(ASSET_REFERENCE, (_match, quote, url) => `${quote}${url}?v=${assetVersion(url)}${quote}`);
+}
+function checkAssetVersions(html) {
+    const references = [...html.matchAll(ASSET_REFERENCE)];
+    if (!references.length) throw new Error('No index asset references found');
+    for (const [reference, , url] of references) {
+        const version = new URL(reference.slice(1, -1), 'http://localhost').searchParams.get('v');
+        if (version !== assetVersion(url)) throw new Error(`Asset version mismatch: ${url} (${version})`);
+    }
+    return references.length;
+}
+// Run the guard without starting the service; optionally verify a saved HTTP response.
+if (process.argv.includes('--check-asset-versions')) {
+    if ([...INDEX_TEMPLATE.matchAll(ASSET_REFERENCE)].some(([reference]) => reference.includes('?'))) {
+        throw new Error('Index asset versions must be injected, not hardcoded');
+    }
+    const html = process.argv[3] ? fs.readFileSync(process.argv[3], 'utf8') : renderIndex();
+    console.log(`PASS: ${checkAssetVersions(html)} index asset versions match SHA-1 content hashes`);
+    process.exit(0);
+}
 const HALF_HOUR_MS = 30 * 60 * 1000;
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_ISSUER = 'weather-app';
@@ -177,13 +210,20 @@ app.use(helmet({
 app.use('/api', cors(corsOptions));
 app.use(express.json({ limit: '32kb' }));
 
+app.get(['/', '/index.html'], (_req, res) => {
+    res.setHeader('Cache-Control', 'no-cache');
+    res.type('html').send(renderIndex());
+});
+
 // The large, versioned Three.js module is precompressed at build time so the
 // server does not spend CPU time gzipping it on every request.
+// When updating Three.js, regenerate three.module.js.gz AND update the import-map
+// ?v= (formerly manual): renderIndex now derives that version from the new JS hash.
 app.get('/vendor/three.module.js', (req, res, next) => {
     const acceptEncoding = req.get('accept-encoding') || '';
     if (!/\bgzip\b/i.test(acceptEncoding) || !fs.existsSync(THREE_GZIP_FILE)) return next();
     res.set({
-        'Cache-Control': 'public, max-age=31536000, immutable',
+        'Cache-Control': /^[a-f0-9]{8}$/.test(req.query.v || '') ? 'public, max-age=31536000, immutable' : 'no-cache',
         'Content-Encoding': 'gzip',
         'Content-Type': 'application/javascript; charset=UTF-8',
         'Vary': 'Accept-Encoding'
@@ -201,7 +241,8 @@ app.use(express.static(FRONTEND_ROOT, {
         if (relative === 'index.html') {
             res.setHeader('Cache-Control', 'no-cache');
         } else if (/^(vendor|css|js)\//.test(relative)) {
-            res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+            // Unversioned module imports must revalidate, including future split modules.
+            res.setHeader('Cache-Control', /^[a-f0-9]{8}$/.test(res.req.query.v || '') ? 'public, max-age=31536000, immutable' : 'no-cache');
         } else if (/^data\//.test(relative)) {
             res.setHeader('Cache-Control', 'public, max-age=86400');
         }
@@ -290,6 +331,10 @@ app.get('/api/weather', async (req, res) => {
     }
 
     const cacheKey = latNum.toFixed(2) + ',' + lonNum.toFixed(2);
+    const controller = new AbortController();
+    const cancel = () => { if (!res.writableEnded) controller.abort(); };
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    res.on('close', cancel);
 
     try {
         const cached = stmt.cacheGet.get(cacheKey);
@@ -297,14 +342,17 @@ app.get('/api/weather', async (req, res) => {
             return res.json(JSON.parse(cached.data));
         }
         const r = await fetch(`${WEATHER_API}?latitude=${latNum}&longitude=${lonNum}&${WEATHER_PARAMS}`, {
-            signal: AbortSignal.timeout(8000)
+            signal: controller.signal
         });
         if (!r.ok) throw new Error(`Weather API returned ${r.status}`);
         const data = await r.json();
         stmt.cacheSet.run(cacheKey, JSON.stringify(data), Date.now());
         res.json(data);
     } catch (e) {
-        res.status(500).json({ error: '天气数据获取失败' });
+        if (!res.destroyed) res.status(500).json({ error: '天气数据获取失败' });
+    } finally {
+        clearTimeout(timeout);
+        res.off('close', cancel);
     }
 });
 
