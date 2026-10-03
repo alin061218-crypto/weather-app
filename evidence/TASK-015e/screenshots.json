@@ -1,0 +1,180 @@
+{
+  "results": [
+    {
+      "name": "home",
+      "innerWidth": 375,
+      "clientWidth": 375,
+      "bodyScrollWidth": 375,
+      "stats": 8,
+      "rows": 7,
+      "bars": [
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24
+      ],
+      "chartPoints": "24",
+      "axis": [
+        "00:00",
+        "23:00"
+      ],
+      "tabFont": "11.008px",
+      "tabIcon": "22px",
+      "tempFont": "54.4px",
+      "tempTracking": "-1.632px",
+      "statOverflow": 0
+    },
+    {
+      "name": "map-modal",
+      "innerWidth": 375,
+      "clientWidth": 375,
+      "bodyScrollWidth": 375,
+      "left": 20,
+      "right": 355,
+      "width": 335
+    },
+    {
+      "name": "chat",
+      "innerWidth": 375,
+      "clientWidth": 375,
+      "bodyScrollWidth": 375,
+      "maxHeight": "495px"
+    },
+    {
+      "name": "me-login",
+      "innerWidth": 375,
+      "clientWidth": 375,
+      "bodyScrollWidth": 375,
+      "top": 273.734375,
+      "bottom": 738.265625,
+      "pageTop": 0,
+      "pageBottom": 1012,
+      "centerDelta": 0,
+      "viewportCenterDelta": -44,
+      "listMaxHeight": "240px",
+      "formWidth": 343
+    },
+    {
+      "name": "home",
+      "innerWidth": 768,
+      "clientWidth": 768,
+      "bodyScrollWidth": 768,
+      "stats": 8,
+      "rows": 7,
+      "bars": [
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24
+      ],
+      "chartPoints": "24",
+      "axis": [
+        "00:00",
+        "23:00"
+      ],
+      "tabFont": "13.008px",
+      "tabIcon": "24px",
+      "tempFont": "88px",
+      "tempTracking": "-2.64px",
+      "statOverflow": 0
+    },
+    {
+      "name": "map-modal",
+      "innerWidth": 768,
+      "clientWidth": 768,
+      "bodyScrollWidth": 768,
+      "left": 84,
+      "right": 684,
+      "width": 600
+    },
+    {
+      "name": "chat",
+      "innerWidth": 768,
+      "clientWidth": 768,
+      "bodyScrollWidth": 768,
+      "maxHeight": "605px"
+    },
+    {
+      "name": "me-login",
+      "innerWidth": 768,
+      "clientWidth": 768,
+      "bodyScrollWidth": 768,
+      "top": 273.734375,
+      "bottom": 738.265625,
+      "pageTop": 0,
+      "pageBottom": 1012,
+      "centerDelta": 0,
+      "viewportCenterDelta": -44,
+      "listMaxHeight": "340px",
+      "formWidth": 400
+    },
+    {
+      "name": "home",
+      "innerWidth": 1280,
+      "clientWidth": 1280,
+      "bodyScrollWidth": 1280,
+      "stats": 8,
+      "rows": 7,
+      "bars": [
+        24,
+        24,
+        24,
+        24,
+        24,
+        24,
+        24
+      ],
+      "chartPoints": "24",
+      "axis": [
+        "00:00",
+        "23:00"
+      ],
+      "tabFont": "13.008px",
+      "tabIcon": "26px",
+      "tempFont": "88px",
+      "tempTracking": "-2.64px",
+      "statOverflow": 0
+    },
+    {
+      "name": "map-modal",
+      "innerWidth": 1280,
+      "clientWidth": 1280,
+      "bodyScrollWidth": 1280,
+      "left": 340,
+      "right": 940,
+      "width": 600
+    },
+    {
+      "name": "chat",
+      "innerWidth": 1280,
+      "clientWidth": 1280,
+      "bodyScrollWidth": 1280,
+      "maxHeight": "715px"
+    },
+    {
+      "name": "me-login",
+      "innerWidth": 1280,
+      "clientWidth": 1280,
+      "bodyScrollWidth": 1280,
+      "top": 301.734375,
+      "bottom": 766.265625,
+      "pageTop": 0,
+      "pageBottom": 1068,
+      "centerDelta": 0,
+      "viewportCenterDelta": -16,
+      "listMaxHeight": "440px",
+      "formWidth": 400
+    }
+  ],
+  "fallback": {
+    "weather": 1,
+    "direct": 1,
+    "favoriteWrites": 0
+  }
+}

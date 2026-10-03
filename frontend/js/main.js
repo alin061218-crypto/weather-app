@@ -498,6 +498,7 @@ function renderWeather(loc, wx) {
   $('temperature').textContent = state.unit === 'fahrenheit'
     ? F.c2f(cur.temperature) + '°F'
     : Math.round(cur.temperature) + '°';
+  $('temperature').setAttribute('aria-label', `当前 ${$('temperature').textContent}，切换到${state.unit === 'celsius' ? '华氏' : '摄氏'}温度`);
 
   // 描述
   $('weather-desc').textContent = DESC(cur.weathercode);
@@ -534,8 +535,11 @@ function renderWeather(loc, wx) {
       const precip = d.precipitation_probability_max?.[i] || 0;
 
       const fingerprint = temperatureFingerprint(h.temperature_2m?.slice(i * 24, i * 24 + 24), state.unit, fingerprintScale);
-      const dayDiv = document.createElement('div');
+      const dayDiv = document.createElement('button');
+      dayDiv.type = 'button';
       dayDiv.className = 'day-row';
+      dayDiv.setAttribute('aria-expanded', 'false');
+      dayDiv.setAttribute('aria-controls', `day-detail-${i}`);
       dayDiv.innerHTML = `
         <span class="day-name">${F.day(d.time[i])}</span>
         <span class="day-icon-wrap">${weatherIcon(d.weathercode[i], true)}</span>
@@ -549,6 +553,16 @@ function renderWeather(loc, wx) {
         </span>
       `;
       dailyList.appendChild(dayDiv);
+      const detail = document.createElement('p');
+      detail.id = `day-detail-${i}`;
+      detail.className = 'day-detail hidden';
+      detail.textContent = `${d.time[i]} ${DESC(d.weathercode[i])}，最低 ${F.ftemp(lo, state.unit)}，最高 ${F.ftemp(hi, state.unit)}，降雨概率 ${precip}%。`;
+      dayDiv.addEventListener('click', () => {
+        const expanded = dayDiv.getAttribute('aria-expanded') !== 'true';
+        dayDiv.setAttribute('aria-expanded', String(expanded));
+        detail.classList.toggle('hidden', !expanded);
+      });
+      dailyList.appendChild(detail);
     }
   }
 
@@ -578,7 +592,14 @@ function renderAdvice(mid, tid, adv) {
   const mel = $(mid);
   const tel = $(tid);
   if (mel) mel.textContent = adv.text;
-  if (tel) tel.innerHTML = adv.tags.map(t => `<span class="advice-chip">${t}</span>`).join('');
+  if (tel) {
+    tel.innerHTML = adv.tags.map(t => `<button type="button" class="advice-chip" aria-label="咨询${esc(t)}建议">${esc(t)}</button>`).join('');
+    QA('.advice-chip', tel).forEach(btn => btn.addEventListener('click', () => {
+      switchTab('chat');
+      $('chat-input').value = `${mid === 'clothing-main' ? '怎么穿' : '运动出门'}：${btn.textContent}`;
+      $('chat-input').focus();
+    }));
+  }
 }
 
 // 城市指南（纯文字/圆点装饰，无 emoji）
@@ -962,9 +983,17 @@ function initSearch() {
     if (!last.length) { showSearchMessage('未找到相关城市，请检查名称'); return; }
     for (const c of last) {
       const li = document.createElement('li');
-      li.className = 'search-item';
-      li.innerHTML = `<span class="si-name">${esc(c.name)}</span><span class="si-meta">${esc([c.admin1, c.country, c.coordinateSource].filter(Boolean).join('，'))}</span>`;
-      li.addEventListener('click', () => { searchGeneration++; selectCity(c); res.classList.add('hidden'); });
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'search-item';
+      button.innerHTML = `<span class="si-name">${esc(c.name)}</span><span class="si-meta">${esc([c.admin1, c.country, c.coordinateSource].filter(Boolean).join('，'))}</span>`;
+      button.addEventListener('click', () => {
+        searchGeneration++;
+        selectCity(c);
+        res.classList.add('hidden');
+        inp.focus();
+      });
+      li.appendChild(button);
       res.appendChild(li);
     }
   }, 250);
@@ -1014,7 +1043,7 @@ function initSearch() {
     const rc = loadRecent();
     if (!rc.length) { rsec.classList.add('hidden'); return; }
     rsec.classList.remove('hidden');
-    recentEl.innerHTML = rc.map(c => `<span class="recent-chip">${esc(c.name)}</span>`).join('');
+    recentEl.innerHTML = rc.map(c => `<button type="button" class="recent-chip">${esc(c.name)}</button>`).join('');
     QA('.recent-chip', recentEl).forEach((el, i) => {
       el.addEventListener('click', () => selectCity(rc[i]));
     });
@@ -1142,21 +1171,28 @@ $('me-clear-hist').addEventListener('click', async () => {
 });
 
 async function loadMeFavorites() {
-  const list = $('me-fav-list');
-  if (!currentUser) { favoritesCache = null; list.innerHTML = '<p class="me-empty">请先登录</p>'; return; }
+  if (!currentUser) { favoritesCache = null; setMeListState('fav', '请先登录'); return; }
   const user = currentUser;
   const d = await fetchJSON(`${API_BASE}/api/favorites`);
   if (currentUser !== user) return;
-  if (!Array.isArray(d)) { list.innerHTML = '<p class="me-empty">加载失败</p>'; return; }
+  if (!Array.isArray(d)) { setMeListState('fav', '加载失败'); return; }
   favoritesCache = d;
   updateStarUI();
   renderMeFavorites(d);
 }
 
+function setMeListState(kind, message = '') {
+  const empty = $(`me-${kind}-empty`);
+  const list = $(`me-${kind}-list`);
+  empty.textContent = message;
+  empty.classList.toggle('hidden', !message);
+  list.classList.toggle('hidden', !!message);
+}
+
 function renderMeFavorites(d) {
   const list = $('me-fav-list');
-  if (!d.length) { list.innerHTML = '<p class="me-empty">暂无收藏，在天气页搜索城市后点击星标收藏</p>'; return; }
-  list.innerHTML = d.map(f => `<div class="fav-item"><div class="fav-item-click" data-lat="${esc(f.lat)}" data-lon="${esc(f.lon)}" data-name="${esc(f.name)}" data-admin1="${esc(f.admin1)}" data-country="${esc(f.country)}"><div class="fav-item-name">${esc(f.name)}</div><div class="fav-item-meta">${esc(f.admin1)} ${esc(f.country)}</div></div><button class="fav-item-del" data-id="${esc(f.id)}">&times;</button></div>`).join('');
+  setMeListState('fav', d.length ? '' : '暂无收藏，在天气页搜索城市后点击星标收藏');
+  list.innerHTML = d.map(f => `<div class="fav-item"><button type="button" class="fav-item-click" data-lat="${esc(f.lat)}" data-lon="${esc(f.lon)}" data-name="${esc(f.name)}" data-admin1="${esc(f.admin1)}" data-country="${esc(f.country)}"><span class="fav-item-name">${esc(f.name)}</span><span class="fav-item-meta">${esc(f.admin1)} ${esc(f.country)}</span></button><button class="fav-item-del" aria-label="取消收藏${esc(f.name)}" data-id="${esc(f.id)}">&times;</button></div>`).join('');
   QA('.fav-item-click', list).forEach(el => {
     el.addEventListener('click', () => {
       selectCity({ name: el.dataset.name, admin1: el.dataset.admin1, country: el.dataset.country, lat: parseFloat(el.dataset.lat), lon: parseFloat(el.dataset.lon) });
@@ -1178,11 +1214,11 @@ function renderMeFavorites(d) {
 
 async function loadMeHistory() {
   const list = $('me-hist-list');
-  if (!currentUser) { list.innerHTML = '<p class="me-empty">请先登录</p>'; return; }
+  if (!currentUser) { setMeListState('hist', '请先登录'); return; }
   const d = await fetchJSON(`${API_BASE}/api/history`);
-  if (!d || d.error) { list.innerHTML = '<p class="me-empty">加载失败</p>'; return; }
-  if (!d.length) { list.innerHTML = '<p class="me-empty">暂无记录</p>'; return; }
-  list.innerHTML = d.map(h => `<div class="fav-item" style="cursor:pointer"><div class="fav-item-click" data-lat="${esc(h.lat)}" data-lon="${esc(h.lon)}" data-name="${esc(h.city)}"><div class="fav-item-name">${esc(h.city)}</div><div class="fav-item-meta">${esc(h.weather)} · ${esc(new Date(h.time).toLocaleString())}</div></div></div>`).join('');
+  if (!d || d.error) { setMeListState('hist', '加载失败'); return; }
+  setMeListState('hist', d.length ? '' : '暂无记录');
+  list.innerHTML = d.map(h => `<div class="fav-item"><button type="button" class="fav-item-click" data-lat="${esc(h.lat)}" data-lon="${esc(h.lon)}" data-name="${esc(h.city)}"><span class="fav-item-name">${esc(h.city)}</span><span class="fav-item-meta">${esc(h.weather)} · ${esc(new Date(h.time).toLocaleString())}</span></button></div>`).join('');
   QA('.fav-item-click', list).forEach(el => {
     el.addEventListener('click', () => {
       selectCity({ name: el.dataset.name, lat: parseFloat(el.dataset.lat), lon: parseFloat(el.dataset.lon) });
@@ -1240,6 +1276,8 @@ function updateStarUI() {
   if (!btn || !state.city) return;
   const active = !!currentUser && Array.isArray(favoritesCache) && favoritesCache.some(f => favoriteMatchesCity(f, state.city));
   btn.classList.toggle('active', active);
+  btn.setAttribute('aria-pressed', String(active));
+  btn.setAttribute('aria-label', `${active ? '取消收藏' : '收藏'}${state.city.city || '当前城市'}`);
 }
 
 // 拦截 renderWeather 加收藏按钮
@@ -1370,6 +1408,7 @@ function initMap() {
   const container = $('map-container');
   const btn = $('map-btn');
   const frame = document.createElement('iframe');
+  frame.title = '天气地图';
   frame.allow = 'geolocation';
   frame.style.cssText = 'width:100%;height:100%;border:none;position:absolute;top:0;left:0';
   frame.src = 'about:blank';
@@ -1383,10 +1422,18 @@ function initMap() {
     const url = `https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=°C&metricWind=km/h&zoom=7&overlay=wind&product=ecmwf&lat=${lat}&lon=${lon}&detailLat=${lat}&detailLon=${lon}&detail=true&message=true`;
     if (frame.getAttribute('src') !== url) frame.src = url;
     modal.classList.remove('hidden');
+    modal.showModal();
+    $('map-close').focus();
   });
 
-  $('map-close').addEventListener('click', () => { modal.classList.add('hidden'); });
-  modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.add('hidden'); });
+  const closeMap = () => modal.close();
+  modal.addEventListener('close', () => {
+    modal.classList.add('hidden');
+    btn.focus();
+  });
+  modal.addEventListener('cancel', (e) => { e.preventDefault(); closeMap(); });
+  $('map-close').addEventListener('click', closeMap);
+  modal.addEventListener('click', (e) => { if (e.target === modal) closeMap(); });
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -1414,13 +1461,12 @@ function applyTheme(mode) {
 //  单位切换 (°C / °F)
 // ═══════════════════════════════════════════════════════════
 function initUnit() {
-  // 没有单独的按钮了，直接在温度上长按切换（保持简单）
+  // 原生按钮同时支持点击、Enter 与 Space。
   $('temperature').addEventListener('click', () => {
     state.unit = state.unit === 'celsius' ? 'fahrenheit' : 'celsius';
     localStorage.setItem('wx_unit', state.unit);
     if (state.weather) renderWeather(state.city, state.weather);
   });
-  $('temperature').style.cursor = 'pointer';
   $('temperature').title = '点击切换 °C / °F';
 }
 

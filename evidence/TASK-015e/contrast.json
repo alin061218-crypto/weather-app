@@ -1,0 +1,170 @@
+[
+  {
+    "label": "dark clear-day muted text",
+    "fg": "#a9b4c5",
+    "bg": "#182334",
+    "ratio": 7.54,
+    "threshold": 4.5
+  },
+  {
+    "label": "dark clear-day focus ring",
+    "fg": "#5b9cf5",
+    "bg": "#182334",
+    "ratio": 5.66,
+    "threshold": 3
+  },
+  {
+    "label": "dark clear-night muted text",
+    "fg": "#a9b4c5",
+    "bg": "#0a0e17",
+    "ratio": 9.21,
+    "threshold": 4.5
+  },
+  {
+    "label": "dark clear-night focus ring",
+    "fg": "#5b9cf5",
+    "bg": "#0a0e17",
+    "ratio": 6.91,
+    "threshold": 3
+  },
+  {
+    "label": "dark cloudy muted text",
+    "fg": "#a9b4c5",
+    "bg": "#172233",
+    "ratio": 7.63,
+    "threshold": 4.5
+  },
+  {
+    "label": "dark cloudy focus ring",
+    "fg": "#5b9cf5",
+    "bg": "#172233",
+    "ratio": 5.73,
+    "threshold": 3
+  },
+  {
+    "label": "dark overcast muted text",
+    "fg": "#a9b4c5",
+    "bg": "#151f2e",
+    "ratio": 7.91,
+    "threshold": 4.5
+  },
+  {
+    "label": "dark overcast focus ring",
+    "fg": "#5b9cf5",
+    "bg": "#151f2e",
+    "ratio": 5.93,
+    "threshold": 3
+  },
+  {
+    "label": "dark rain muted text",
+    "fg": "#a9b4c5",
+    "bg": "#101c2e",
+    "ratio": 8.16,
+    "threshold": 4.5
+  },
+  {
+    "label": "dark rain focus ring",
+    "fg": "#5b9cf5",
+    "bg": "#101c2e",
+    "ratio": 6.12,
+    "threshold": 3
+  },
+  {
+    "label": "dark snow muted text",
+    "fg": "#b4becd",
+    "bg": "#2b3648",
+    "ratio": 6.49,
+    "threshold": 4.5
+  },
+  {
+    "label": "dark snow focus ring",
+    "fg": "#5b9cf5",
+    "bg": "#2b3648",
+    "ratio": 4.36,
+    "threshold": 3
+  },
+  {
+    "label": "dark fog muted text",
+    "fg": "#b4becd",
+    "bg": "#262e3a",
+    "ratio": 7.29,
+    "threshold": 4.5
+  },
+  {
+    "label": "dark fog focus ring",
+    "fg": "#5b9cf5",
+    "bg": "#262e3a",
+    "ratio": 4.9,
+    "threshold": 3
+  },
+  {
+    "label": "dark storm muted text",
+    "fg": "#b1bdcd",
+    "bg": "#111827",
+    "ratio": 9.32,
+    "threshold": 4.5
+  },
+  {
+    "label": "dark storm focus ring",
+    "fg": "#5b9cf5",
+    "bg": "#111827",
+    "ratio": 6.35,
+    "threshold": 3
+  },
+  {
+    "label": "light scene muted text",
+    "fg": "#596476",
+    "bg": "#f6f4f0",
+    "ratio": 5.45,
+    "threshold": 4.5
+  },
+  {
+    "label": "light night muted text",
+    "fg": "#b4becd",
+    "bg": "#243047",
+    "ratio": 7.04,
+    "threshold": 4.5
+  },
+  {
+    "label": "dark button --primary",
+    "fg": "#08101c",
+    "bg": "#5b9cf5",
+    "ratio": 6.83,
+    "threshold": 4.5
+  },
+  {
+    "label": "dark button --primary-hover",
+    "fg": "#08101c",
+    "bg": "#73adf7",
+    "ratio": 8.22,
+    "threshold": 4.5
+  },
+  {
+    "label": "dark focus ring on raised",
+    "fg": "#5b9cf5",
+    "bg": "#1a2030",
+    "ratio": 5.81,
+    "threshold": 3
+  },
+  {
+    "label": "light button --primary",
+    "fg": "#ffffff",
+    "bg": "#2c6ccf",
+    "ratio": 5.06,
+    "threshold": 4.5
+  },
+  {
+    "label": "light button --primary-hover",
+    "fg": "#ffffff",
+    "bg": "#2c6ccf",
+    "ratio": 5.06,
+    "threshold": 4.5
+  },
+  {
+    "label": "light focus ring on raised",
+    "fg": "#2c6ccf",
+    "bg": "#e8e4de",
+    "ratio": 3.99,
+    "threshold": 3
+  }
+]

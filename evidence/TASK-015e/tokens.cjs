@@ -1,0 +1,18 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const css = fs.readFileSync(path.resolve(__dirname, '../../frontend/css/style.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+const names = ['type-display', 'type-headline', 'type-data', 'type-label', 'type-copy', 'type-eyebrow', 'elev-rest', 'elev-raise', 'elev-float', 'text-2xl', 'text-3xl', 'space-12', 'surface-glass', 'success', 'z-toast', 'z-overlay'];
+const defined = new Set([...css.matchAll(/(--[\w-]+)\s*:/g)].map(m => m[1]));
+const count = token => [...css.matchAll(new RegExp(`var\\(\\s*${token}(?=\\s*[,\\)])`, 'g'))].length;
+const rows = names.map(name => ({ token: '--' + name, defined: defined.has('--' + name), hits: count('--' + name) }));
+for (const row of rows) assert.ok(!row.defined || row.hits > 0, `dead token: ${row.token}`);
+const all = [...defined].map(token => ({ token, hits: count(token) }));
+const dead = all.filter(row => row.hits === 0);
+const lines = rows.map(row => `${row.token}\t${row.hits}\t${row.defined ? 'USED' : 'REMOVED'}`);
+lines.push(`All defined tokens: ${all.length}; zero-use: ${dead.map(r => r.token).join(', ') || 'none'}`);
+fs.writeFileSync(path.join(__dirname, 'tokens.txt'), lines.join('\n') + '\n');
+fs.writeFileSync(path.join(__dirname, 'tokens.json'), JSON.stringify({ required: rows, all, dead }, null, 2) + '\n');
+console.log(lines.join('\n'));
+assert.deepEqual(dead, [], 'all declared tokens must have a var() use');
+console.log('PASS: no defined token has zero uses');
