@@ -1,0 +1,10 @@
+PASS: login palette / keyboard focus / viewport = {"innerWidth":375,"clientWidth":375,"bodyScrollWidth":375}
+PASS: admin-375.png {"width":375,"innerWidth":375,"clientWidth":360,"bodyScrollWidth":360,"rows":[50,50,30],"counts":[70,85,392,7],"trend":"09-20 → 10-03","summary":"总计 196 次、峰值 23 次","chartsDrawn":true,"focusVisible":true,"imageWidth":375,"imageHeight":2398}
+PASS: admin-768.png {"width":768,"innerWidth":768,"clientWidth":753,"bodyScrollWidth":753,"rows":[50,50,30],"counts":[70,85,392,7],"trend":"09-20 → 10-03","summary":"总计 196 次、峰值 23 次","chartsDrawn":true,"focusVisible":true,"imageWidth":768,"imageHeight":2007}
+PASS: admin-1280.png {"width":1280,"innerWidth":1280,"clientWidth":1265,"bodyScrollWidth":1265,"rows":[50,50,30],"counts":[70,85,392,7],"trend":"09-20 → 10-03","summary":"总计 196 次、峰值 23 次","chartsDrawn":true,"focusVisible":true,"imageWidth":1280,"imageHeight":2007}
+PASS: P1-23 / 40 increasing history rows → 30 visible, newest first (39 … 10)
+PASS: stored-XSS regression (ordinary-user favorites/history, legacy username, chart labels); 0 injected elements / 0 executed payloads; fixed HTML contains no DB values or password hashes
+PASS: username edit and favorite/history/user deletion refresh the real counts
+PASS: clear-cache confirmation cancel preserves 7 rows; accept clears cache and updates count to 0
+PASS: empty database renders zero counts / empty tables / empty charts without overflow
+PASS: UI logout clears the HttpOnly cookie and revokes the session; 0 browser errors

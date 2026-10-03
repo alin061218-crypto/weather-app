@@ -1,0 +1,87 @@
+{
+  "login": {
+    "innerWidth": 375,
+    "clientWidth": 375,
+    "bodyScrollWidth": 375
+  },
+  "admin": [
+    {
+      "width": 375,
+      "innerWidth": 375,
+      "clientWidth": 360,
+      "bodyScrollWidth": 360,
+      "rows": [
+        50,
+        50,
+        30
+      ],
+      "counts": [
+        70,
+        85,
+        392,
+        7
+      ],
+      "trend": "09-20 → 10-03",
+      "summary": "总计 196 次、峰值 23 次",
+      "chartsDrawn": true,
+      "focusVisible": true,
+      "imageWidth": 375,
+      "imageHeight": 2398
+    },
+    {
+      "width": 768,
+      "innerWidth": 768,
+      "clientWidth": 753,
+      "bodyScrollWidth": 753,
+      "rows": [
+        50,
+        50,
+        30
+      ],
+      "counts": [
+        70,
+        85,
+        392,
+        7
+      ],
+      "trend": "09-20 → 10-03",
+      "summary": "总计 196 次、峰值 23 次",
+      "chartsDrawn": true,
+      "focusVisible": true,
+      "imageWidth": 768,
+      "imageHeight": 2007
+    },
+    {
+      "width": 1280,
+      "innerWidth": 1280,
+      "clientWidth": 1265,
+      "bodyScrollWidth": 1265,
+      "rows": [
+        50,
+        50,
+        30
+      ],
+      "counts": [
+        70,
+        85,
+        392,
+        7
+      ],
+      "trend": "09-20 → 10-03",
+      "summary": "总计 196 次、峰值 23 次",
+      "chartsDrawn": true,
+      "focusVisible": true,
+      "imageWidth": 1280,
+      "imageHeight": 2007
+    }
+  ],
+  "browserErrors": [],
+  "regression": {
+    "latest30": true,
+    "storedXss": true,
+    "crud": true,
+    "cacheConfirm": true,
+    "empty": true,
+    "logout": true
+  }
+}

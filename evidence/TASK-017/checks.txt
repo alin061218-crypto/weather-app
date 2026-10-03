@@ -1,0 +1,5 @@
+PASS: node --check server.js
+PASS: node --check evidence/TASK-017/runtime.cjs
+PASS: node --check evidence/TASK-017/stats.cjs
+PASS: node --check evidence/TASK-017/screenshots.cjs
+PASS: git diff --check

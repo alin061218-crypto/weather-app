@@ -154,6 +154,11 @@ db.exec(`
     data TEXT NOT NULL,
     time INTEGER NOT NULL
   );
+  CREATE INDEX IF NOT EXISTS idx_history_city ON history(city);
+  CREATE INDEX IF NOT EXISTS idx_history_time ON history(time);
+  CREATE INDEX IF NOT EXISTS idx_history_user ON history(userId);
+  CREATE INDEX IF NOT EXISTS idx_favorites_user ON favorites(userId);
+  CREATE INDEX IF NOT EXISTS idx_favorites_admin1 ON favorites(admin1);
 `);
 
 // 预编译语句
@@ -162,7 +167,7 @@ const stmt = {
   userByUsername:  db.prepare('SELECT * FROM users WHERE username = ?'),
   userById:        db.prepare('SELECT id, username, createdAt FROM users WHERE id = ?'),
   userInsert:      db.prepare('INSERT INTO users (id, username, password, createdAt) VALUES (?, ?, ?, ?)'),
-  userAll:         db.prepare('SELECT id, username, createdAt FROM users ORDER BY createdAt DESC'),
+  userAll:         db.prepare('SELECT id, username, createdAt FROM users ORDER BY createdAt DESC LIMIT 50'),
   userUpdateName:  db.prepare('UPDATE users SET username = ? WHERE id = ?'),
   userDelete:      db.prepare('DELETE FROM users WHERE id = ?'),
 
@@ -173,7 +178,7 @@ const stmt = {
   favDelete:       db.prepare('DELETE FROM favorites WHERE id = ? AND userId = ?'),
   favDeleteByUser: db.prepare('DELETE FROM favorites WHERE userId = ?'),
   favDeleteById:   db.prepare('DELETE FROM favorites WHERE id = ?'),
-  favAll:          db.prepare('SELECT * FROM favorites ORDER BY createdAt DESC'),
+  favAll:          db.prepare('SELECT * FROM favorites ORDER BY createdAt DESC LIMIT 50'),
   favCount:        db.prepare('SELECT COUNT(*) AS n FROM favorites'),
 
   // history
@@ -183,7 +188,7 @@ const stmt = {
   histOldest:      db.prepare('SELECT id FROM history WHERE userId = ? ORDER BY time ASC LIMIT ?'),
   histDeleteById:  db.prepare('DELETE FROM history WHERE id = ?'),
   histDeleteByUser:db.prepare('DELETE FROM history WHERE userId = ?'),
-  histAll:         db.prepare('SELECT * FROM history ORDER BY time DESC'),
+  histAll:         db.prepare('SELECT * FROM history ORDER BY time DESC LIMIT 100'),
 
   // cache
   cacheGet:        db.prepare('SELECT * FROM cache WHERE key = ?'),
@@ -195,7 +200,10 @@ const stmt = {
 
   // stats
   userCount:       db.prepare('SELECT COUNT(*) AS n FROM users'),
-  histCountAll:    db.prepare('SELECT COUNT(*) AS n FROM history'),
+  histTotal:       db.prepare('SELECT COUNT(*) AS n FROM history'),
+  byCity:         db.prepare('SELECT city, COUNT(*) n FROM history GROUP BY city ORDER BY n DESC LIMIT 10'),
+  byDay:          db.prepare('SELECT substr(time,1,10) d, COUNT(*) n FROM history GROUP BY d ORDER BY d DESC LIMIT 14'),
+  byProvince:     db.prepare("SELECT admin1, COUNT(*) n FROM favorites WHERE admin1 <> '' GROUP BY admin1 ORDER BY n DESC LIMIT 10"),
 };
 
 const deleteHistoryRows = db.transaction(rows => {
@@ -557,34 +565,61 @@ app.post('/api/admin-login', createAuthRateLimit(), async (req, res) => {
 
 // Admin 后台页面只返回固定骨架，所有数据库值由客户端以 textContent 渲染。
 function sendAdminPage(res) {
-    const html = `<!DOCTYPE html><html lang="zh"><head><meta charset="UTF-8"><title>数据后台管理</title>
-<style>body{font-family:system-ui,sans-serif;background:#1a1a2e;color:#e0e0e0;padding:20px;max-width:1000px;margin:0 auto}
-h2{color:#e8b86d;margin-top:30px;border-bottom:1px solid #333;padding-bottom:8px}
-table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13px;background:rgba(255,255,255,.03);border-radius:8px;overflow:hidden}
-th{background:rgba(255,255,255,.08);padding:8px 10px;text-align:left;font-weight:600}
-td{padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.05)}
-tr:hover{background:rgba(255,255,255,.04)}
-.stat{display:inline-block;background:rgba(255,255,255,.06);padding:12px 20px;margin:6px;border-radius:10px;text-align:center}
-.stat-num{font-size:28px;font-weight:700;color:#e8b86d}.stat-label{font-size:11px;color:#888;margin-top:4px}
-button{padding:4px 10px;border-radius:6px;border:none;cursor:pointer;font-size:12px;margin:0 2px}
-.btn-del{background:#c0392b;color:#fff}.btn-del:hover{background:#e74c3c}
-input[type=text]{background:rgba(255,255,255,.08);border:1px solid #444;color:#fff;padding:4px 8px;border-radius:4px;font-size:12px;width:80px}
-.error{color:#e09090;font-size:13px;margin:8px 0}</style></head><body>
-<h1>📊 数据后台管理 (SQLite)</h1>
-<button id="clear-cache" type="button" style="background:#e8b86d;color:#1a1a2e;font-weight:600;padding:8px 16px">清空天气缓存</button>
+    const html = `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>数据后台</title>
+<style>
+/* 值镜像自 frontend/css/style.css 的 :root，改动请同步 */
+:root{--bg:#0a0e17;--surface:#121724;--ink:#eef2f8;--ink-secondary:#aab4c6;--primary:#5b9cf5;--border:rgba(255,255,255,.07);--danger:#e06070;}
+*{box-sizing:border-box}
+body{font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--ink);margin:0;line-height:1.5}
+main{max-width:1208px;margin:0 auto;padding:32px}
+.topbar,.section-heading,.danger{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+h1{font-size:28px;letter-spacing:-.03em;margin:0}h2{font-size:18px;font-weight:600;margin:0}
+.actions{display:flex;gap:8px}button,input{font:inherit}
+button{padding:8px 12px;border:1px solid var(--border);background:var(--surface);color:var(--ink);cursor:pointer;border-radius:4px}
+button:hover{border-color:var(--primary)}button:active{opacity:.8}button:disabled{opacity:.5;cursor:wait}
+#refresh{color:var(--primary)}.btn-del{color:var(--danger)}.btn-del:hover{border-color:var(--danger)}
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.error{color:var(--danger);font-size:13px;margin:12px 0}.error:empty{display:none}
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin:24px 0 32px;padding:20px 0}
+.stat{min-width:0;text-align:center}.stat-num{font-size:32px;font-weight:600;color:var(--primary);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.stat-label{font-size:13px;color:var(--ink-secondary);margin-top:4px}
+.charts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:32px;margin-bottom:32px}
+.chart{min-width:0}.chart-note,.table-note,.total,.danger p{font-size:13px;color:var(--ink-secondary)}
+.chart-note{margin:12px 0 0}.plot{position:relative;margin-top:16px;height:280px}
+canvas{display:block;width:100%;height:100%}.date-labels{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-secondary);gap:8px;margin-top:8px}
+.city-labels{position:absolute;inset:0;list-style:none;margin:0;padding:0;pointer-events:none}
+.city-labels li{height:28px;display:grid;grid-template-columns:100px minmax(0,1fr) 40px;align-items:center;font-size:13px;gap:8px}
+.city-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.city-count{grid-column:3;text-align:right;font-variant-numeric:tabular-nums}
+.data-section{margin-top:28px}.section-heading{justify-content:flex-start;gap:12px}.table-note{margin:6px 0 12px}
+.table-wrap{max-width:100%;max-height:320px;overflow:auto;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+table{width:100%;min-width:480px;border-collapse:collapse;font-size:13px}table.wide{min-width:700px}
+th{position:sticky;top:0;background:var(--surface);padding:10px 12px;text-align:left;font-weight:600;color:var(--ink-secondary)}
+td{padding:8px 12px;border-top:1px solid var(--border);overflow-wrap:anywhere;max-width:240px}td:last-child{white-space:nowrap}
+tr:hover{background:var(--surface)}td button{padding:4px 10px;font-size:12px}
+input[type=text]{background:var(--surface);border:1px solid var(--border);color:var(--ink);padding:6px 8px;border-radius:4px;font-size:13px;width:140px;max-width:100%}
+.danger{border-top:1px solid var(--border);margin-top:32px;padding-top:24px}.danger h2{color:var(--danger)}.danger p{margin:6px 0 0}
+@media(max-width:767px){main{padding:20px 16px}.topbar{gap:12px}h1{font-size:24px}.actions button{font-size:13px}.stat-num{font-size:24px}.stat-label{font-size:12px}.metrics{padding:16px 0}.charts{grid-template-columns:minmax(0,1fr);gap:28px}.section-heading{gap:8px}}
+</style></head><body><main>
+<header class="topbar"><h1>数据后台</h1><div class="actions"><button id="refresh" type="button">刷新</button><button id="logout" type="button">退出登录</button></div></header>
 <p id="error" class="error" role="alert"></p>
-<div>
-<div class="stat"><div id="user-count" class="stat-num">0</div><div class="stat-label">注册用户</div></div>
-<div class="stat"><div id="favorite-count" class="stat-num">0</div><div class="stat-label">收藏记录</div></div>
-<div class="stat"><div id="history-count" class="stat-num">0</div><div class="stat-label">查询历史</div></div>
-<div class="stat"><div id="cache-count" class="stat-num">0</div><div class="stat-label">天气缓存</div></div>
-</div>
-<h2>👥 用户管理</h2>
-<table><thead><tr><th>ID</th><th>用户名</th><th>注册时间</th><th>操作</th></tr></thead><tbody id="users"></tbody></table>
-<h2>⭐ 收藏管理</h2>
-<table><thead><tr><th>ID</th><th>城市</th><th>省份</th><th>用户ID</th><th>时间</th><th>操作</th></tr></thead><tbody id="favorites"></tbody></table>
-<h2>📋 历史记录</h2>
-<table><thead><tr><th>ID</th><th>城市</th><th>天气</th><th>用户</th><th>时间</th><th>操作</th></tr></thead><tbody id="history"></tbody></table>
+<section class="metrics" aria-label="核心指标">
+<div class="stat"><div id="user-count" class="stat-num">—</div><div class="stat-label">注册用户</div></div>
+<div class="stat"><div id="favorite-count" class="stat-num">—</div><div class="stat-label">收藏城市</div></div>
+<div class="stat"><div id="history-count" class="stat-num">—</div><div class="stat-label">查询记录</div></div>
+<div class="stat"><div id="cache-count" class="stat-num">—</div><div class="stat-label">缓存条目</div></div>
+</section>
+<section class="charts" aria-label="查询统计图表">
+<div class="chart"><h2>近 14 天查询趋势</h2><div class="plot"><canvas id="trend-chart" role="img" aria-label="近 14 天查询趋势，正在加载"></canvas></div><div id="date-labels" class="date-labels" aria-hidden="true"></div><p id="trend-summary" class="chart-note">正在加载</p></div>
+<div class="chart"><h2>热门城市 Top-10</h2><div class="plot"><canvas id="city-chart" role="img" aria-label="热门城市前十名，正在加载"></canvas><ol id="city-labels" class="city-labels" aria-hidden="true"></ol></div><p class="chart-note">按查询次数排序 · 条形长度表示次数</p></div>
+</section>
+<section class="data-section" aria-labelledby="users-heading"><div class="section-heading"><h2 id="users-heading">用户</h2><span id="users-total" class="total"></span></div><p class="table-note">显示最新 50 条 · 修改用户名后自动保存</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="用户表，可滚动"><table><thead><tr><th scope="col">ID</th><th scope="col">用户名</th><th scope="col">注册时间</th><th scope="col">操作</th></tr></thead><tbody id="users"></tbody></table></div></section>
+<section class="data-section" aria-labelledby="favorites-heading"><div class="section-heading"><h2 id="favorites-heading">收藏</h2><span id="favorites-total" class="total"></span></div><p class="table-note">显示最新 50 条</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="收藏表，可滚动"><table class="wide"><thead><tr><th scope="col">ID</th><th scope="col">城市</th><th scope="col">省份</th><th scope="col">用户 ID</th><th scope="col">时间</th><th scope="col">操作</th></tr></thead><tbody id="favorites"></tbody></table></div></section>
+<section class="data-section" aria-labelledby="history-heading"><div class="section-heading"><h2 id="history-heading">查询记录</h2><span id="history-total" class="total"></span></div><p class="table-note">显示最新 30 条 · 按时间从新到旧</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="查询记录表，可滚动"><table class="wide"><thead><tr><th scope="col">ID</th><th scope="col">城市</th><th scope="col">天气</th><th scope="col">用户</th><th scope="col">时间</th><th scope="col">操作</th></tr></thead><tbody id="history"></tbody></table></div></section>
+<section class="danger" aria-labelledby="danger-heading"><div><h2 id="danger-heading">危险区</h2><p>清空后，下次天气查询将重新获取数据。</p></div><button id="clear-cache" class="btn-del" type="button">清空天气缓存</button></section>
+</main>
 <script>
 const $ = id => document.getElementById(id);
 function setError(message) { $('error').textContent = message || ''; }
@@ -634,6 +669,8 @@ function renderUsers(users) {
         const input = document.createElement('input');
         input.type = 'text';
         input.value = user.username || '';
+        input.setAttribute('aria-label', '用户名');
+        input.maxLength = 30;
         input.addEventListener('change', async () => {
             try { await api('/admin/users/' + encodeURIComponent(user.id), 'PUT', {username: input.value}); await loadOverview(); }
             catch (error) { setError(error.message); }
@@ -671,7 +708,7 @@ function renderFavorites(favorites) {
 function renderHistory(history) {
     const tbody = $('history');
     tbody.replaceChildren();
-    const rows = history.slice(-30).reverse();
+    const rows = history.slice(0, 30);
     if (!rows.length) return showEmpty(tbody, 6, '暂无记录');
     rows.forEach(item => {
         const row = document.createElement('tr');
@@ -688,19 +725,91 @@ function renderHistory(history) {
         tbody.appendChild(row);
     });
 }
+let chartStats = null;
+function chartSurface(id) {
+    const canvas = $(id), width = canvas.clientWidth, height = canvas.clientHeight;
+    const ratio = window.devicePixelRatio || 1;
+    canvas.width = Math.round(width * ratio); canvas.height = Math.round(height * ratio);
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    ctx.font = '12px system-ui, sans-serif';
+    const style = getComputedStyle(document.documentElement);
+    return {ctx, width, height, primary: style.getPropertyValue('--primary').trim(),
+        secondary: style.getPropertyValue('--ink-secondary').trim(), border: style.getPropertyValue('--border').trim()};
+}
+function drawCharts() {
+    if (!chartStats) return;
+    const {days, cities} = chartStats;
+    const {ctx, width, height, primary, secondary, border} = chartSurface('trend-chart');
+    const left = 36, right = width - 12, top = 16, bottom = height - 12;
+    const peak = Math.max(0, ...days.map(day => day.n)), ceiling = Math.max(2, Math.ceil(peak / 2) * 2);
+    ctx.fillStyle = secondary; ctx.textAlign = 'right';
+    for (let tick = 0; tick <= 2; tick++) {
+        const y = bottom - (bottom - top) * tick / 2;
+        ctx.strokeStyle = border; ctx.beginPath(); ctx.moveTo(left, y); ctx.lineTo(right, y); ctx.stroke();
+        ctx.fillText(String(ceiling * tick / 2), left - 8, y + 4);
+    }
+    if (days.length) {
+        const points = days.map((day, i) => [days.length === 1 ? (left + right) / 2 : left + (right - left) * i / (days.length - 1), bottom - (bottom - top) * day.n / ceiling]);
+        ctx.beginPath(); ctx.moveTo(points[0][0], bottom);
+        points.forEach(([x, y]) => ctx.lineTo(x, y)); ctx.lineTo(points[points.length - 1][0], bottom); ctx.closePath();
+        ctx.fillStyle = primary; ctx.globalAlpha = .10; ctx.fill(); ctx.globalAlpha = 1;
+        ctx.beginPath(); points.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y));
+        ctx.strokeStyle = primary; ctx.lineWidth = 2; ctx.stroke();
+        points.forEach(([x, y]) => { ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill(); });
+    } else { ctx.textAlign = 'center'; ctx.fillText('暂无查询记录', (left + right) / 2, height / 2); }
+    const bars = chartSurface('city-chart'), max = Math.max(1, ...cities.map(city => city.n));
+    bars.ctx.fillStyle = bars.primary;
+    cities.forEach((city, i) => bars.ctx.fillRect(108, i * 28 + 7, Math.max(0, bars.width - 156) * city.n / max, 14));
+    if (!cities.length) { bars.ctx.fillStyle = bars.secondary; bars.ctx.textAlign = 'center'; bars.ctx.fillText('暂无查询记录', bars.width / 2, bars.height / 2); }
+}
+function renderStats(stats) {
+    const {counts} = stats;
+    $('user-count').textContent = counts.users;
+    $('favorite-count').textContent = counts.favorites;
+    $('history-count').textContent = counts.history;
+    $('cache-count').textContent = counts.cache;
+    $('users-total').textContent = '共 ' + counts.users + ' 条';
+    $('favorites-total').textContent = '共 ' + counts.favorites + ' 条';
+    $('history-total').textContent = '共 ' + counts.history + ' 条';
+    // API 按日期倒序返回；折线按从旧到新的顺序绘制。
+    const days = stats.byDay.slice().reverse(), cities = stats.byCity;
+    chartStats = {days, cities};
+    const total = days.reduce((sum, day) => sum + day.n, 0), peak = Math.max(0, ...days.map(day => day.n));
+    $('trend-summary').textContent = '总计 ' + total + ' 次、峰值 ' + peak + ' 次';
+    $('trend-chart').setAttribute('aria-label', '近 14 天查询趋势，共 ' + total + ' 次，峰值 ' + peak + ' 次。' + days.map(day => day.d + '：' + day.n + ' 次').join('；'));
+    $('city-chart').setAttribute('aria-label', '热门城市前十名。' + (cities.map(city => city.city + '：' + city.n + ' 次').join('；') || '暂无查询记录'));
+    $('date-labels').replaceChildren();
+    [...new Set([0, Math.floor((days.length - 1) / 2), days.length - 1])].filter(i => days[i]).forEach(i => {
+        const label = document.createElement('span'); label.textContent = days[i].d.slice(5); $('date-labels').appendChild(label);
+    });
+    $('city-labels').replaceChildren();
+    cities.forEach(city => {
+        const row = document.createElement('li'), name = document.createElement('span'), count = document.createElement('span');
+        name.className = 'city-name'; name.textContent = city.city; name.title = city.city;
+        count.className = 'city-count'; count.textContent = city.n;
+        row.append(name, count); $('city-labels').appendChild(row);
+    });
+    drawCharts();
+}
+new ResizeObserver(drawCharts).observe(document.querySelector('.charts'));
 async function loadOverview() {
+    $('refresh').disabled = true;
     try {
         setError('');
-        const data = await api('/admin/api/overview', 'GET');
-        $('user-count').textContent = data.users.length;
-        $('favorite-count').textContent = data.favorites.length;
-        $('history-count').textContent = data.history.length;
-        $('cache-count').textContent = data.cacheCount;
+        const [data, stats] = await Promise.all([api('/admin/api/overview', 'GET'), api('/admin/api/stats', 'GET')]);
+        renderStats(stats);
         renderUsers(data.users);
         renderFavorites(data.favorites);
         renderHistory(data.history);
     } catch (error) { setError(error.message); }
+    finally { $('refresh').disabled = false; }
 }
+$('refresh').addEventListener('click', loadOverview);
+$('logout').addEventListener('click', async () => {
+    try { await api('/admin/logout', 'POST'); location.href = '/admin'; }
+    catch (error) { setError(error.message); }
+});
 $('clear-cache').addEventListener('click', async () => {
     if (!confirm('确认清空所有天气缓存?')) return;
     try { await api('/admin/clear-cache', 'POST'); await loadOverview(); }
@@ -720,20 +829,39 @@ app.get('/admin/api/overview', adminAuth, (req, res) => {
     });
 });
 
+app.get('/admin/api/stats', adminAuth, (req, res) => {
+    res.json({
+        counts: { users: stmt.userCount.get().n, favorites: stmt.favCount.get().n,
+            history: stmt.histTotal.get().n, cache: stmt.cacheCount.get().n },
+        byCity: stmt.byCity.all(),
+        byDay: stmt.byDay.all(),
+        byProvince: stmt.byProvince.all()
+    });
+});
+
+app.post('/admin/logout', adminAuth, (req, res) => {
+    ADMIN_TOKENS.delete(getAdminToken(req));
+    res.clearCookie('admin_token', { path: '/admin' });
+    res.json({ success: true });
+});
+
 app.get('/admin', (req, res) => {
     if (req.query.token) return res.redirect('/admin');
     if (isAdminTokenValid(getAdminToken(req))) {
         return sendAdminPage(res);
     }
-    return res.send(`<!DOCTYPE html><html lang="zh"><head><meta charset="UTF-8"><title>后台登录</title>
-<style>body{font-family:system-ui,sans-serif;background:#1a1a2e;color:#e0e0e0;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
-.box{background:rgba(255,255,255,.05);padding:40px;border-radius:16px;text-align:center;border:1px solid rgba(255,255,255,.1)}
-input{padding:12px 16px;border-radius:8px;border:1px solid #444;background:rgba(255,255,255,.08);color:#fff;font-size:15px;margin:8px 0;width:220px;display:block}
-button{padding:12px 28px;border-radius:8px;border:none;background:#e8b86d;color:#1a1a2e;font-size:15px;font-weight:600;cursor:pointer;margin-top:12px}
-.error{color:#e09090;font-size:13px;margin-top:8px}
-</style></head><body><div class="box"><h2>🔐 数据后台</h2>
-<form id="loginForm"><input type="text" name="username" placeholder="用户名" required><input type="password" name="password" placeholder="密码" required><button type="submit">登录</button></form>
-<p class="error" id="errMsg"></p></div>
+    return res.send(`<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>后台登录</title>
+<style>
+/* 值镜像自 frontend/css/style.css 的 :root，改动请同步 */
+:root{--bg:#0a0e17;--surface:#121724;--ink:#eef2f8;--ink-secondary:#aab4c6;--primary:#5b9cf5;--border:rgba(255,255,255,.07);--danger:#e06070;}
+*{box-sizing:border-box}body{font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--ink);display:flex;align-items:center;justify-content:center;min-height:100dvh;margin:0;padding:24px 16px;line-height:1.5}
+.box{width:100%;max-width:360px}h1{font-size:24px;margin:0 0 24px}label{display:block;color:var(--ink-secondary);font-size:13px;margin-top:16px}
+input{padding:12px 16px;border-radius:4px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font:inherit;margin:8px 0;width:100%;display:block}
+button{padding:12px 28px;border-radius:4px;border:0;background:var(--primary);color:var(--bg);font:inherit;font-weight:600;cursor:pointer;margin-top:16px;width:100%}button:active{opacity:.8}
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px}.error{color:var(--danger);font-size:13px;margin-top:12px}
+</style></head><body><main class="box"><h1>数据后台</h1>
+<form id="loginForm"><label for="admin-username">用户名</label><input id="admin-username" type="text" name="username" autocomplete="username" required><label for="admin-password">密码</label><input id="admin-password" type="password" name="password" autocomplete="current-password" required><button type="submit">登录</button></form>
+<p class="error" id="errMsg" role="alert"></p></main>
 <script>
 document.getElementById('loginForm').addEventListener('submit',async(e)=>{e.preventDefault();
 const u=document.querySelector('[name=username]').value,p=document.querySelector('[name=password]').value;

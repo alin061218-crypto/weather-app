@@ -1,0 +1,6 @@
+PASS: stats / overview reject unauthenticated and invalid-token requests (401)
+PASS: SQLite contains all 5 required indexes, with the correct indexed columns
+PASS: real COUNT(*) totals = {"users":70,"favorites":85,"history":392,"cache":7}; overview row counts = 50 / 50 / 100; no password column
+PASS: byCity=10, byDay=14 (DESC), byProvince=10; all aggregates match fixtures
+PASS: source acceptance counts = {"oldHistorySlice":0,"limitedQueries":3,"indexes":5,"statsReferences":2,"oldColors":0,"innerHTML":0}; XSS comment retained; primary matches style.css
+PASS: logout invalidates the administrator token
