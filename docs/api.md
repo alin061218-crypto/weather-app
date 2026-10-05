@@ -82,3 +82,26 @@
 `/admin/api/overview` 返回的用户字段只有 `id`、`username`、`createdAt`；`password` 永远不会出现在 API 响应。管理员页面返回固定 HTML 骨架，数据库值由浏览器用 `textContent` 写入表格，避免把数据库值插入 `innerHTML`。管理员删除接口按 ID 操作，清缓存接口删除天气缓存，不删除用户数据。
 
 所有未匹配错误会由 Express 错误处理中间件转换为 JSON：服务器内部错误为 `500 { "error": "服务器内部错误" }`，可识别的请求错误保留对应状态码和错误信息。
+
+## TASK-022 请求解析升级验收（2026-10-05）
+
+执行不带 `--force` 的 `npm audit fix`，锁定版本 `express` 4.22.2→4.22.3、`body-parser` 1.20.5→1.20.8、`qs` 6.15.2→6.16.0，均未跨大版本；`package.json` 的依赖声明以及其他直接运行时依赖的锁定版本未变。升级前审计为 3 个 moderate、0 个 high/critical，升级后 `docs/audit.json` 的全部漏洞计数为 0。
+
+升级前基线来自提交 `89a02b1ca645b692ff015597da70262828e85d6b` 的完整导出及原锁文件 `npm ci`；升级后使用当前仓库的新锁文件安装。两边分别启动真实 `server.js` 子进程，使用随机独立端口、临时数据库和测试凭据；天气及搜索请求访问真实上游，未使用响应桩。HTTP 请求完成后比较状态码、递归 JSON 字段与类型、错误信息和缓存头，并确认服务进程仍存活；测试数据库已清理。
+
+| 实测请求                                                  | 升级前 | 升级后 | 对照结果                                                                                         |
+| --------------------------------------------------------- | ------ | ------ | ------------------------------------------------------------------------------------------------ |
+| `GET /api/weather?lat=39.9&lon=116.4`                     | 200    | 200    | JSON 字段及递归类型一致，`hourly.time` 168 项、`daily.time` 7 项                                 |
+| `GET /api/search?q=北京`                                  | 200    | 200    | 3 个城市，形状为 `[{ name: string, admin1: string, country: string, lat: number, lon: number }]` |
+| `GET /api/weather?lat[0]=1&lat[1]=2`                      | 400    | 400    | 均为 `{ "error": "缺少经纬度参数" }`，未出现 500 或崩溃                                          |
+| `POST /api/register`，JSON body                           | 200    | 200    | 均为 `{ token: string, user: { id: string, username: string } }`                                 |
+| `POST /api/register`，`application/x-www-form-urlencoded` | 400    | 400    | 均为 `{ "error": "用户名和密码不能为空" }`                                                       |
+| `GET /js/main.js?v=5e5652e4`                              | 200    | 200    | 均为 JavaScript，`Cache-Control: public, max-age=31536000, immutable`                            |
+
+缓存请求的 URL 来自各自 `GET /index.html` 响应的 importmap 中 `imports["app/main"]`，哈希未手写作为测试输入。天气响应的顶层字段均为 `latitude`、`longitude`、`generationtime_ms`、`utc_offset_seconds`、`timezone`、`timezone_abbreviation`、`elevation`、`current_weather_units`、`current_weather`、`hourly_units`、`hourly`、`daily_units`、`daily`；动态天气数值不作为相等断言。
+
+可达性结论：应用只启用 `express.json({ limit: '32kb' })`，未启用 `express.urlencoded()`，因此 body-parser 的 URL-encoded 解析路径不可达；但 `req.query` 使用 qs，天气、搜索和资源缓存分支仍暴露查询串解析。原风险属于公开端点上的 DoS，未涉及数据泄露，本次已通过同大版本升级消除。
+
+回归结果：`npm test` 6/6、`npm run lint`、`npm run check:versions`（PASS: 15）、`npm run check:evidence -- --static-only`、`node --check server.js`、`git diff --check` 均通过。`npm run format:check` 仍因原有 `docs/DESIGN.md` 未格式化而失败，使用基线提交中的该文件单独检查也返回 1；该文件不在 TASK-022 写作用域内，未修改，本文及 README、audit.json 的格式检查通过。
+
+已核对 CI 使用 `npm ci`，按新锁文件在本机执行后显示 `found 0 vulnerabilities`。未添加可选的 CI audit 步骤（工作流不在本任务写作用域）；后续添加时应使用 `npm audit --audit-level=high`。

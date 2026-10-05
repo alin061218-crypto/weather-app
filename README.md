@@ -88,6 +88,6 @@ CI 使用 `npm run check:evidence -- --static-only`：会执行证据脚本的�
 
 ## npm audit 结论
 
-完整机器可读报告在 [`docs/audit.json`](docs/audit.json)。本次报告有 3 个 moderate 项，来自生产依赖链中的 `express` → `body-parser`/`qs`，所以不能归类为仅 dev 依赖；它们描述的是特定解析输入下的拒绝服务风险。应用只启用固定 32 KB 的 JSON body parser、没有启用 URL-encoded 解析器，降低了实际暴露面，但仍应在上游发布修复后升级并重新审计。CI 仍保留 audit 留档流程，升级工具链时应重新检查报告和可利用性。
+完整机器可读报告在 [`docs/audit.json`](docs/audit.json)。已通过不带 `--force` 的 `npm audit fix` 将 `express` 4.22.2→4.22.3、`body-parser` 1.20.5→1.20.8、`qs` 6.15.2→6.16.0，`npm audit` 显示 moderate/high/critical 均为 0（0 漏洞）；应用仍只启用固定 32 KB 的 JSON body parser、没有启用 URL-encoded 解析器，并已实测查询串解析边界。
 
 API 字段、鉴权要求和错误码以仓库内 [`docs/api.md`](docs/api.md) 为准；服务启动 banner 也明确引用该文档。
