@@ -1,0 +1,32 @@
+TASK-014e 证据脚本裸资源路径排查
+日期：2026-10-05
+范围：evidence/ 下全部 .cjs、.js、.ps1（共 62 个脚本）
+
+排查命令：
+  rg --files evidence -g '*.cjs' -g '*.js' -g '*.ps1' | Measure-Object
+  rg -n '/js/|/css/|/vendor/' evidence -g '*.cjs' -g '*.js' -g '*.ps1'
+  Select-String -Path evidence\TASK-018\headers.cjs -Pattern "read\('/js/|read\('/css/|read\('/vendor/"
+
+结论：
+  - TASK-018/headers.cjs：已修复混合写法。index.html 的 main.js、style.css 从 HTML 属性解析；
+    Three.js 从 importmap.imports.three 解析，并断言 ?v=<8 位十六进制>。同一路径去掉查询串的请求
+    只作为反向控制，明确断言 Cache-Control: no-cache，不用于长缓存检查。
+  - TASK-016b/cache.cjs：资源请求使用页面解析出的 importmap 条目（new URL(asset, url)），无裸资源请求。
+  - TASK-016b/parity.cjs、TASK-021/browser.cjs：出现的 **/js/*.js* 是 Playwright 路由拦截匹配器，
+    不是证据脚本直接请求裸资源；实际页面 URL 仍由页面/importmap 产生。
+  - TASK-018/compare.cjs、TASK-018b/latency.cjs、TASK-018b/race.cjs、TASK-019/browser.cjs：
+    出现的 /js/main.js 是本地 fixture 服务的 pathname 分支或 HTML 注入替换点，不是裸资源断言请求。
+  - 其余命中为 fs.readFileSync 的本地源码读取、git show 的历史源码读取、字符串结构检查，均不是 HTTP 资源请求。
+  - TASK-016b/importmap.cjs 中的 /js/config.js?v=00000000 是刻意构造的版本守卫负例，按 TASK-014c 规则保留。
+
+裸资源请求扫描结果：
+  Select-String -Path evidence\TASK-018\headers.cjs -Pattern "read\('/js/|read\('/css/|read\('/vendor/"
+  -> 0 命中
+
+  对 read('/...')、fetch('.../js/...')、fetch('.../css/...')、fetch('.../vendor/...') 进行逐脚本复核：
+  -> 0 个直接请求裸资源路径的证据脚本（headers.cjs 的反向 no-cache 控制请求除外，路径由 importmap
+     解析后去掉 ?v=，并由专门断言标记为 intentional bare-path control）。
+
+资源 URL 使用规则：
+  证据脚本请求长缓存资源时必须从页面的 importmap、<link> 或 <script src> 解析实际 URL；
+  不得在脚本中写死资源路径与版本。混合解析和写死的文件按不可信处理。

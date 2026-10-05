@@ -26,9 +26,16 @@ async function read(path) {
   const jsPath = page.match(/<script\b[^>]*type=["']module["'][^>]*src=["']([^"']*main\.js[^"']*)["']/i)?.[1];
   const cssPath = page.match(/<link\b[^>]*href=["']([^"']*style\.css[^"']*)["']/i)?.[1];
   assert.ok(jsPath && cssPath, 'index.html must expose JS/CSS URLs');
+  const importmap = page.match(/<script\s+type=["']importmap["']\s*>([\s\S]*?)<\/script>/)?.[1];
+  assert.ok(importmap, 'index.html must expose an importmap');
+  const threePath = JSON.parse(importmap).imports?.three;
+  assert.ok(threePath, 'importmap must expose the three URL');
+  const threePathUrl = new URL(threePath, base);
+  assert.match(threePathUrl.search, /^\?v=[0-9a-f]{8}$/i, 'three URL must include an 8-digit content hash');
   const js = await read(jsPath);
   const css = await read(cssPath);
-  const three = await read('/vendor/three.module.js');
+  const three = await read(threePath);
+  const threeBare = await read(threePathUrl.pathname);
   const cache = value => value || '';
   assert.equal(html.response.status, 200);
   assert.match(cache(html.response.headers.get('cache-control')), /no-cache/);
@@ -38,6 +45,8 @@ async function read(path) {
   assert.equal(three.response.status, 200);
   assert.equal(three.response.headers.get('content-encoding'), 'gzip');
   assert.match(cache(three.response.headers.get('cache-control')), /(?:max-age=31536000|immutable)/);
+  assert.equal(threeBare.response.status, 200);
+  assert.match(cache(threeBare.response.headers.get('cache-control')), /no-cache/);
   const compressedBytes = Number(three.response.headers.get('content-length') || three.body.length);
   assert.ok(compressedBytes < 400000, `gzip payload too large: ${compressedBytes}`);
   console.log(JSON.stringify({
@@ -45,7 +54,8 @@ async function read(path) {
     cities: { cacheControl: cities.response.headers.get('cache-control') },
     js: { cacheControl: js.response.headers.get('cache-control') },
     css: { cacheControl: css.response.headers.get('cache-control') },
-    three: { encoding: three.response.headers.get('content-encoding'), compressedBytes, cacheControl: three.response.headers.get('cache-control') }
+    three: { path: threePath, encoding: three.response.headers.get('content-encoding'), compressedBytes, cacheControl: three.response.headers.get('cache-control') },
+    threeBare: { path: threePathUrl.pathname, cacheControl: threeBare.response.headers.get('cache-control') }
   }, null, 2));
   console.log('PASS: TASK-018 static cache headers and gzip verified');
 })().catch(error => { console.error(error.stack || error); process.exitCode = 1; });
