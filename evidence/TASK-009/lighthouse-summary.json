@@ -1,0 +1,15 @@
+{
+  "lighthouseVersion": "13.5.0",
+  "score": 98,
+  "width": 1280,
+  "theme": "light",
+  "scene": "clear-day",
+  "failures": [
+    {
+      "id": "heading-order",
+      "title": "Heading elements are not in a sequentially-descending order",
+      "description": "Properly ordered headings that do not skip levels convey the semantic structure of the page, making it easier to navigate and understand when using assistive technologies. [Learn more about heading order](https://dequeuniversity.com/rules/axe/4.13/heading-order)."
+    }
+  ],
+  "warnings": []
+}

@@ -300,7 +300,7 @@ body[data-weather] { --ink: var(--scene-ink); --ink-secondary: var(--scene-secon
 }
 .recent-clear {
   background: none; border: none; color: var(--ink-muted);
-  font-size: var(--text-xs); cursor: pointer; opacity: 0.6;
+  font-size: var(--text-xs); cursor: pointer; opacity: 1;
   padding: var(--space-1) var(--space-2);
 }
 .recent-clear:hover:not(:disabled) { opacity: 1; }
@@ -557,6 +557,8 @@ body[data-weather] { --ink: var(--scene-ink); --ink-secondary: var(--scene-secon
   color: var(--primary);
   margin-left: 4px;
 }
+/* Small precipitation text needs AA contrast on the light card and hover surfaces. */
+[data-theme="light"] .day-precip { color: var(--ink-secondary); }
 
 /* ---- 穿衣 & 活动建议 ---- */
 .advice-section {
@@ -973,6 +975,8 @@ body[data-weather] { --ink: var(--scene-ink); --ink-secondary: var(--scene-secon
   transition: transform var(--duration-normal) var(--ease-spring);
 }
 .tab-btn.active { color: var(--primary); }
+/* The primary icon/indicator meets non-text contrast; small labels need 4.5:1. */
+[data-theme="light"] .tab-btn.active .tab-btn-label { color: var(--ink-secondary); }
 .tab-btn.active::before { transform: translateX(-50%) scaleX(1); }
 .tab-btn-icon { display: flex; align-items: center; justify-content: center; }
 .tab-btn-icon svg {
@@ -1191,6 +1195,7 @@ button:disabled, input:disabled {
 .content-dialog textarea { resize: vertical; }
 .content-dialog summary { cursor: pointer; font: var(--type-label); min-height: 44px; padding-block: var(--space-2); }
 .content-dialog a { color: var(--primary); }
+[data-theme="light"] .content-dialog a { color: var(--ink-secondary); }
 #feedback-status { min-height: 1.5em; }
 
 @media (min-width: 600px) and (max-width: 839px) {

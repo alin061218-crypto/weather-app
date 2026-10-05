@@ -1,0 +1,20 @@
+[
+  {
+    "theme": "dark",
+    "opacity": 0.6,
+    "foreground": "#a9b4c5",
+    "background": "#182334",
+    "effective": "#6f7a8b",
+    "ratio": 3.64,
+    "threshold": 4.5
+  },
+  {
+    "theme": "light",
+    "opacity": 0.6,
+    "foreground": "#596476",
+    "background": "#f6f4f0",
+    "effective": "#989ea7",
+    "ratio": 2.46,
+    "threshold": 4.5
+  }
+]

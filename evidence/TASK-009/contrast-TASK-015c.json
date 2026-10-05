@@ -1,0 +1,794 @@
+{
+  "coverage": {
+    "cssPaletteRuleCount": 9,
+    "lightOverrideRuleCount": 1,
+    "expectedSceneCount": 8,
+    "validatedSceneCount": 8,
+    "scenes": [
+      "clear-day",
+      "clear-night",
+      "cloudy",
+      "overcast",
+      "rain",
+      "snow",
+      "fog",
+      "storm"
+    ]
+  },
+  "rows": [
+    {
+      "theme": "dark",
+      "scene": "clear-day",
+      "label": "main",
+      "foreground": "#f3f6fa",
+      "background": "#182334",
+      "ratio": 14.58,
+      "threshold": 4.5
+    },
+    {
+      "theme": "dark",
+      "scene": "clear-day",
+      "label": "secondary",
+      "foreground": "#c3cbd8",
+      "background": "#182334",
+      "ratio": 9.67,
+      "threshold": 4.5
+    },
+    {
+      "theme": "dark",
+      "scene": "clear-day",
+      "label": "muted",
+      "foreground": "#a9b4c5",
+      "background": "#182334",
+      "ratio": 7.54,
+      "threshold": 4.5
+    },
+    {
+      "theme": "dark",
+      "scene": "clear-day",
+      "label": "focus ring",
+      "foreground": "#5b9cf5",
+      "background": "#182334",
+      "ratio": 5.66,
+      "threshold": 3
+    },
+    {
+      "theme": "dark",
+      "scene": "clear-day",
+      "label": "recent clear effective text",
+      "foreground": "#a9b4c5",
+      "background": "#182334",
+      "ratio": 7.54,
+      "threshold": 4.5
+    },
+    {
+      "theme": "light",
+      "scene": "clear-day",
+      "label": "main",
+      "foreground": "#1a1d24",
+      "background": "#f6f4f0",
+      "ratio": 15.35,
+      "threshold": 4.5
+    },
+    {
+      "theme": "light",
+      "scene": "clear-day",
+      "label": "secondary",
+      "foreground": "#3f4a5c",
+      "background": "#f6f4f0",
+      "ratio": 8.15,
+      "threshold": 4.5
+    },
+    {
+      "theme": "light",
+      "scene": "clear-day",
+      "label": "muted",
+      "foreground": "#596476",
+      "background": "#f6f4f0",
+      "ratio": 5.45,
+      "threshold": 4.5
+    },
+    {
+      "theme": "light",
+      "scene": "clear-day",
+      "label": "focus ring",
+      "foreground": "#2c6ccf",
+      "background": "#f6f4f0",
+      "ratio": 4.6,
+      "threshold": 3
+    },
+    {
+      "theme": "light",
+      "scene": "clear-day",
+      "label": "recent clear effective text",
+      "foreground": "#596476",
+      "background": "#f6f4f0",
+      "ratio": 5.45,
+      "threshold": 4.5
+    },
+    {
+      "theme": "dark",
+      "scene": "clear-night",
+      "label": "main",
+      "foreground": "#eef3fa",
+      "background": "#0a0e17",
+      "ratio": 17.31,
+      "threshold": 4.5
+    },
+    {
+      "theme": "dark",
+      "scene": "clear-night",
+      "label": "secondary",
+      "foreground": "#c3cbd8",
+      "background": "#0a0e17",
+      "ratio": 11.81,
+      "threshold": 4.5
+    },
+    {
+      "theme": "dark",
+      "scene": "clear-night",
+      "label": "muted",
+      "foreground": "#a9b4c5",
+      "background": "#0a0e17",
+      "ratio": 9.21,
+      "threshold": 4.5
+    },
+    {
+      "theme": "dark",
+      "scene": "clear-night",
+      "label": "focus ring",
+      "foreground": "#5b9cf5",
+      "background": "#0a0e17",
+      "ratio": 6.91,
+      "threshold": 3
+    },
+    {
+      "theme": "dark",
+      "scene": "clear-night",
+      "label": "recent clear effective text",
+      "foreground": "#a9b4c5",
+      "background": "#0a0e17",
+      "ratio": 9.21,
+      "threshold": 4.5
+    },
+    {
+      "theme": "light",
+      "scene": "clear-night",
+      "label": "main",
+      "foreground": "#1a1d24",
+      "background": "#f6f4f0",
+      "ratio": 15.35,
+      "threshold": 4.5
+    },
+    {
+      "theme": "light",
+      "scene": "clear-night",
+      "label": "secondary",
+      "foreground": "#3f4a5c",
+      "background": "#f6f4f0",
+      "ratio": 8.15,
+      "threshold": 4.5
+    },
+    {
+      "theme": "light",
+      "scene": "clear-night",
+      "label": "muted",
+      "foreground": "#596476",
+      "background": "#f6f4f0",
+      "ratio": 5.45,
+      "threshold": 4.5
+    },
+    {
+      "theme": "light",
+      "scene": "clear-night",
+      "label": "focus ring",
+      "foreground": "#2c6ccf",
+      "background": "#f6f4f0",
+      "ratio": 4.6,
+      "threshold": 3
+    },
+    {
+      "theme": "light",
+      "scene": "clear-night",
+      "label": "recent clear effective text",
+      "foreground": "#596476",
+      "background": "#f6f4f0",
+      "ratio": 5.45,
+      "threshold": 4.5
+    },
+    {
+      "theme": "dark",
+      "scene": "cloudy",
+      "label": "main",
+      "foreground": "#eef2f7",
+      "background": "#172233",
+      "ratio": 14.23,
+      "threshold": 4.5
+    },
+    {
+      "theme": "dark",
+      "scene": "cloudy",
+      "label": "secondary",
+      "foreground": "#c3cbd8",
+      "background": "#172233",
+      "ratio": 9.79,
+      "threshold": 4.5
+    },
+    {
+      "theme": "dark",
+      "scene": "cloudy",
+      "label": "muted",
+      "foreground": "#a9b4c5",
+      "background": "#172233",
+      "ratio": 7.63,
+      "threshold": 4.5
+    },
+    {
+      "theme": "dark",
+      "scene": "cloudy",
+      "label": "focus ring",
+      "foreground": "#5b9cf5",
+      "background": "#172233",
+      "ratio": 5.73,
+      "threshold": 3
+    },
+    {
+      "theme": "dark",
+      "scene": "cloudy",
+      "label": "recent clear effective text",
+      "foreground": "#a9b4c5",
+      "background": "#172233",
+      "ratio": 7.63,
+      "threshold": 4.5
+    },
+    {
+      "theme": "light",
+      "scene": "cloudy",
+      "label": "main",
+      "foreground": "#1a1d24",
+      "background": "#f6f4f0",
+      "ratio": 15.35,
+      "threshold": 4.5
+    },
+    {
+      "theme": "light",
+      "scene": "cloudy",
+      "label": "secondary",
+      "foreground": "#3f4a5c",
+      "background": "#f6f4f0",
+      "ratio": 8.15,
+      "threshold": 4.5
+    },
+    {
+      "theme": "light",
+      "scene": "cloudy",
+      "label": "muted",
+      "foreground": "#596476",
+      "background": "#f6f4f0",
+      "ratio": 5.45,
+      "threshold": 4.5
+    },
+    {
+      "theme": "light",
+      "scene": "cloudy",
+      "label": "focus ring",
+      "foreground": "#2c6ccf",
+      "background": "#f6f4f0",
+      "ratio": 4.6,
+      "threshold": 3
+    },
+    {
+      "theme": "light",
+      "scene": "cloudy",
+      "label": "recent clear effective text",
+      "foreground": "#596476",
+      "background": "#f6f4f0",
+      "ratio": 5.45,
+      "threshold": 4.5
+    },
+    {
+      "theme": "dark",
+      "scene": "overcast",
+      "label": "main",
+      "foreground": "#eef2f7",
+      "background": "#151f2e",
+      "ratio": 14.74,
+      "threshold": 4.5
+    },
+    {
+      "theme": "dark",
+      "scene": "overcast",
+      "label": "secondary",
+      "foreground": "#c3cbd8",
+      "background": "#151f2e",
+      "ratio": 10.14,
+      "threshold": 4.5
+    },
+    {
+      "theme": "dark",
+      "scene": "overcast",
+      "label": "muted",
+      "foreground": "#a9b4c5",
+      "background": "#151f2e",
+      "ratio": 7.91,
+      "threshold": 4.5
+    },
+    {
+      "theme": "dark",
+      "scene": "overcast",
+      "label": "focus ring",
+      "foreground": "#5b9cf5",
+      "background": "#151f2e",
+      "ratio": 5.93,
+      "threshold": 3
+    },
+    {
+      "theme": "dark",
+      "scene": "overcast",
+      "label": "recent clear effective text",
+      "foreground": "#a9b4c5",
+      "background": "#151f2e",
+      "ratio": 7.91,
+      "threshold": 4.5
+    },
+    {
+      "theme": "light",
+      "scene": "overcast",
+      "label": "main",
+      "foreground": "#1a1d24",
+      "background": "#f6f4f0",
+      "ratio": 15.35,
+      "threshold": 4.5
+    },
+    {
+      "theme": "light",
+      "scene": "overcast",
+      "label": "secondary",
+      "foreground": "#3f4a5c",
+      "background": "#f6f4f0",
+      "ratio": 8.15,
+      "threshold": 4.5
+    },
+    {
+      "theme": "light",
+      "scene": "overcast",
+      "label": "muted",
+      "foreground": "#596476",
+      "background": "#f6f4f0",
+      "ratio": 5.45,
+      "threshold": 4.5
+    },
+    {
+      "theme": "light",
+      "scene": "overcast",
+      "label": "focus ring",
+      "foreground": "#2c6ccf",
+      "background": "#f6f4f0",
+      "ratio": 4.6,
+      "threshold": 3
+    },
+    {
+      "theme": "light",
+      "scene": "overcast",
+      "label": "recent clear effective text",
+      "foreground": "#596476",
+      "background": "#f6f4f0",
+      "ratio": 5.45,
+      "threshold": 4.5
+    },
+    {
+      "theme": "dark",
+      "scene": "rain",
+      "label": "main",
+      "foreground": "#eef2f7",
+      "background": "#101c2e",
+      "ratio": 15.22,
+      "threshold": 4.5
+    },
+    {
+      "theme": "dark",
+      "scene": "rain",
+      "label": "secondary",
+      "foreground": "#c3cbd8",
+      "background": "#101c2e",
+      "ratio": 10.47,
+      "threshold": 4.5
+    },
+    {
+      "theme": "dark",
+      "scene": "rain",
+      "label": "muted",
+      "foreground": "#a9b4c5",
+      "background": "#101c2e",
+      "ratio": 8.16,
+      "threshold": 4.5
+    },
+    {
+      "theme": "dark",
+      "scene": "rain",
+      "label": "focus ring",
+      "foreground": "#5b9cf5",
+      "background": "#101c2e",
+      "ratio": 6.12,
+      "threshold": 3
+    },
+    {
+      "theme": "dark",
+      "scene": "rain",
+      "label": "recent clear effective text",
+      "foreground": "#a9b4c5",
+      "background": "#101c2e",
+      "ratio": 8.16,
+      "threshold": 4.5
+    },
+    {
+      "theme": "light",
+      "scene": "rain",
+      "label": "main",
+      "foreground": "#1a1d24",
+      "background": "#f6f4f0",
+      "ratio": 15.35,
+      "threshold": 4.5
+    },
+    {
+      "theme": "light",
+      "scene": "rain",
+      "label": "secondary",
+      "foreground": "#3f4a5c",
+      "background": "#f6f4f0",
+      "ratio": 8.15,
+      "threshold": 4.5
+    },
+    {
+      "theme": "light",
+      "scene": "rain",
+      "label": "muted",
+      "foreground": "#596476",
+      "background": "#f6f4f0",
+      "ratio": 5.45,
+      "threshold": 4.5
+    },
+    {
+      "theme": "light",
+      "scene": "rain",
+      "label": "focus ring",
+      "foreground": "#2c6ccf",
+      "background": "#f6f4f0",
+      "ratio": 4.6,
+      "threshold": 3
+    },
+    {
+      "theme": "light",
+      "scene": "rain",
+      "label": "recent clear effective text",
+      "foreground": "#596476",
+      "background": "#f6f4f0",
+      "ratio": 5.45,
+      "threshold": 4.5
+    },
+    {
+      "theme": "dark",
+      "scene": "snow",
+      "label": "main",
+      "foreground": "#f2f5f9",
+      "background": "#2b3648",
+      "ratio": 11.14,
+      "threshold": 4.5
+    },
+    {
+      "theme": "dark",
+      "scene": "snow",
+      "label": "secondary",
+      "foreground": "#d1d8e2",
+      "background": "#2b3648",
+      "ratio": 8.49,
+      "threshold": 4.5
+    },
+    {
+      "theme": "dark",
+      "scene": "snow",
+      "label": "muted",
+      "foreground": "#b4becd",
+      "background": "#2b3648",
+      "ratio": 6.49,
+      "threshold": 4.5
+    },
+    {
+      "theme": "dark",
+      "scene": "snow",
+      "label": "focus ring",
+      "foreground": "#5b9cf5",
+      "background": "#2b3648",
+      "ratio": 4.36,
+      "threshold": 3
+    },
+    {
+      "theme": "dark",
+      "scene": "snow",
+      "label": "recent clear effective text",
+      "foreground": "#b4becd",
+      "background": "#2b3648",
+      "ratio": 6.49,
+      "threshold": 4.5
+    },
+    {
+      "theme": "light",
+      "scene": "snow",
+      "label": "main",
+      "foreground": "#1a1d24",
+      "background": "#f6f4f0",
+      "ratio": 15.35,
+      "threshold": 4.5
+    },
+    {
+      "theme": "light",
+      "scene": "snow",
+      "label": "secondary",
+      "foreground": "#3f4a5c",
+      "background": "#f6f4f0",
+      "ratio": 8.15,
+      "threshold": 4.5
+    },
+    {
+      "theme": "light",
+      "scene": "snow",
+      "label": "muted",
+      "foreground": "#596476",
+      "background": "#f6f4f0",
+      "ratio": 5.45,
+      "threshold": 4.5
+    },
+    {
+      "theme": "light",
+      "scene": "snow",
+      "label": "focus ring",
+      "foreground": "#2c6ccf",
+      "background": "#f6f4f0",
+      "ratio": 4.6,
+      "threshold": 3
+    },
+    {
+      "theme": "light",
+      "scene": "snow",
+      "label": "recent clear effective text",
+      "foreground": "#596476",
+      "background": "#f6f4f0",
+      "ratio": 5.45,
+      "threshold": 4.5
+    },
+    {
+      "theme": "dark",
+      "scene": "fog",
+      "label": "main",
+      "foreground": "#f2f5f9",
+      "background": "#262e3a",
+      "ratio": 12.52,
+      "threshold": 4.5
+    },
+    {
+      "theme": "dark",
+      "scene": "fog",
+      "label": "secondary",
+      "foreground": "#d1d8e2",
+      "background": "#262e3a",
+      "ratio": 9.54,
+      "threshold": 4.5
+    },
+    {
+      "theme": "dark",
+      "scene": "fog",
+      "label": "muted",
+      "foreground": "#b4becd",
+      "background": "#262e3a",
+      "ratio": 7.29,
+      "threshold": 4.5
+    },
+    {
+      "theme": "dark",
+      "scene": "fog",
+      "label": "focus ring",
+      "foreground": "#5b9cf5",
+      "background": "#262e3a",
+      "ratio": 4.9,
+      "threshold": 3
+    },
+    {
+      "theme": "dark",
+      "scene": "fog",
+      "label": "recent clear effective text",
+      "foreground": "#b4becd",
+      "background": "#262e3a",
+      "ratio": 7.29,
+      "threshold": 4.5
+    },
+    {
+      "theme": "light",
+      "scene": "fog",
+      "label": "main",
+      "foreground": "#1a1d24",
+      "background": "#f6f4f0",
+      "ratio": 15.35,
+      "threshold": 4.5
+    },
+    {
+      "theme": "light",
+      "scene": "fog",
+      "label": "secondary",
+      "foreground": "#3f4a5c",
+      "background": "#f6f4f0",
+      "ratio": 8.15,
+      "threshold": 4.5
+    },
+    {
+      "theme": "light",
+      "scene": "fog",
+      "label": "muted",
+      "foreground": "#596476",
+      "background": "#f6f4f0",
+      "ratio": 5.45,
+      "threshold": 4.5
+    },
+    {
+      "theme": "light",
+      "scene": "fog",
+      "label": "focus ring",
+      "foreground": "#2c6ccf",
+      "background": "#f6f4f0",
+      "ratio": 4.6,
+      "threshold": 3
+    },
+    {
+      "theme": "light",
+      "scene": "fog",
+      "label": "recent clear effective text",
+      "foreground": "#596476",
+      "background": "#f6f4f0",
+      "ratio": 5.45,
+      "threshold": 4.5
+    },
+    {
+      "theme": "dark",
+      "scene": "storm",
+      "label": "main",
+      "foreground": "#f2f5f9",
+      "background": "#111827",
+      "ratio": 16.22,
+      "threshold": 4.5
+    },
+    {
+      "theme": "dark",
+      "scene": "storm",
+      "label": "secondary",
+      "foreground": "#cfd7e2",
+      "background": "#111827",
+      "ratio": 12.22,
+      "threshold": 4.5
+    },
+    {
+      "theme": "dark",
+      "scene": "storm",
+      "label": "muted",
+      "foreground": "#b1bdcd",
+      "background": "#111827",
+      "ratio": 9.32,
+      "threshold": 4.5
+    },
+    {
+      "theme": "dark",
+      "scene": "storm",
+      "label": "focus ring",
+      "foreground": "#5b9cf5",
+      "background": "#111827",
+      "ratio": 6.35,
+      "threshold": 3
+    },
+    {
+      "theme": "dark",
+      "scene": "storm",
+      "label": "recent clear effective text",
+      "foreground": "#b1bdcd",
+      "background": "#111827",
+      "ratio": 9.32,
+      "threshold": 4.5
+    },
+    {
+      "theme": "light",
+      "scene": "storm",
+      "label": "main",
+      "foreground": "#1a1d24",
+      "background": "#f6f4f0",
+      "ratio": 15.35,
+      "threshold": 4.5
+    },
+    {
+      "theme": "light",
+      "scene": "storm",
+      "label": "secondary",
+      "foreground": "#3f4a5c",
+      "background": "#f6f4f0",
+      "ratio": 8.15,
+      "threshold": 4.5
+    },
+    {
+      "theme": "light",
+      "scene": "storm",
+      "label": "muted",
+      "foreground": "#596476",
+      "background": "#f6f4f0",
+      "ratio": 5.45,
+      "threshold": 4.5
+    },
+    {
+      "theme": "light",
+      "scene": "storm",
+      "label": "focus ring",
+      "foreground": "#2c6ccf",
+      "background": "#f6f4f0",
+      "ratio": 4.6,
+      "threshold": 3
+    },
+    {
+      "theme": "light",
+      "scene": "storm",
+      "label": "recent clear effective text",
+      "foreground": "#596476",
+      "background": "#f6f4f0",
+      "ratio": 5.45,
+      "threshold": 4.5
+    },
+    {
+      "theme": "dark",
+      "scene": null,
+      "label": "button --primary",
+      "foreground": "#08101c",
+      "background": "#5b9cf5",
+      "ratio": 6.83,
+      "threshold": 4.5
+    },
+    {
+      "theme": "dark",
+      "scene": null,
+      "label": "button --primary-hover",
+      "foreground": "#08101c",
+      "background": "#73adf7",
+      "ratio": 8.22,
+      "threshold": 4.5
+    },
+    {
+      "theme": "dark",
+      "scene": null,
+      "label": "focus ring on raised",
+      "foreground": "#5b9cf5",
+      "background": "#1a2030",
+      "ratio": 5.81,
+      "threshold": 3
+    },
+    {
+      "theme": "light",
+      "scene": null,
+      "label": "button --primary",
+      "foreground": "#ffffff",
+      "background": "#2c6ccf",
+      "ratio": 5.06,
+      "threshold": 4.5
+    },
+    {
+      "theme": "light",
+      "scene": null,
+      "label": "button --primary-hover",
+      "foreground": "#ffffff",
+      "background": "#2c6ccf",
+      "ratio": 5.06,
+      "threshold": 4.5
+    },
+    {
+      "theme": "light",
+      "scene": null,
+      "label": "focus ring on raised",
+      "foreground": "#2c6ccf",
+      "background": "#e8e4de",
+      "ratio": 3.99,
+      "threshold": 3
+    }
+  ]
+}
