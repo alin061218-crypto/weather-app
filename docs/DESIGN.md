@@ -4,7 +4,7 @@
 > 本文没写的取值，视为"未定义"，应补进来或删掉。
 >
 > 适用范围：`frontend/`（含 `css/style.css`、`js/*.js`、`index.html`）与 `/admin` 页的配色。
-> 产品定位见 `E:\weather\PRODUCT.md`（在仓库之外）。
+> 产品定位见 [docs/PRODUCT.md](./PRODUCT.md)（已随 TASK-010a 移入仓库）。
 >
 > 版本：v1（2026-10-04）｜对应提交：TASK-014d 之后
 
