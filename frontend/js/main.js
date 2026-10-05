@@ -119,6 +119,28 @@ export function initMap() {
   modal.addEventListener('click', (e) => { if (e.target === modal) closeMap(); });
 }
 
+async function clearServiceWorkerCaches() {
+  try {
+    const registrations = await navigator.serviceWorker?.getRegistrations?.() || [];
+    registrations.forEach(registration => registration.active?.postMessage({ type: 'clear-caches' }));
+    if ('caches' in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map(key => caches.delete(key)));
+      const remaining = await caches.keys();
+      console.assert(remaining.length === 0, 'SW: caches remain after logout', remaining);
+    }
+  } catch (error) {
+    console.warn('SW: failed to clear caches after logout', error);
+  }
+}
+
+function registerServiceWorker() {
+  if (!('serviceWorker' in navigator)) return;
+  navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' })
+    .catch(error => console.warn('SW: registration failed', error));
+  $('me-logout')?.addEventListener('click', () => { void clearServiceWorkerCaches(); });
+}
+
 // ═══════════════════════════════════════════════════════════
 //  启动
 // ═══════════════════════════════════════════════════════════
@@ -143,4 +165,5 @@ document.addEventListener('DOMContentLoaded', () => {
   init();
   checkAuth();
   updateMeUI();
+  registerServiceWorker();
 });

@@ -1,0 +1,18 @@
+{
+  "controller": true,
+  "active": "activated",
+  "caches": [
+    "weather-app-fb82530e"
+  ],
+  "precacheExpected": 22,
+  "precacheCached": 22,
+  "cacheEntriesTotal": 25,
+  "consoleMessages": [
+    "error: Connecting to 'http://localhost:3001/api/air?lat=39.904&lon=116.407' violates the following Content Security Policy directive: \"connect-src 'self' https:\". The action has been blocked.",
+    "error: Fetch API cannot load http://localhost:3001/api/air?lat=39.904&lon=116.407. Refused to connect because it violates the document's Content Security Policy.",
+    "verbose: [DOM] Password field is not contained in a form: (More info: https://www.chromium.org/developers/design-documents/create-amazing-password-forms) %o",
+    "error: Connecting to 'http://localhost:3001/api/air?lat=39.904&lon=116.407' violates the following Content Security Policy directive: \"connect-src 'self' https:\". The action has been blocked.",
+    "error: Fetch API cannot load http://localhost:3001/api/air?lat=39.904&lon=116.407. Refused to connect because it violates the document's Content Security Policy.",
+    "verbose: [DOM] Password field is not contained in a form: (More info: https://www.chromium.org/developers/design-documents/create-amazing-password-forms) %o"
+  ]
+}
