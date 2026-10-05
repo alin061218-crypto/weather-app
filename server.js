@@ -270,6 +270,17 @@ app.use(helmet({
     contentSecurityPolicy: { directives: cspDirectives },
     referrerPolicy: { policy: 'no-referrer' }
 }));
+
+app.get('/health', (_req, res) => {
+    try {
+        db.prepare('SELECT 1').get();
+        res.status(200).json({ status: 'ok' });
+    } catch (error) {
+        console.error('Health check failed:', error?.message || error);
+        res.status(503).json({ status: 'error' });
+    }
+});
+
 app.use('/api', cors(corsOptions));
 app.use(express.json({ limit: '32kb' }));
 

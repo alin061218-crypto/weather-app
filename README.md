@@ -37,7 +37,7 @@ flowchart LR
 
 1. 安装 Node.js 20 或更高版本。
 2. 安装依赖：`npm ci`。
-3. 复制 `.env.example` 为 `.env`，设置至少 32 字符的 `JWT_SECRET`，并用 `node scripts/hash-password.js` 生成 `ADMIN_PASSWORD_HASH`。
+3. 先按 `.env.example` 建立 `.env`，设置至少 32 字符的 `JWT_SECRET`，并用 `node scripts/hash-password.js` 生成 `ADMIN_PASSWORD_HASH`。
 4. 启动：`npm start`，默认地址为 <http://localhost:3001>。
 5. 浏览器打开根地址；普通用户可在「我的」页面注册。后台地址为 `/admin`。
 

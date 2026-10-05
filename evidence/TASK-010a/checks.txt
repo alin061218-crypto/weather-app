@@ -1,0 +1,29 @@
+TASK-010a checks
+
+health-check.cjs:
+NORMAL_STATUS=200
+NORMAL_BODY={"status":"ok"}
+NORMAL_DB_PROBE=SELECT 1
+FAILURE_STATUS=503
+FAILURE_BODY={"status":"error"}
+
+start script:
+> weather-backend@1.0.0 start
+> node --env-file=.env server.js
+天气后端服务已启动: http://localhost:3311 (SQLite)
+
+static service worker check:
+Select-String -Path frontend\sw.js -Pattern 'health'
+0 matches
+
+regression:
+npm test: PASS (1 file, 6 tests)
+npm run lint: PASS
+npm run format:check: PASS
+npm run check:versions: PASS
+npm run check:evidence -- --static-only: PASS
+node --check server.js: PASS
+git diff --check: PASS
+
+CI confirmation: ci.yml runs test, lint, format, version, evidence static-only,
+syntax, and whitespace checks; none invokes npm start or npm dev.
