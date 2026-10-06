@@ -38,34 +38,31 @@ icon.weather = {
     `);
   },
 
-  // 🌙 晴夜 — 月牙 + 两颗星
+  // 🌙 晴夜 — 月牙 + 一颗星
   clearNight() {
     return wsvg(`
-      <path d="M19 13A7 7 0 1111 5a5 5 0 0010 8z" fill="currentColor" stroke="none" opacity="0.15"/>
-      <path d="M19 13A7 7 0 1111 5a5 5 0 0010 8z"/>
-      <circle cx="15" cy="3" r="1" fill="currentColor" stroke="none" opacity="0.6"/>
-      <circle cx="20" cy="8" r="0.7" fill="currentColor" stroke="none" opacity="0.4"/>
+      <path d="M17.66 6.34A8 8 0 1 0 17.66 17.66L18.95 14.95A7 7 0 1 1 18.95 5.05z" fill="currentColor" stroke="none" opacity="0.15"/>
+      <path d="M17.66 6.34A8 8 0 1 0 17.66 17.66L18.95 14.95A7 7 0 1 1 18.95 5.05z"/>
+      <path d="M15.5 2.6l.45 1.2 1.2.45-1.2.45-.45 1.2-.45-1.2-1.2-.45 1.2-.45z" fill="currentColor" stroke="none" opacity="0.75"/>
     `);
   },
 
   // 🌤️ 少云 — 太阳被一小朵云挡住部分
   partlyCloudy() {
     return wsvg(`
-      <circle cx="10" cy="9" r="3.5"/>
-      <path d="M10 4v1.5"/><path d="M10 17.5v1.5"/>
-      <path d="M5.5 6.5l1 1"/><path d="M13.5 11.5l1 1"/>
-      <path d="M4 10h1"/><path d="M14.5 8h1"/>
+      <circle cx="9" cy="8" r="3.5"/>
+      <path d="M9 2.5v1.3"/><path d="M9 12.2v1.3"/>
+      <path d="M3.5 8h1.3"/><path d="M13.2 8h1.3"/>
+      <path d="M5.1 4.1l.9.9"/><path d="M12 4.1l-.9.9"/>
       <path d="M14 18h6.2a2.8 2.8 0 000-5.6h-.3a4.4 4.4 0 00-8.3-.8A3.2 3.2 0 0014 18z" fill="currentColor" fill-opacity=".16"/>
     `);
   },
 
-  // ⛅ 多云 — 两朵云 + 微露太阳
+  // ⛅ 多云 — 两朵叠云
   cloudy() {
     return wsvg(`
-      <circle cx="7" cy="8" r="3" fill="currentColor" stroke="none" opacity="0.12"/>
-      <circle cx="7" cy="8" r="2.8"/>
-      <path d="M7 3.5v1.5"/><path d="M7 14v1"/>
-      <path d="M9 19h10.2a3.8 3.8 0 000-7.6h-.4a5.5 5.5 0 00-10.4-1A4.5 4.5 0 009 19z" fill="currentColor" fill-opacity=".16"/>
+      <path d="M5 15h8.5a3.2 3.2 0 000-6.4h-.3a4.2 4.2 0 00-7.8.8A3.1 3.1 0 005 15z" fill="currentColor" fill-opacity=".12"/>
+      <path d="M9 20h10.2a3.8 3.8 0 000-7.6h-.4a5.5 5.5 0 00-10.4-1A4.5 4.5 0 009 20z" fill="currentColor" fill-opacity=".16"/>
     `);
   },
 

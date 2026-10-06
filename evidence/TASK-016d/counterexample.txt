@@ -1,0 +1,15 @@
+TASK-016d geometry guard counterexample
+======================================
+
+Command:
+  node evidence/TASK-016d/icon-geometry.cjs --inner-radius=5
+Exit: 1
+
+Output:
+  AssertionError [ERR_ASSERTION]: crescent thickness 9.551 must stay <= 4.200 to avoid a heavy crescent
+
+The --inner-radius=5 switch applies the old inner arc radius to the parsed
+clearNight path without changing the checked source file. The same parser and
+assertions therefore reject the old, over-thick geometry. The normal command
+`node evidence/TASK-016d/icon-geometry.cjs` passes with thickness 3.824 and a
+minimum contract of 3.750 (2.5 × stroke-width).
