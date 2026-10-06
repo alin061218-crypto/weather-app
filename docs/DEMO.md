@@ -7,8 +7,8 @@
 作者已选定路线 B：本机运行 + Cloudflare Tunnel + `weather.alin061218.online`。
 
 - 主路径是本机演示：`http://localhost:3001`。`localhost` 属可信上下文，自动定位可用，无需 HTTPS。
-- 公网路径是隧道演示：`https://weather.alin061218.online`。
-- 隧道目前尚未接通；公网验收状态：**待作者完成 Cloudflare 侧操作**，不得将其写成已验证。
+- 今天可用的公网路径是临时隧道；固定域名路径仍是 `https://weather.alin061218.online`。
+- 固定域名隧道尚未接通；公网固定域名验收状态：**待作者完成 Cloudflare 侧操作**，不得将其写成已验证。
 - `cloudflared` 已安装，版本为 `2026.10.0`，可执行文件是 `C:\Program Files (x86)\cloudflared\cloudflared.exe`，并已写入机器级 PATH。
 - PATH 修改必须在**新开终端**后才会被当前终端识别。
 - 隧道演示的 `.env` 应设置 `NODE_ENV=production`，这样 Cookie 才会带 `Secure`。
@@ -18,7 +18,11 @@
 
 以下步骤需要作者在浏览器中登录 Cloudflare 账号或在 Cloudflare 控制台确认，不能由仓库脚本代办。
 
-### 第 0 步：确认域名已在 Cloudflare
+### 第 0 步：确认固定域名的 Cloudflare / DNS 现状
+
+设计方经 `223.5.5.5` 直查，`alin061218.online` 的 NS 仍是 `dns31.hichina.com` / `dns32.hichina.com`（阿里云）。要让固定域名可用，必须先「Cloudflare 添加站点 → 阿里云改 NS」，然后等待 NS 生效 **1–48 小时**。
+
+这不阻塞临时隧道与本地演示，两条路可并行：临时隧道不需要 Cloudflare 账号、不需要域名、不需要改 NS。
 
 1. 浏览器打开 <https://dash.cloudflare.com> 并登录 Cloudflare。
 2. 确认 `alin061218.online` 已经是 Cloudflare 站点。
@@ -63,9 +67,9 @@ ingress:
 
 凭据 JSON 文件应由 `cloudflared tunnel create` 写入 `%USERPROFILE%\.cloudflared\`。不要把该 JSON、Token 或其他密钥写进仓库。
 
-## 2. 两条启动路径
+## 2. 三条启动路径
 
-### 本机演示（主路径）
+### ① 本机演示（主路径，100% 可靠）
 
 在仓库根目录 `E:\weather\weather-project` 打开窗口 A：
 
@@ -77,7 +81,56 @@ node --env-file=.env server.js
 
 `localhost` 属可信上下文，自动定位可用，无需 HTTPS。
 
-### 公网演示（隧道）
+### ② 临时隧道（今天可用，已验证）
+
+先在窗口 A 启动服务：
+
+```powershell
+node --env-file=.env server.js
+```
+
+再在窗口 B 运行临时隧道：
+
+```powershell
+cloudflared tunnel --url http://localhost:3001
+```
+
+这条路径不需要 Cloudflare 账号、不需要域名、不需要改 NS。命令输出里的 `https://<随机>.trycloudflare.com` 就是给老师的地址；这是今天可用、已经实测验证的公网路径。
+
+临时隧道的限制（都属于同一条路径）：
+
+1. **地址每次重启都变**：`hands-sea-shaped-tea` 是随机子域，演示当天必须重跑并把新地址发出去。
+2. **有偶发失败**：设计方抽样 `/css/style.css` 为 200 / 200 / 超时(000) / 200，即 1/4 超时；本地直连 4/4 正常。刷新通常可恢复；不要把它当唯一依赖。
+3. **出站 UDP 7844 可能被拦**：日志显示 `region2 UDP FAIL → degraded transport`；可改用下面的命令并加 `--protocol http2`，减少协议切换抖动：
+
+    ```powershell
+    cloudflared tunnel --protocol http2 --url http://localhost:3001
+    ```
+
+#### 临时隧道实测记录（原文）
+
+作者机器（cloudflared 2026.10.0）：
+
+```text
+cloudflared tunnel --url http://localhost:3001
+→ Your quick Tunnel has been created! Visit it at:
+    https://hands-sea-shaped-tea.trycloudflare.com
+→ Registered tunnel connection connIndex=0 ... location=lax13 protocol=quic
+连通性预检：DNS PASS / TCP PASS / Cloudflare API PASS
+                ⚠️ UDP(region2) FAIL → SUMMARY: degraded transport, 改用 http2
+```
+
+设计方从公网独立验证（curl）：
+
+```text
+GET /                → 200，首页 19,833 B，<title>天气 · Weather</title>，18 个 ?v=<hash> 引用
+GET /health          → 200 {"status":"ok"}
+/js/main.js、/manifest.json、/vendor/three.module.js → 全部 200
+/css/style.css（经隧道）→ 200/200/超时(000)/200 ⚠️ 抽样 1/4 偶发失败
+/css/style.css（本地直连）→ 4/4 正常 → 偶发失败在隧道侧，不是服务端
+```
+
+### ③ 命名隧道 + 固定域名（等 NS 生效后）
 
 先确认 `.env` 中有 `NODE_ENV=production`，然后开两个终端窗口。
 
@@ -95,7 +148,7 @@ node --env-file=.env server.js
 
 浏览器访问：<https://weather.alin061218.online>
 
-隧道是否真的通，必须以手机关闭 Wi-Fi 后用 4G 打开该域名的 HTTPS 验收为准。当前仓库验收不替代作者的 Cloudflare 浏览器操作，隧道状态仍记为**待作者完成 Cloudflare 侧操作**。
+这条路径依赖第 0 步的 NS 切换和生效。隧道是否真的通，必须以手机关闭 Wi-Fi 后用 4G 打开该域名的 HTTPS 验收为准。当前仓库验收不替代作者的 Cloudflare 浏览器操作，隧道状态仍记为**待作者完成 Cloudflare 侧操作**。
 
 ## 3. 答辩演示顺序
 
