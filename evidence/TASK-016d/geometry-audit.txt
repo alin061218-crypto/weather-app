@@ -6,10 +6,14 @@ so the review threshold is 1.5 × stroke-width = 2.25 viewBox units. Gaps are
 estimated from the closest visible edges in the 24 × 24 coordinate system. A
 gap below the threshold is listed even when it is an intentional attachment.
 
+2026-10-06 author decision: clearNight now delegates to clearDay. The remaining
+non-crescent estimates below are retained from the previous review; they were
+not remeasured for this icon-unification change. The current clearNight contract
+is checked by icon-unification.cjs.
+
 icon          closest gap   threshold   judgement
 ------------  ------------  ----------  ----------------------------------------------
 clearDay           4.50        2.25      pass; ray-to-sun spacing is deliberate
-clearNight        3.82        2.25      pass; crescent band is separated, tips taper
 partlyCloudy       2.50        2.25      pass; cloud and sun are layered, not touching
 cloudy             2.50        2.25      pass; cloud/sun overlap is open and readable
 overcast           2.00        2.25      intentional; baseline is a separate ground cue
@@ -22,5 +26,4 @@ storm              0.00        2.25      intentional; lightning is attached to t
 The only sub-threshold gaps are overcast's cloud-to-baseline separation,
 rainHeavy's closest drop-to-cloud start, and storm's attached lightning. They
 are intentional construction cues rather than strokes filling an unintended
-hole. None is a hidden enclosed gap that collapses at 24px. The clearNight
-measurement is produced independently by icon-geometry.cjs.
+hole. None is a hidden enclosed gap that collapses at 24px.

@@ -11,7 +11,7 @@
  *   大雨 → 云 + 密集雨滴
  *   雪 → 云 + 雪花
  *   雷暴 → 云 + 闪电
- *   晴夜 → 月牙 + 星星
+ *   晴（夜间）→ 与日间相同的太阳
  */
 
 export const icon = {};
@@ -38,13 +38,9 @@ icon.weather = {
     `);
   },
 
-  // 🌙 晴夜 — 月牙 + 一颗星
+  // ☀️ 晴（夜间）— 与日间共用太阳图标
   clearNight() {
-    return wsvg(`
-      <path d="M17.66 6.34A8 8 0 1 0 17.66 17.66L18.95 14.95A7 7 0 1 1 18.95 5.05z" fill="currentColor" stroke="none" opacity="0.15"/>
-      <path d="M17.66 6.34A8 8 0 1 0 17.66 17.66L18.95 14.95A7 7 0 1 1 18.95 5.05z"/>
-      <path d="M15.5 2.6l.45 1.2 1.2.45-1.2.45-.45 1.2-.45-1.2-1.2-.45 1.2-.45z" fill="currentColor" stroke="none" opacity="0.75"/>
-    `);
+    return icon.weather.clearDay();
   },
 
   // 🌤️ 少云 — 太阳被一小朵云挡住部分
