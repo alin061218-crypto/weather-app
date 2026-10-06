@@ -1,115 +1,122 @@
 # 天气应用答辩演示脚本
 
-本文是答辩现场的操作顺序。演示前先完成“必须由人操作的前置步骤”，并确认 `.env` 已存在于本机且不会提交到 Git。
+本文是答辩现场的操作顺序。
 
-## 0. 演示方案与重要配置
+> **2026-10-06 更新**：路线 B（本机 + Cloudflare Tunnel + `weather.alin061218.online`）
+> **已全部接通并通过验收** —— 手机关 Wi-Fi 用 4G 打开固定域名、点「自动定位」**弹出授权**。
+> 隧道与应用均**已服务化/自启**：重启电脑后不需要敲任何命令。
 
-作者已选定路线 B：本机运行 + Cloudflare Tunnel + `weather.alin061218.online`。
+## 0. 当前基础设施终态
 
-- 主路径是本机演示：`http://localhost:3001`。`localhost` 属可信上下文，自动定位可用，无需 HTTPS。
-- 今天可用的公网路径是临时隧道；固定域名路径仍是 `https://weather.alin061218.online`。
-- 固定域名隧道尚未接通；公网固定域名验收状态：**待作者完成 Cloudflare 侧操作**，不得将其写成已验证。
-- `cloudflared` 已安装，版本为 `2026.10.0`，可执行文件是 `C:\Program Files (x86)\cloudflared\cloudflared.exe`，并已写入机器级 PATH。
-- PATH 修改必须在**新开终端**后才会被当前终端识别。
-- 隧道演示的 `.env` 应设置 `NODE_ENV=production`，这样 Cookie 才会带 `Secure`。
-- `localhost` 仍可正常登录；改用局域网 IP（例如 `http://192.168.x.x:3001`）时，`Secure` Cookie 发不出去，登录会静默失效。演示固定使用 localhost 或隧道域名。
+| 组件         | 值 / 运行方式                                                         | 自启                                      |
+| ------------ | --------------------------------------------------------------------- | ----------------------------------------- |
+| 固定域名     | `https://weather.alin061218.online`                                   | —                                         |
+| 域名 NS      | `edward.ns.cloudflare.com` / `lila.ns.cloudflare.com`（注册局已收录） | —                                         |
+| 隧道         | `weather-demo`，UUID `d1057273-b4ef-465f-a7c8-30eadee90ee2`           | —                                         |
+| **隧道进程** | **Windows 服务 `cloudflared`**                                        | ✅ `Automatic`                            |
+| **应用进程** | **PM2 `weather-app`**（`node --env-file=.env server.js`）             | ✅ 计划任务 `pm2-resurrect`（登录时触发） |
+| 源站         | `http://localhost:3001`                                               | —                                         |
+| `.env`       | `NODE_ENV=production`（走 HTTPS 时 Cookie 才带 `Secure`）             | —                                         |
 
-## 1. 必须由人操作的前置步骤
+**结论：重启电脑后不用敲任何命令。** 隧道服务与 `pm2 resurrect` 会自动把两个进程起回来。
 
-以下步骤需要作者在浏览器中登录 Cloudflare 账号或在 Cloudflare 控制台确认，不能由仓库脚本代办。
+三条路径（按可靠度排序）：
 
-### 第 0 步：确认固定域名的 Cloudflare / DNS 现状
+1. **本机演示（主路径，100% 可靠）**：`http://localhost:3001`。`localhost` 属可信上下文，自动定位可用，无需 HTTPS。
+2. **固定域名（已验收）**：`https://weather.alin061218.online` —— 走隧道，HTTPS 已确认生效。
+3. **临时隧道（兜底）**：见第 2 节 ③，不需要账号/域名，但地址每次重启都变。
 
-设计方经 `223.5.5.5` 直查，`alin061218.online` 的 NS 仍是 `dns31.hichina.com` / `dns32.hichina.com`（阿里云）。要让固定域名可用，必须先「Cloudflare 添加站点 → 阿里云改 NS」，然后等待 NS 生效 **1–48 小时**。
+⚠️ 改用**局域网 IP**（`http://192.168.x.x:3001`）访问时 `Secure` Cookie 发不出去、**登录会静默失效**。
+演示固定使用 `localhost` 或隧道域名。
 
-这不阻塞临时隧道与本地演示，两条路可并行：临时隧道不需要 Cloudflare 账号、不需要域名、不需要改 NS。
+---
 
-1. 浏览器打开 <https://dash.cloudflare.com> 并登录 Cloudflare。
-2. 确认 `alin061218.online` 已经是 Cloudflare 站点。
-3. 如果不是：添加该站点，记录 Cloudflare 给出的两个 NS，然后到阿里云域名控制台把 NS 改成这两个值。NS 生效通常需要 **1–48 小时**。
+## 1. 开机自检（★ 答辩当天第一件事）
 
-### 第 1 步：授权 cloudflared
-
-在**新开终端**运行：
-
-```powershell
-cloudflared tunnel login
-```
-
-命令会打开浏览器。登录 Cloudflare 后选择 `alin061218.online` 并授权。
-
-### 第 2 步：创建隧道
+一条命令看四项，全部符合预期再开始演示：
 
 ```powershell
-cloudflared tunnel create weather-demo
+@{
+  'cloudflared 服务' = (Get-Service cloudflared).Status
+  'PM2 应用'         = (pm2.cmd jlist 2>$null | ConvertFrom-Json | Where-Object { $_.name -eq 'weather-app' }).pm2_env.status
+  '本地健康'         = (curl.exe -s -o NUL -w '%{http_code}' http://127.0.0.1:3001/health)
+  '公网健康'         = (curl.exe -s -o NUL -w '%{http_code}' https://weather.alin061218.online/health)
+} | Format-Table -AutoSize
 ```
 
-记下命令输出的 Tunnel UUID。后续配置中的 `<TUNNEL-UUID>` 和凭据文件名都使用这个 UUID。
+**期望：`Running` / `online` / `200` / `200`**
 
-### 第 3 步：绑定 DNS
+### 如果某一项不对
 
-```powershell
-cloudflared tunnel route dns weather-demo weather.alin061218.online
-```
+| 现象                            | 处理                                                                                                      |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `cloudflared 服务` 不是 Running | 管理员 PowerShell：`Start-Service cloudflared`                                                            |
+| `PM2 应用` 不是 online          | `pm2.cmd resurrect`；仍不行则 `pm2.cmd start server.js --name weather-app --node-args="--env-file=.env"`  |
+| 本地 **200**、公网 **530**      | 隧道没连上：`cloudflared tunnel info weather-demo` 应列出 connector；没有就 `Restart-Service cloudflared` |
+| 本地也不是 200                  | 应用没起：`pm2.cmd logs weather-app --lines 30` 看报错                                                    |
+| 公网 502                        | 本地服务没跑，或隧道 ingress 指向的端口不对（应为 `localhost:3001`）                                      |
 
-### 第 4 步：写入隧道配置
+**★ 一条重要经验（本次踩过）**：服务可以"在跑但一个连接都不建" —— 如果同时还有手动窗口在跑，
+**故障会被手动进程掩盖**。所以自检必须**先确认没有任何手动 `cloudflared tunnel run` 窗口**。
 
-创建 `%USERPROFILE%\.cloudflared\config.yml`，把 `<TUNNEL-UUID>` 换成第 2 步记下的 UUID：
-
-```yaml
-tunnel: <TUNNEL-UUID>
-credentials-file: C:\Users\<你的用户名>\.cloudflared\<TUNNEL-UUID>.json
-ingress:
-    - hostname: weather.alin061218.online
-      service: http://127.0.0.1:3001
-    - service: http_status:404
-```
-
-凭据 JSON 文件应由 `cloudflared tunnel create` 写入 `%USERPROFILE%\.cloudflared\`。不要把该 JSON、Token 或其他密钥写进仓库。
+---
 
 ## 2. 三条启动路径
 
 ### ① 本机演示（主路径，100% 可靠）
 
-在仓库根目录 `E:\weather\weather-project` 打开窗口 A：
-
 ```powershell
 node --env-file=.env server.js
 ```
 
-浏览器打开：<http://localhost:3001>
+浏览器打开 <http://localhost:3001>。`localhost` 属可信上下文，自动定位可用，无需 HTTPS。
 
-`localhost` 属可信上下文，自动定位可用，无需 HTTPS。
+### ② 固定域名（已验收，走 Windows 服务）
 
-### ② 临时隧道（今天可用，已验证）
-
-先在窗口 A 启动服务：
+正常情况**什么都不用做** —— 服务与 PM2 都已自启。要手工验证：
 
 ```powershell
-node --env-file=.env server.js
+Get-Service cloudflared
+curl.exe -s -o NUL -w "%{http_code}`n" https://weather.alin061218.online/health
 ```
 
-再在窗口 B 运行临时隧道：
+浏览器访问 <https://weather.alin061218.online>。
+
+**底层构成**（排查时用）：
+
+- 隧道配置 `%USERPROFILE%\.cloudflared\config.yml`：`ingress` 把
+  `weather.alin061218.online` 指向 `http://localhost:3001`，末条 `http_status:404` 兜底。
+- 服务启动命令（注册表 `HKLM\SYSTEM\CurrentControlSet\Services\Cloudflared` 的 `ImagePath`）：
+    ```
+    "C:\Program Files (x86)\cloudflared\cloudflared.exe" --config=C:\Users\Lenovo\.cloudflared\config.yml tunnel run
+    ```
+    ⚠️ **`cloudflared service install` 装出来的 `ImagePath` 不带任何参数**，
+    而服务以 `LocalSystem` 身份运行、默认在 `C:\Windows\System32\config\systemprofile\.cloudflared\`
+    找配置 —— 那里没有 `config.yml`，于是**服务 Running 但一个连接都不建**。
+    上面那个 `ImagePath` 就是修好后的形态。
+
+### ③ 临时隧道（兜底，今天可用）
+
+不需要 Cloudflare 账号、不需要域名、不需要改 NS：
 
 ```powershell
 cloudflared tunnel --url http://localhost:3001
 ```
 
-这条路径不需要 Cloudflare 账号、不需要域名、不需要改 NS。命令输出里的 `https://<随机>.trycloudflare.com` 就是给老师的地址；这是今天可用、已经实测验证的公网路径。
+命令输出里的 `https://<随机>.trycloudflare.com` 就是给老师的地址。三条限制：
 
-临时隧道的限制（都属于同一条路径）：
-
-1. **地址每次重启都变**：`hands-sea-shaped-tea` 是随机子域，演示当天必须重跑并把新地址发出去。
-2. **有偶发失败**：设计方抽样 `/css/style.css` 为 200 / 200 / 超时(000) / 200，即 1/4 超时；本地直连 4/4 正常。刷新通常可恢复；不要把它当唯一依赖。
-3. **出站 UDP 7844 可能被拦**：日志显示 `region2 UDP FAIL → degraded transport`；可改用下面的命令并加 `--protocol http2`，减少协议切换抖动：
+1. **地址每次重启都变**（`hands-sea-shaped-tea` 是随机子域）→ 演示当天必须重跑并把新地址发出去。
+2. **有偶发失败**：设计方抽样 `/css/style.css` 为 200 / 200 / 超时(000) / 200（1/4 超时）；
+   本地直连 4/4 正常。刷新通常可恢复；**不要把它当唯一依赖**。
+3. **出站 UDP 7844 可能被拦**（日志 `region2 UDP FAIL → degraded transport`），
+   可加 `--protocol http2` 减少协议切换抖动：
 
     ```powershell
     cloudflared tunnel --protocol http2 --url http://localhost:3001
     ```
 
-#### 临时隧道实测记录（原文）
-
-作者机器（cloudflared 2026.10.0）：
+<details>
+<summary>临时隧道实测记录（原文，2026-10-06）</summary>
 
 ```text
 cloudflared tunnel --url http://localhost:3001
@@ -130,25 +137,9 @@ GET /health          → 200 {"status":"ok"}
 /css/style.css（本地直连）→ 4/4 正常 → 偶发失败在隧道侧，不是服务端
 ```
 
-### ③ 命名隧道 + 固定域名（等 NS 生效后）
+</details>
 
-先确认 `.env` 中有 `NODE_ENV=production`，然后开两个终端窗口。
-
-窗口 A：
-
-```powershell
-cloudflared tunnel run weather-demo
-```
-
-窗口 B，在仓库根目录运行：
-
-```powershell
-node --env-file=.env server.js
-```
-
-浏览器访问：<https://weather.alin061218.online>
-
-这条路径依赖第 0 步的 NS 切换和生效。隧道是否真的通，必须以手机关闭 Wi-Fi 后用 4G 打开该域名的 HTTPS 验收为准。当前仓库验收不替代作者的 Cloudflare 浏览器操作，隧道状态仍记为**待作者完成 Cloudflare 侧操作**。
+---
 
 ## 3. 答辩演示顺序
 
@@ -173,7 +164,8 @@ node --env-file=.env server.js
 node scripts/hash-password.js "<现场自行输入的临时密码>"
 ```
 
-修改 `.env` 后重启 `server.js`。`.env` 已被 `.gitignore` 忽略，提交前仍应检查 `git status`，确保没有密钥或密码进入版本库。
+修改 `.env` 后重启：`pm2.cmd restart weather-app --update-env`。
+`.env` 已被 `.gitignore` 忽略，提交前仍应检查 `git status`，确保没有密钥或密码进入版本库。
 
 ## 5. 断网降级
 
@@ -182,18 +174,66 @@ node scripts/hash-password.js "<现场自行输入的临时密码>"
 - PWA 已预缓存的页面外壳和静态资源仍可打开。
 - 已在浏览器本地缓存的最近天气数据可用于展示已有结果。
 - 实时天气、城市搜索、自动定位后的远程天气请求、登录、收藏、历史、生活指数、意见反馈和 `/admin` 都依赖后端或外部网络，断网时可能不可用。
+- **兜底**：断网时改用本机演示路径（`http://localhost:3001`），它不经公网。
 
-## 6. HTTPS 唯一验收判据
+## 6. HTTPS 唯一验收判据（✅ 已于 2026-10-06 通过）
 
 用手机关闭 Wi-Fi，切换 4G/5G，打开 <https://weather.alin061218.online>，点击“自动定位”：**能弹出浏览器定位授权，才算 HTTPS 真的生效**。
 
 HTTP 下 Geolocation 会被浏览器拒绝，详见 doc 07 第三节。仅能打开页面、看到地址栏或收到 HTTP 响应，都不能替代这个判据。
 
-## 7. 现场检查清单
+> 结果记录见 `evidence/TASK-010b/https-acceptance.md`：
+> 「自动定位弹出授权」是**作者手持设备的人工观察**，不是字节级可复现的产物 ——
+> 但它恰恰是这个判据唯一成立的证明方式（无头浏览器代表不了真实移动端的安全上下文与权限弹窗）。
 
-- [ ] 已在 Cloudflare 控制台确认站点和 DNS 状态。
-- [ ] 已在**新开终端**中完成 `cloudflared tunnel login`，并准备好 Tunnel UUID 与 `config.yml`。
-- [ ] `.env` 中 `NODE_ENV=production` 已用于隧道演示；本机演示可继续使用现有配置。
-- [ ] 窗口 A、窗口 B 的启动命令按第 2 节执行。
-- [ ] 手机 4G/5G 自动定位授权弹窗已出现，才宣称 HTTPS 验收通过。
+## 7. 前置步骤（✅ 已完成，保留供换机 / 重装参考）
+
+以下步骤需要作者在浏览器中登录 Cloudflare 账号，不能由仓库脚本代办。
+
+1. **改 NS**：`dash.cloudflare.com` 添加站点 → 到阿里云域名控制台把 NS 从
+   `dns31.hichina.com` / `dns32.hichina.com` 改成 Cloudflare 给出的
+   `edward.ns.cloudflare.com` / `lila.ns.cloudflare.com` → 等 **1–48 小时**
+   （本次实测约 40 分钟就全部传播完）。改之前确认域名**未开启 DNSSEC**。
+2. **安装 cloudflared**：`winget install Cloudflare.cloudflared`（本次版本 `2026.10.0`）。
+   ⚠️ PATH 修改必须**新开终端**才生效。
+3. **授权**：`cloudflared tunnel login` → 浏览器里选 `alin061218.online` 并授权。
+4. **建隧道**：`cloudflared tunnel create weather-demo` → 记下 UUID 与凭据 JSON 路径。
+5. **绑 DNS**：`cloudflared tunnel route dns weather-demo weather.alin061218.online`。
+6. **写配置** `%USERPROFILE%\.cloudflared\config.yml`：
+
+    ```yaml
+    tunnel: <TUNNEL-UUID>
+    credentials-file: C:/Users/<用户名>/.cloudflared/<TUNNEL-UUID>.json
+    ingress:
+        - hostname: weather.alin061218.online
+          service: http://localhost:3001
+        - service: http_status:404
+    ```
+
+    ⚠️ 用**完整 `ingress:` 形式**，不要用 `url:` 简写 —— 简写能让 `tunnel run` 跑起来，
+    但 `cloudflared tunnel ingress validate` 会报 “doesn't contain any ingress rules”。
+    校验：`cloudflared tunnel ingress validate`（期望 `OK`）。
+
+7. **装服务**：管理员 PowerShell 运行 `cloudflared service install`，
+   然后**必须**把注册表 `HKLM\SYSTEM\CurrentControlSet\Services\Cloudflared` 的 `ImagePath` 改成
+   第 2 节 ② 里那条带 `--config=... tunnel run` 的形式，否则服务会空转。
+8. **应用自启**：
+
+    ```powershell
+    pm2.cmd save
+    schtasks /create /tn "pm2-resurrect" /tr "cmd /c pm2 resurrect" /sc onlogon /f
+    ```
+
+    （PM2 的 `startup` 子命令**不支持 Windows**，所以用计划任务。）
+
+不要把凭据 JSON、Token 或其他密钥写进仓库。
+
+## 8. 现场检查清单（最终版）
+
+- [ ] **第 1 节的四项自检全部符合预期**（Running / online / 200 / 200）。
+- [ ] 确认**没有**残留的手动 `cloudflared tunnel run` 窗口（否则会掩盖服务故障）。
+- [ ] 手机 4G/5G 打开固定域名后「自动定位」能弹授权（第 6 节判据）。
+- [ ] `.env` 中 `NODE_ENV=production` 已生效（改过就 `pm2.cmd restart weather-app --update-env`）。
+- [ ] 演示顺序按第 3 节走一遍；SUS 问卷能提交。
+- [ ] 兜底路径已实测：本机 `http://localhost:3001` 可打开。
 - [ ] 录屏兜底：**作者决定不做**。
