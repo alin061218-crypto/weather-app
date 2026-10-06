@@ -273,7 +273,10 @@ app.use(helmet({
 
 app.get('/health', (_req, res) => {
     try {
-        db.prepare('SELECT 1').get();
+        const schema = db.prepare("SELECT count(*) AS n FROM sqlite_master").get();
+        if (!schema || schema.n <= 0) throw new Error('database schema is empty');
+        db.prepare('SELECT count(*) AS n FROM cache').get();
+        if (fs.statSync(DB_FILE).size <= 0) throw new Error('database file is empty');
         res.status(200).json({ status: 'ok' });
     } catch (error) {
         console.error('Health check failed:', error?.message || error);

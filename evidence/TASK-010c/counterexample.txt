@@ -1,0 +1,13 @@
+Counterexample: server.js /health probe temporarily changed to SELECT 1.
+Command: node evidence/TASK-010a/health-check.cjs
+Exit status: 1
+
+NORMAL_STATUS=200
+NORMAL_BODY={"status":"ok"}
+NORMAL_DB_PROBE=SELECT count(*) FROM cache + sqlite_master schema count
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+200 !== 503
+
+    at main (E:\weather\weather-project\evidence\TASK-010a\health-check.cjs:54:16)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
