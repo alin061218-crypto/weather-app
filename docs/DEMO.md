@@ -54,13 +54,14 @@ $check.GetEnumerator() | ForEach-Object { '  {0,-18} = {1}' -f $_.Key, $_.Value 
 
 ### 如果某一项不对
 
-| 现象                            | 处理                                                                                                      |
-| ------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `cloudflared 服务` 不是 Running | 管理员 PowerShell：`Start-Service cloudflared`                                                            |
-| `PM2 应用` 不是 online          | `pm2.cmd resurrect`；仍不行则 `pm2.cmd start server.js --name weather-app --node-args="--env-file=.env"`  |
-| 本地 **200**、公网 **530**      | 隧道没连上：`cloudflared tunnel info weather-demo` 应列出 connector；没有就 `Restart-Service cloudflared` |
-| 本地也不是 200                  | 应用没起：`pm2.cmd logs weather-app --lines 30` 看报错                                                    |
-| 公网 502                        | 本地服务没跑，或隧道 ingress 指向的端口不对（应为 `localhost:3001`）                                      |
+| 现象                                           | 处理                                                                                                                                                                                                   |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `cloudflared 服务` 不是 Running                | 管理员 PowerShell：`Start-Service cloudflared`                                                                                                                                                         |
+| `PM2 应用` 不是 online                         | `pm2.cmd resurrect`；仍不行则 `pm2.cmd start server.js --name weather-app --node-args="--env-file=.env"`                                                                                               |
+| **公网 502 / 530 / 000（本地 200，重试就好）** | ★ **先刷新 2～3 次再排查。** 隧道会偶发抖动（本机出站 UDP 7844 被拦，cloudflared 回落 `http2`，日志出现 `degraded transport`）。实测：偶发 1 次 502，紧接着连测 3 次全部 200。**抖动时不要急着改配置** |
+| 本地 **200**、公网 **530**（重试多次仍不行）   | 隧道没连上：`cloudflared tunnel info weather-demo` 应列出 connector；没有就 `Restart-Service cloudflared`                                                                                              |
+| 本地也不是 200                                 | 应用没起：`pm2.cmd logs weather-app --lines 30` 看报错                                                                                                                                                 |
+| 公网 **502**（重试多次仍不行）                 | 本地服务没跑，或隧道 ingress 指向的端口不对（应为 `localhost:3001`）                                                                                                                                   |
 
 **★ 一条重要经验（本次踩过）**：服务可以"在跑但一个连接都不建" —— 如果同时还有手动窗口在跑，
 **故障会被手动进程掩盖**。所以自检必须**先确认没有任何手动 `cloudflared tunnel run` 窗口**。
