@@ -36,12 +36,18 @@
 一条命令看四项，全部符合预期再开始演示：
 
 ```powershell
-@{
-  'cloudflared 服务' = (Get-Service cloudflared).Status
-  'PM2 应用'         = (pm2.cmd jlist 2>$null | ConvertFrom-Json | Where-Object { $_.name -eq 'weather-app' }).pm2_env.status
-  '本地健康'         = (curl.exe -s -o NUL -w '%{http_code}' http://127.0.0.1:3001/health)
-  '公网健康'         = (curl.exe -s -o NUL -w '%{http_code}' https://weather.alin061218.online/health)
-} | Format-Table -AutoSize
+$check = [ordered]@{}
+$check['cloudflared 服务'] = (Get-Service cloudflared -ErrorAction SilentlyContinue).Status
+# 注意：pm2 jlist 里同时有 username 和 USERNAME，PowerShell 的 ConvertFrom-Json
+# 会因大小写冲突而拒绝解析，必须加 -AsHashtable。
+try {
+  $check['PM2 应用'] = (pm2.cmd jlist 2>$null | Out-String |
+    ConvertFrom-Json -AsHashtable |
+    Where-Object { $_['name'] -eq 'weather-app' })['pm2_env']['status']
+} catch { $check['PM2 应用'] = '解析失败' }
+$check['本地健康'] = & curl.exe -s -o NUL -w '%{http_code}' --max-time 8 'http://127.0.0.1:3001/health'
+$check['公网健康'] = & curl.exe -s -o NUL -w '%{http_code}' --max-time 25 'https://weather.alin061218.online/health'
+$check.GetEnumerator() | ForEach-Object { '  {0,-18} = {1}' -f $_.Key, $_.Value }
 ```
 
 **期望：`Running` / `online` / `200` / `200`**
