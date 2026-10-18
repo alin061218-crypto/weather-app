@@ -6,10 +6,11 @@ so the review threshold is 1.5 × stroke-width = 2.25 viewBox units. Gaps are
 estimated from the closest visible edges in the 24 × 24 coordinate system. A
 gap below the threshold is listed even when it is an intentional attachment.
 
-2026-10-06 author decision: clearNight now delegates to clearDay. The remaining
+Historical estimates, retained from the 2026-10-06 sun-unification decision.
+Superseded on 2026-10-18: clearNight now uses a solid moon and two stars. The remaining
 non-crescent estimates below are retained from the previous review; they were
-not remeasured for this icon-unification change. The current clearNight contract
-is checked by icon-unification.cjs.
+not remeasured for the current night-icon change. The current clearNight contract
+is checked by night-icon.cjs and browser-computed SVG bounds in screenshots.cjs.
 
 icon          closest gap   threshold   judgement
 ------------  ------------  ----------  ----------------------------------------------

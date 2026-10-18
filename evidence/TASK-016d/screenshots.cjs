@@ -24,16 +24,27 @@ const pageMarkup = `<!doctype html>
   .tile { min-height: 118px; display: grid; place-items: center; align-content: center; gap: 9px; border: 1px solid #344153; background: #182230; }
   .tile svg { width: var(--size); height: var(--size); color: #f3f7fb; }
   .label { font-size: 13px; color: #bdc8d6; }
+  body.preview { padding: 0; width: 272px; height: 180px; display: grid; place-items: center; background: #24324d; }
+  body.preview h1, body.preview .label { display: none; }
+  body.preview .grid { display: block; }
+  body.preview .tile { min-height: 0; border: 0; background: none; display: block; }
+  body.preview .tile svg { display: block; }
 </style>
 <h1 id="title"></h1><main id="root" class="grid"></main>
 <script type="module">
   import { icon } from '${moduleUrl}';
   const size = Number(new URLSearchParams(location.search).get('size') || 48);
   document.documentElement.style.setProperty('--size', size + 'px');
-  document.querySelector('#title').textContent = '天气图标家族 · ' + size + 'px · 方案 A（晴 / 晴夜共用太阳）';
+  document.querySelector('#title').textContent = '天气图标家族 · ' + size + 'px · 2026-10-18（晴夜：实心月牙 + 双星）';
   document.querySelector('#root').innerHTML = ${JSON.stringify(icons)}.map(([name, label]) =>
     '<section class="tile" data-icon="' + name + '"><div>' + icon.weather[name]() + '</div><div class="label">' + label + '</div></section>'
   ).join('');
+  if (new URLSearchParams(location.search).has('preview')) {
+    document.body.classList.add('preview');
+    document.querySelectorAll('.tile').forEach(tile => {
+      if (tile.dataset.icon !== 'clearNight') tile.remove();
+    });
+  }
 </script>`;
 
 function startServer() {
@@ -65,15 +76,27 @@ async function capture(page, baseUrl, filename, size) {
       day: day.querySelector('svg').outerHTML,
       night: night.querySelector('svg').outerHTML,
       labels: [day, night].map(tile => tile.querySelector('.label').textContent),
-      sizes: [dimensions(day), dimensions(night)]
+      sizes: [dimensions(day), dimensions(night)],
+      paths: [...night.querySelectorAll('path')].map(element => {
+        const { x, y, width, height } = element.getBBox();
+        return { x, y, width, height, stroke: getComputedStyle(element).stroke, fill: getComputedStyle(element).fill };
+      })
     };
   });
-  assert.equal(rendered.day, rendered.night, `${filename}: day and night SVGs must match`);
+  assert.notEqual(rendered.day, rendered.night, `${filename}: nighttime must use its own moon icon`);
+  assert.match(rendered.night, /<g fill="currentColor" stroke="none">/, `${filename}: moon and stars must be solid without outlines`);
   assert.deepEqual(rendered.labels, ['晴', '晴夜'], `${filename}: both comparison labels must remain`);
   assert.deepEqual(rendered.sizes, [[size, size], [size, size]], `${filename}: use the requested size`);
+  assert.equal(rendered.paths.length, 3, `${filename}: one moon and two stars`);
+  for (const shape of rendered.paths) {
+    assert.equal(shape.stroke, 'none', `${filename}: no outlines`);
+    assert.notEqual(shape.fill, 'none', `${filename}: solid fill`);
+    assert.ok(shape.x >= 0 && shape.y >= 0 && shape.x + shape.width <= 24 && shape.y + shape.height <= 24,
+      `${filename}: all shapes must remain inside the 24px viewBox`);
+  }
   await page.screenshot({ path: path.join(output, filename), fullPage: true });
   assert.ok(fs.statSync(path.join(output, filename)).size > 1000, `${filename}: screenshot is empty`);
-  console.log(`PASS: ${filename}, ${size}px, 晴 / 晴夜 SVGs match`);
+  console.log(`PASS: ${filename}, ${size}px, 晴 / 晴夜 are distinct; solid moon and two stars`);
 }
 
 async function main() {
@@ -89,6 +112,11 @@ async function main() {
     await capture(page, baseUrl, 'icons-24.png', 24);
     await capture(page, baseUrl, 'icons-48.png', 48);
     await capture(page, baseUrl, 'icons-hero.png', 96);
+    await page.setViewportSize({ width: 272, height: 180 });
+    await page.goto(`${baseUrl}/icons.html?size=64&preview=1`);
+    await page.waitForFunction(() => document.querySelectorAll('.tile svg').length === 1);
+    await page.screenshot({ path: path.join(output, 'night-icon-preview.png') });
+    console.log('PASS: night-icon-preview.png');
     assert.deepEqual(errors, [], 'screenshot page must have no browser errors');
   } finally {
     if (browser) await browser.close();

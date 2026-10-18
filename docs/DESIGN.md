@@ -6,7 +6,7 @@
 > 适用范围：`frontend/`（含 `css/style.css`、`js/*.js`、`index.html`）与 `/admin` 页的配色。
 > 产品定位见 [docs/PRODUCT.md](./PRODUCT.md)（已随 TASK-010a 移入仓库）。
 >
-> 版本：v1（2026-10-04）｜对应提交：TASK-014d 之后
+> 版本：v1.1（2026-10-18）｜本次更新：§6.6 晴夜图标作者参考图决策
 
 ---
 
@@ -320,6 +320,26 @@
 
 ---
 
+### 6.6 晴夜图标（2026-10-18 作者参考图决策）
+
+**`[决策]` `clearNight()` 使用饱满的实心月牙，右上方配一大一小两颗四芒星。**
+作者在 2026-10-18 提供参考图，要求晴夜改成该造型；此选择取代 2026-10-06
+“晴夜共用太阳”的方案 A。旧方案关于字母「C」误读的讨论保留为历史，不再作为当前交付要求。
+
+**`[约束]` 图标使用 `24 × 24` viewBox，月牙和星星均为 `fill="currentColor"`、
+`stroke="none"` 的不透明 SVG 路径。** 月牙用闭合贝塞尔轮廓表现饱满下弧和右上开口，
+不叠加内外描边；两颗星用凹弧构成四芒轮廓，较小星在上、较大星在右。
+颜色随所在界面的文字色，全部轮廓必须落在 viewBox 内，在 24px / 48px / Hero 96px 下复核。
+
+日间仍使用 `clearDay()` 的太阳。现有夜间天气码 0、1 使用 `clearNight()` 的映射不变；
+`weatherScene(0, false)` 仍为 `clear-night`，背景色、3D 月亮、星空、文字和 scrim 继续沿用原场景。
+天气文字继续显示“晴”，不因图标变化改成“晴夜”。旧方案的“夜间显示太阳”和
+“太阳图标配夜空/月亮背景”两个代价不再适用于当前实现。
+
+验证和任务历史：`docs/TASK-016d.md` 与 `evidence/TASK-016d/`。
+
+---
+
 ## 7. 动效原则
 
 **`[约束]` 动效必须响应 `prefers-reduced-motion: reduce`**（3D 场景、粒子、过渡）。
@@ -380,6 +400,8 @@
 | §6.1 指标带            | `style.css` `.stats-scroll, .skeleton-stats`              |
 | §6.2 24h 曲线          | `frontend/js/visuals.js` `TempChart`                      |
 | §6.3 温度指纹          | `frontend/js/visuals.js` `temperatureFingerprint()`       |
+| §6.6 晴夜图标          | `frontend/js/icons.js` `clearNight()`                     |
+| TASK-016d 当前决策     | `docs/TASK-016d.md`                                       |
 | §7 动效                | `frontend/js/atmosphere.js`                               |
 
 **`[约束]` 模块与资源的加载方式**：新增 `frontend/js/*.js` 必须同时加进 `index.html` 的

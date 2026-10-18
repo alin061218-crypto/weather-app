@@ -1,0 +1,34 @@
+TASK-016d 作者审美决策（2026-10-06）
+====================================
+
+最终选择：方案 A，晴夜直接归为晴；不再保留月牙。
+clearNight() 返回 icon.weather.clearDay()，共用同一个太阳 SVG。
+weatherScene() 不改，weatherScene(0, false) 仍返回 clear-night。
+
+月牙读作「C」的根因：月牙轮廓天然由外弧与内弧两条弧构成。
+描边会同时画出外弧和内弧；在 24px 网格和这套线稿风格下，
+调整月牙厚度与星点仍没有消除作者对字母「C」的误读。
+
+实心月牙作为备选也被否决：去掉描边仍保留开口的月牙轮廓，
+作者看过变体与对比后，判定实心方案在这一网格与风格下也读作「C」，
+因此直接选择放弃月牙，而不是继续修改月牙造型。
+
+已知并接受的代价（作者决策）：
+① 语义：夜间晴朗会显示太阳图标——已知并接受。
+② clear-night 场景保持不变，包括背景色、3D 月亮、星空，背景/文字/scrim
+   继续依赖原场景映射；夜间会出现「太阳图标 + 夜空/月亮背景」的组合
+   ——已知并接受。
+
+可验证的交付：
+- icon-unification.cjs 执行真实图标模块并严格比较两个返回字符串，
+  同时执行 visuals.js 中真实的 weatherScene() 并断言 clear-night。
+- --counterexample 临时将磁盘上的 clearNight() 改回月牙，启动同一断言；
+  输出与退出码留在 counterexample.txt，finally 按原始字节恢复 icons.js。
+- icons-24.png / icons-48.png / icons-hero.png 是当前方案 A 的三档截图，
+  同时保留「晴」与「晴夜」两格，以便直接比较相同的太阳。
+- frontend/js/ 与 index.html 的「晴夜」字样统一为「晴」，代码标识符保留。
+
+历史证据：clear-night-variants.png / siblings.png 保留此前月牙方向的截图，
+不代表本次实现，不重跑；screenshots.cjs 只生成当前三档图标家族截图。
+geometry-audit.txt 保留此前其他图标的估算记录，已移除旧月牙厚度项；
+icon-geometry.cjs 已删除，旧月牙几何反例由统一性断言反例取代。

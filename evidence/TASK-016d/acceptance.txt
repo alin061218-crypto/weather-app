@@ -1,85 +1,31 @@
-TASK-016d acceptance and regression (2026-10-06)
-================================================
+TASK-016d 当前验收记录（2026-10-18）
+====================================
 
-Implementation: clearNight() delegates to icon.weather.clearDay().
-weatherScene() and all other runtime functions remain unchanged.
+当前实现：clearNight() 使用参考图对应的实心月牙与一大一小两颗四芒星；
+clearDay() 保持太阳；weatherScene(0, false) 保持 clear-night。
 
-Command: node evidence/TASK-016d/icon-unification.cjs
-Exit: 0
-PASS: weatherScene(0, false) === 'clear-night'
-PASS: icon.weather.clearNight() === icon.weather.clearDay()
+图标守卫与反例：
+- node evidence/TASK-016d/night-icon.cjs                  exit 0
+- node evidence/TASK-016d/night-icon.cjs --counterexample exit 1（预期失败）
+  反例将 clearNight() 临时改回 2026-10-06 的太阳；finally 已恢复 icons.js 原始字节。
+  输出见 counterexample.txt。
 
-Command: node evidence/TASK-016d/icon-unification.cjs --counterexample
-Exit: 1 (expected failure)
-AssertionError: clearNight() must return exactly the same SVG as clearDay()
-Actual disk mutation: replaced clearNight() with a crescent; original bytes restored in finally.
-Full child output: counterexample.txt. Normal assertion after restoration: exit 0.
+三档证据：
+- node evidence/TASK-016d/screenshots.cjs                 exit 0
+- icons-24.png、icons-48.png、icons-hero.png 均保留「晴」与「晴夜」两格，
+  并由浏览器实际断言月牙/双星实心、无描边、轮廓在 24×24 viewBox 内。
+- night-icon-preview.png 展示单独的当前晴夜图标；reference-night.jpg 保留作者原图。
 
-Source scan: A8 8 0 1 0|opacity="0.15" in frontend/js/icons.js: 0 hits.
-Source scan: clearNight in frontend/js/icons.js: 3 hits.
-Source scan: 晴夜 in frontend/index.html and frontend/js/*.js: 0 hits.
-git diff --exit-code -- frontend/js/visuals.js: exit 0.
-icon-geometry.cjs deleted; obsolete crescent measurements and counterexample replaced.
+回归：
+- npm test                                                   exit 0（1 file / 6 tests passed）
+- npm run lint                                                exit 0
+- npm run format:check                                       exit 0
+- npm run check:versions                                     exit 0（15 assets）
+- npm run check:evidence -- --static-only                    exit 0
+- node --check server.js                                     exit 0
+- node --check evidence/TASK-016d/night-icon.cjs            exit 0
+- git diff --check                                           exit 0
 
-Command: node evidence/TASK-016d/screenshots.cjs
-Exit: 0
-PASS: icons-24.png, 24px, 晴 / 晴夜 SVGs match
-PASS: icons-48.png, 48px, 晴 / 晴夜 SVGs match
-PASS: icons-hero.png, 96px, 晴 / 晴夜 SVGs match
-Each image retains both labels and asserts identical SVGs and requested dimensions.
-Visual review: all three PNGs inspected; both cells show the same sun without clipping.
-Historical clear-night-variants.png and siblings.png were not regenerated.
-
-Command: npm test
-Exit: 0
-> weather-backend@1.0.0 test
-> vitest run
-
-
- RUN  v5.0.3 E:/weather/weather-project
-
-
- Test Files  1 passed (1)
-      Tests  6 passed (6)
-   Start at  21:49:20
-   Duration  2.79s (tests 93%, import 6%, transform 1%)
-
-Command: npm run lint
-Exit: 0
-> weather-backend@1.0.0 lint
-> eslint server.js tests --max-warnings=0
-
-Command: npm run format:check
-Exit: 0
-> weather-backend@1.0.0 format:check
-> prettier --check tests README.md docs
-
-Checking formatting...
-All matched files use Prettier code style!
-
-Command: npm run check:versions
-Exit: 0
-> weather-backend@1.0.0 check:versions
-> node server.js --check-asset-versions
-
-PASS: 15 index asset versions match SHA-1 content hashes
-
-Command: npm run check:evidence -- --static-only
-Exit: 0
-> weather-backend@1.0.0 check:evidence
-> node scripts/check-evidence.cjs --static-only
-
-PASS: no hard-coded asset version strings in evidence scripts (00000000 negative fixture excluded)
-PASS: --static-only requested; browser evidence scripts were not started
-
-Command: node --check server.js
-Exit: 0
-
-
-Command: git diff --check
-Exit: 0 after removal of a trailing blank line in counterexample.txt.
-Initial whitespace failure: counterexample.txt:24: new blank line at EOF.
-
-Known and accepted costs: nighttime clear weather uses a sun icon; the unchanged
-clear-night scene combines that sun icon with the night sky / 3D moon background.
-Author rationale and explicit acceptance: aesthetic-decision.txt.
+文档：当前决策同步到 docs/DESIGN.md §6.6、docs/TASK-016d.md、
+E:/weather/docs/03-Codex任务分解与验收标准.md 的 TASK-016d，
+并记录在 aesthetic-decision.txt。2026-10-06 太阳方案的旧记录已归档到 history-2026-10-06/。

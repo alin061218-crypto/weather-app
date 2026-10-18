@@ -1,34 +1,40 @@
-TASK-016d 作者审美决策（2026-10-06）
+TASK-016d 作者审美决策（2026-10-18）
 ====================================
 
-最终选择：方案 A，晴夜直接归为晴；不再保留月牙。
-clearNight() 返回 icon.weather.clearDay()，共用同一个太阳 SVG。
-weatherScene() 不改，weatherScene(0, false) 仍返回 clear-night。
+当前选择：以作者本轮提供的图片为准，晴夜使用实心月牙 + 两颗四芒星。
+参考原图：reference-night.jpg；实现预览：night-icon-preview.png。
+本次作者指令取代 2026-10-06「晴夜直接归为晴 / 共用太阳」的方案 A。
+此前决策与验收输出保存在 history-2026-10-06/，不再作为当前断言。
 
-月牙读作「C」的根因：月牙轮廓天然由外弧与内弧两条弧构成。
-描边会同时画出外弧和内弧；在 24px 网格和这套线稿风格下，
-调整月牙厚度与星点仍没有消除作者对字母「C」的误读。
+造型依据：
+- 月牙是饱满、下弧圆润、向右上开口的闭合实心轮廓。
+- 右上两颗星均为四芒星，较小星在上方，较大星在右方。
+- 月牙和星形均以 currentColor 实心填充，显式 stroke="none"，无透明度叠加。
+- 使用 24 × 24 SVG viewBox，保留矢量缩放能力；不直接将截图用作前端图标。
 
-实心月牙作为备选也被否决：去掉描边仍保留开口的月牙轮廓，
-作者看过变体与对比后，判定实心方案在这一网格与风格下也读作「C」，
-因此直接选择放弃月牙，而不是继续修改月牙造型。
+历史取舍：10 月 6 日作者曾因旧月牙读作「C」而选择放弃月牙；
+10 月 18 日作者给出这张具体实心月牙双星参考并明确要求采用，故以新指令为准。
+不把新选择表述为自动证明消除了所有人的字母「C」误读。
+旧决策的两个已知并接受的代价（夜间显示太阳、太阳图标搭配夜空/月亮背景）
+不再适用于当前月牙实现，旧记录仍完整留存于历史目录。
 
-已知并接受的代价（作者决策）：
-① 语义：夜间晴朗会显示太阳图标——已知并接受。
-② clear-night 场景保持不变，包括背景色、3D 月亮、星空，背景/文字/scrim
-   继续依赖原场景映射；夜间会出现「太阳图标 + 夜空/月亮背景」的组合
-   ——已知并接受。
+行为：
+clearDay() 仍使用原太阳；clearNight() 改为独立实心月牙与双星。
+weatherIcon() 的夜间天气码 0、1 映射保留，日间逻辑保留。
+weatherScene() 不改，weatherScene(0, false) 仍为 clear-night；
+背景色、3D 月亮、星空、文字/scrim 的场景规则保持原样。
+UI 天气文字仍为「晴」，仅证据截图用「晴夜」标签区分夜间图标。
 
-可验证的交付：
-- icon-unification.cjs 执行真实图标模块并严格比较两个返回字符串，
-  同时执行 visuals.js 中真实的 weatherScene() 并断言 clear-night。
-- --counterexample 临时将磁盘上的 clearNight() 改回月牙，启动同一断言；
-  输出与退出码留在 counterexample.txt，finally 按原始字节恢复 icons.js。
-- icons-24.png / icons-48.png / icons-hero.png 是当前方案 A 的三档截图，
-  同时保留「晴」与「晴夜」两格，以便直接比较相同的太阳。
-- frontend/js/ 与 index.html 的「晴夜」字样统一为「晴」，代码标识符保留。
+验证：
+node evidence/TASK-016d/night-icon.cjs
+  检查夜间与太阳不同、实心无描边、一个月牙和两颗星、实际图标映射和夜间场景。
+node evidence/TASK-016d/night-icon.cjs --counterexample
+  将真实磁盘源文件临时改回太阳，运行同一守卫，预期退出 1；finally 按原字节恢复。
+node evidence/TASK-016d/screenshots.cjs
+  生成 24px / 48px / Hero 96px 三档家族图与独立预览；
+  用浏览器实际渲染边界检查月牙和双星均未超出 24px viewBox。
+旧 icon-unification.cjs 已删除，避免保留一个与当前作者决策冲突的守卫。
+clear-night-variants.png / siblings.png 已移入 history-2026-10-06/，作为早期方案历史截图，本次未重跑。
 
-历史证据：clear-night-variants.png / siblings.png 保留此前月牙方向的截图，
-不代表本次实现，不重跑；screenshots.cjs 只生成当前三档图标家族截图。
-geometry-audit.txt 保留此前其他图标的估算记录，已移除旧月牙厚度项；
-icon-geometry.cjs 已删除，旧月牙几何反例由统一性断言反例取代。
+文档：仓库 docs/DESIGN.md §6.6 为可推送的当前设计记录；
+E:/weather/docs/03-Codex任务分解与验收标准.md 的 TASK-016d 同步追加新作者决策。
